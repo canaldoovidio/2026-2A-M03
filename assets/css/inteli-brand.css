@@ -35,30 +35,45 @@
   --fonte-titulo: "Platypi", Georgia, serif;
   --fonte-texto: "Manrope", system-ui, sans-serif;
   --fonte-mono: "Space Mono", monospace;
+
+  /* Hierarquia. O brandbook (p.73) define 55/20/15pt em pagina de 1920x1080.
+     A razao entre os niveis e preservada; o corpo sobe para 18px porque
+     13px projetado nao se le do fundo da sala.
+
+     Estes quatro tokens PRECISAM morar em :root. Custom property nao
+     cascateia para fora do seletor que a declara: se elas cairem dentro de
+     um bloco como "code, pre", o body resolve font-size para o 16px padrao
+     do navegador e o piso de legibilidade vira letra morta, sem nenhum erro
+     aparecer. Conferir com getComputedStyle, nao a olho. */
+  --escala-titulo: 44px;
+  --escala-subtitulo: 26px;
+  --escala-texto: 18px;
+  --escala-complementar: 14px;
 }
 
-/* A aplicacao das familias mora aqui e so aqui, porque o check_brand.py
-   proibe font-family em qualquer outro arquivo. Sem estas tres regras os
-   tokens acima ficam declarados e nunca usados, que foi exatamente o defeito
-   do CSS de 2026.1: ele pedia "Azurio" e a fonte nunca era carregada. */
+/* A aplicacao das familias e das escalas mora aqui e so aqui, porque o
+   check_brand.py proibe font-family em qualquer outro arquivo. Sem estas
+   regras os tokens acima ficam declarados e nunca usados, que foi exatamente
+   o defeito do CSS de 2026.1: ele pedia "Azurio" e a fonte nunca era
+   carregada, entao os titulos caiam no fallback em silencio. */
 body {
   font-family: var(--fonte-texto);
   font-size: var(--escala-texto);
 }
 
-h1, h2, h3, h4 {
+h1, h2 {
   font-family: var(--fonte-titulo);
   font-weight: 500;  /* Azurio Medium e o peso de titulo do brandbook, p.69 */
+  font-size: var(--escala-titulo);
+}
+
+h3, h4 {
+  font-family: var(--fonte-titulo);
+  font-weight: 500;
+  font-size: var(--escala-subtitulo);
 }
 
 code, pre, kbd, samp, .mono {
   font-family: var(--fonte-mono);
-
-  /* Hierarquia. O brandbook (p.73) define 55/20/15pt em pagina de 1920x1080.
-     A razao entre os niveis e preservada; o corpo sobe para 18px porque
-     13px projetado nao se le do fundo da sala. */
-  --escala-titulo: 44px;
-  --escala-subtitulo: 26px;
-  --escala-texto: 18px;
-  --escala-complementar: 14px;
+  font-size: var(--escala-complementar);
 }
