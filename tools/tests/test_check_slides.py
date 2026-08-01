@@ -67,3 +67,51 @@ def test_fixture_do_tema_passa_limpo(servidor):
     sujos = [s for s in slides
              if s["pior"] or s["sobreposicoes"] or s["colisoes"]]
     assert sujos == [], "o deck de referencia do tema precisa passar limpo"
+
+
+# --- Regressao da rodada de correcao 1: falso-verde do parsing de --shots --
+
+def test_parse_args_shots_sozinho_nao_vira_deck():
+    """--shots DIR sem nenhum deck explicito continua sem decks: main() cai
+    no ramo que varre aulas/. Sem essa garantia, DIR e tratado como o unico
+    deck, o servidor devolve 404 e o validador aprova sem medir nada."""
+    decks, shots_dir = check_slides._parse_args(["--shots", "/tmp/shots-regressao"])
+    assert decks == []
+    assert shots_dir == "/tmp/shots-regressao"
+
+
+def test_parse_args_deck_mais_shots_nao_cria_deck_fantasma():
+    """deck.html --shots DIR varre so aquele deck: DIR nao pode aparecer como
+    um segundo deck fantasma na lista."""
+    decks, shots_dir = check_slides._parse_args(
+        ["aulas/aula01.html", "--shots", "/tmp/shots-regressao"]
+    )
+    assert decks == ["aulas/aula01.html"]
+    assert shots_dir == "/tmp/shots-regressao"
+
+
+def test_html_sem_sections_reprova(servidor):
+    """checar() contra um HTML sem nenhuma <section> precisa devolver um
+    valor diferente de zero: zero slides encontrados e um deck que nao
+    carregou, nao um deck limpo. Reproduz por outro caminho o mesmo defeito
+    do bug de parsing: 0 slides jamais pode significar sucesso."""
+    page, porta = servidor
+    resultado = check_slides.checar(
+        page,
+        "http://127.0.0.1:%d/tools/tests/fixture_sem_slides.html" % porta,
+        "fixture_sem_slides.html",
+    )
+    assert resultado != 0
+
+
+def test_url_404_reprova(servidor):
+    """Reproducao direta do CRITICAL relatado: uma URL que devolve 404 (o
+    mesmo efeito de tratar o diretorio de --shots como se fosse um deck) tem
+    que reprovar, nunca imprimir sucesso silencioso."""
+    page, porta = servidor
+    resultado = check_slides.checar(
+        page,
+        "http://127.0.0.1:%d/tools/tests/nao-existe-de-proposito.html" % porta,
+        "nao-existe-de-proposito.html",
+    )
+    assert resultado != 0

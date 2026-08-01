@@ -15,7 +15,7 @@ Tres checagens, porque sao tres defeitos diferentes:
    checagem de estouro. Aqui comparamos os filhos diretos da section entre si:
    como o layout deles e empilhado, qualquer intersecao real e defeito.
 
-3. TITULO NO LOGO. O logo da FIAP fica fora da checagem 2 de proposito, senao
+3. TITULO NO LOGO. O logo do Inteli fica fora da checagem 2 de proposito, senao
    todo slide daria falso positivo. O efeito colateral era um ponto cego: um
    titulo longo quebra a segunda linha por baixo do logo sem estourar os 720px
    e sem sobrepor filho direto da section. Apareceu nas Aulas 10 e 11 em
@@ -119,14 +119,7 @@ JS_MEDIR = """
       const ecs = getComputedStyle(el);
       if (ecs.display === 'none' || ecs.visibility === 'hidden') return false;
       // Decoracao de borda: sobrepoe de proposito
-      // .cover-panel entra na mesma excecao: e o fundo declarado da capa
-      // (conic-gradient de 100% da section, ver inteli-theme.css), com o
-      // bloco de texto empilhado por CSS grid na mesma celula, de proposito,
-      // para escrever titulo sobre grafismo. Nao e um bloco absoluto cobrindo
-      // outro por acidente, entao exclui pelo nome da classe, do mesmo jeito
-      // que .slide-footer, .top-bar e o logo, sem abrir mao de comparar os
-      // demais filhos diretos da section entre si.
-      if (el.matches('.slide-footer, .top-bar, [class*="logo-header"], .cover-panel')) return false;
+      if (el.matches('.slide-footer, .top-bar, [class*="logo-header"]')) return false;
       const r = el.getBoundingClientRect();
       return r.width > 0 && r.height > 0;
     });
@@ -207,9 +200,17 @@ def checar(page, url, nome, shots_dir=None):
     page.wait_for_timeout(900)
     slides = page.evaluate(JS_MEDIR)
 
+    print("\n%s  (%d slides)" % (nome, len(slides)))
+    if not slides:
+        # Nenhuma <section> encontrada nao e um deck limpo, e um deck que nao
+        # carregou (404, URL errada, HTML sem slides...). Se isso voltasse 0
+        # aqui, um caminho invalido passaria pelo portao de qualidade
+        # silenciosamente, com exit code 0, sem examinar nada.
+        print("  ERRO: nenhuma section encontrada, o deck nao carregou")
+        return 1
+
     problemas = [s for s in slides
                  if s["pior"] or s.get("sobreposicoes") or s.get("colisoes")]
-    print("\n%s  (%d slides)" % (nome, len(slides)))
     if not problemas:
         print("  OK: nada estourando 1280x720, sem bloco sobreposto nem titulo no logo")
         return 0
@@ -251,16 +252,30 @@ def checar(page, url, nome, shots_dir=None):
     return len(problemas)
 
 
-def main():
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    shots_dir = None
-    if "--shots" in sys.argv:
-        i = sys.argv.index("--shots")
-        shots_dir = sys.argv[i + 1] if len(sys.argv) > i + 1 else "shots"
+def _parse_args(argv):
+    """Separa decks de opcoes. O --shots consome o proprio valor: sem isso o
+    diretorio de screenshots entra na lista de decks, o servidor devolve 404,
+    e o validador reporta sucesso sem ter medido nada."""
+    decks, shots_dir = [], None
+    i = 0
+    while i < len(argv):
+        a = argv[i]
+        if a == "--shots":
+            shots_dir = argv[i + 1] if i + 1 < len(argv) else "shots"
+            i += 2
+            continue
+        if a.startswith("--"):
+            i += 1
+            continue
+        decks.append(a)
+        i += 1
+    return decks, shots_dir
 
-    if args:
-        decks = args
-    else:
+
+def main():
+    decks, shots_dir = _parse_args(sys.argv[1:])
+
+    if not decks:
         pasta = os.path.join(RAIZ, "aulas")
         decks = [
             os.path.join("aulas", f)
