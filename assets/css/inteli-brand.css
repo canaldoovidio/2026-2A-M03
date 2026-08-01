@@ -1,0 +1,64 @@
+/* Tokens do Brandbook Inteli 2025.
+   Este e o unico arquivo do acervo autorizado a declarar cor e tipografia.
+   Qualquer outro arquivo consome var(--inteli-*) ou var(--seg-*).
+   Verificado por tools/check_brand.py. */
+
+@import url("https://fonts.googleapis.com/css2?family=Platypi:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap");
+
+:root {
+  /* Paleta cromatica, p.66 */
+  --inteli-roxo: #2e2640;
+  --inteli-coral: #ff4545;
+  --inteli-verde: #89cea5;
+  --inteli-cinza-escuro: #b2b6bf;
+  --inteli-cinza-medio: #caced6;
+  --inteli-cinza-claro: #e6eaeb;
+  --inteli-branco: #ffffff;
+
+  /* Segmento Graduacao, p.68.
+     Branco e cinzas como base, verde e roxo como blocos de peso,
+     coral apenas como filete de destaque.
+     Lilas e verde escuro pertencem a Escolas e a Exec/Pos e ficam de fora. */
+  --seg-base: var(--inteli-branco);
+  --seg-superficie: var(--inteli-cinza-claro);
+  --seg-borda: var(--inteli-cinza-medio);
+  --seg-primaria: var(--inteli-roxo);
+  --seg-secundaria: var(--inteli-verde);
+  --seg-destaque: var(--inteli-coral);
+  --seg-texto: var(--inteli-roxo);
+  --seg-texto-suave: var(--inteli-cinza-escuro);
+
+  /* Tipografia, p.69 a p.74.
+     A Azurio e licenciada e este repositorio e publico: o proprio brandbook
+     (p.70) autoriza a Platypi como substituta por ser Google Font. */
+  --fonte-titulo: "Platypi", Georgia, serif;
+  --fonte-texto: "Manrope", system-ui, sans-serif;
+  --fonte-mono: "Space Mono", monospace;
+}
+
+/* A aplicacao das familias mora aqui e so aqui, porque o check_brand.py
+   proibe font-family em qualquer outro arquivo. Sem estas tres regras os
+   tokens acima ficam declarados e nunca usados, que foi exatamente o defeito
+   do CSS de 2026.1: ele pedia "Azurio" e a fonte nunca era carregada. */
+body {
+  font-family: var(--fonte-texto);
+  font-size: var(--escala-texto);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--fonte-titulo);
+  font-weight: 500;  /* Azurio Medium e o peso de titulo do brandbook, p.69 */
+}
+
+code, pre, kbd, samp, .mono {
+  font-family: var(--fonte-mono);
+
+  /* Hierarquia. O brandbook (p.73) define 55/20/15pt em pagina de 1920x1080.
+     A razao entre os niveis e preservada; o corpo sobe para 18px porque
+     13px projetado nao se le do fundo da sala. */
+  --escala-titulo: 44px;
+  --escala-subtitulo: 26px;
+  --escala-texto: 18px;
+  --escala-complementar: 14px;
+}
