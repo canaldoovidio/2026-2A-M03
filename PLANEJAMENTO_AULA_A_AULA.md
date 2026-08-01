@@ -60,7 +60,7 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 
 ---
 
-### Aula 02 - 07/08/2026 - Visão Geral de ML, IA e Ciência de Dados  (Sprint 1)
+### Aula 02 - 07/08/2026 - Visão Geral do Aprendizado de Máquina, Inteligência Artificial e Ciência de Dados  (Sprint 1)
 
 08h00 - 10h00  Autoestudo
   Aspectos da qualidade dos dados (6 pilares)
@@ -113,7 +113,7 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 
 ---
 
-### Aula 03 - 11/08/2026 - Pandas, Numpy e bibliotecas gráficas  (Sprint 1)
+### Aula 03 - 11/08/2026 - Introdução ao Pandas, Numpy e bibliotecas gráficas - Exploração de Dados  (Sprint 1)
 
 08h00 - 10h00  Autoestudo
   Bibliotecas gráficas: Matplotlib e Seaborn
@@ -157,7 +157,7 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 
 ---
 
-### Aula 04 - 19/08/2026 - Pré-processamento e Feature Engineering  (Sprint 2)
+### Aula 04 - 19/08/2026 - Pré Processamento e Feature Engineering  (Sprint 2)
 
 08h00 - 10h00  Autoestudo
   Adequação de variáveis numéricas e categóricas
@@ -202,7 +202,7 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 
 ---
 
-### Aula 05 - 24/08/2026 - Aprendizado Supervisionado I  (Sprint 2)
+### Aula 05 - 24/08/2026 - Aprendizado Supervisionado parte I  (Sprint 2)
 
 08h00 - 10h00  Autoestudo
   Atividade ponderada - Competição de modelo preditivo (entrega na semana 9)
@@ -254,7 +254,7 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 
 ---
 
-### Aula 06 - 01/09/2026 - Aprendizado Não Supervisionado I  (Sprint 3)
+### Aula 06 - 01/09/2026 - Aprendizado Não Supervisionado - parte I  (Sprint 3)
 
 08h00 - 10h00  Autoestudo
   Determinando K: Elbow Plot
@@ -292,7 +292,7 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 
 ---
 
-### Aula 07 - 04/09/2026 - Aprendizado Supervisionado II  (Sprint 3)
+### Aula 07 - 04/09/2026 - Aprendizado Supervisionado - parte II  (Sprint 3)
 
 08h00 - 10h00  Autoestudo
   Matriz de confusão, precisão e revocação
@@ -341,7 +341,7 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 
 ---
 
-### Aula 08 - 10/09/2026 - Aprendizado Não Supervisionado II  (Sprint 3)
+### Aula 08 - 10/09/2026 - Aprendizado Não Supervisionado Parte II  (Sprint 3)
 
 08h00 - 10h00  Autoestudo
   Implementação: Sistemas de Recomendação I
@@ -383,7 +383,7 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 
 ---
 
-### Aula 09 - 15/09/2026 - Problemas Comuns de Modelagem e mais Feature Engineering  (Sprint 4)
+### Aula 09 - 15/09/2026 - Problemas Comuns com Modelagem de IA e mais Feature Engineering  (Sprint 4)
 
 08h00 - 10h00  Autoestudo
   Desbalanceamento das Classes
@@ -429,7 +429,7 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 
 ---
 
-### Aula 10 - 17/09/2026 - Hiperparâmetros e Explicabilidade  (Sprint 4)
+### Aula 10 - 17/09/2026 - Hiperparâmetros e Explicabilidade do Modelo  (Sprint 4)
 
 08h00 - 10h00  Autoestudo
   Além da Transparência: Contextualizando a Necessidade de Explicabilidade na IA
@@ -473,7 +473,7 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 
 ---
 
-### Aula 11 - 24/09/2026 - AutoML com PyCaret  (Sprint 4)
+### Aula 11 - 24/09/2026 - AutoML - Pycaret  (Sprint 4)
 
 08h00 - 10h00  Autoestudo
   O que é AutoML?
@@ -513,7 +513,7 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 
 ---
 
-### Aula 12 - 29/09/2026 - Deploy de modelo e pipeline de processamento  (Sprint 5)
+### Aula 12 - 29/09/2026 - Deploy de modelo e criação de pipeline de processamento  (Sprint 5)
 
 08h00 - 10h00  Autoestudo
   Como Usar Pipelines no Scikit-Learn
