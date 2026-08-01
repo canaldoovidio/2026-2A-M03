@@ -6,22 +6,43 @@
   'use strict';
 
   var PASSO = 2;
+  // Limites explicitos: abaixo de 12px o texto nao se le projetado da sala
+  // grande; acima de 32px o corpo do slide estoura os 720px de altura fixa
+  // do tema. Sem isso "-" repetido levava a escala a negativo (o navegador
+  // descarta font-size negativo e volta ao default, um efeito colateral da
+  // spec de CSS, nao uma decisao do codigo).
+  var MINIMO = 12;
+  var MAXIMO = 32;
 
   function slideAtivo() {
     return document.querySelector('.reveal .slides section.present') ||
       document.querySelector('.reveal .slides section');
   }
 
+  function escalaPadrao() {
+    // Le o valor do token direto do :root em vez de fixar um numero: se o
+    // piso de legibilidade mudar em inteli-brand.css, o fallback acompanha
+    // em vez de divergir em silencio.
+    var valor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--escala-texto').trim();
+    var numero = parseFloat(valor);
+    return isNaN(numero) ? MINIMO : numero;
+  }
+
   function escalaAtual(slide) {
     var valor = getComputedStyle(slide).getPropertyValue('--escala-texto').trim();
     var numero = parseFloat(valor);
-    return isNaN(numero) ? 18 : numero;
+    return isNaN(numero) ? escalaPadrao() : numero;
+  }
+
+  function limitar(valor) {
+    return Math.min(MAXIMO, Math.max(MINIMO, valor));
   }
 
   function ajustar(delta) {
     var slide = slideAtivo();
     if (!slide) return;
-    var nova = escalaAtual(slide) + delta;
+    var nova = limitar(escalaAtual(slide) + delta);
     slide.style.setProperty('--escala-texto', nova + 'px');
   }
 

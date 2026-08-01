@@ -12,8 +12,14 @@
     opcao.classList.add(certa ? 'certa' : 'errada');
 
     if (!certa) {
-      var gabarito = quiz.querySelector('[data-correct="true"]');
-      if (gabarito) gabarito.classList.add('revelada');
+      // querySelectorAll, nao querySelector: um quiz pode ter mais de uma
+      // opcao correta (erro de autoria plausivel ao longo de 14 aulas), e
+      // querySelector devolveria so a primeira, deixando a(s) outra(s) sem
+      // revelar.
+      var gabarito = quiz.querySelectorAll('[data-correct="true"]');
+      for (var k = 0; k < gabarito.length; k++) {
+        gabarito[k].classList.add('revelada');
+      }
     }
 
     var feedback = document.createElement('p');

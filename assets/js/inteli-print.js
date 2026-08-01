@@ -34,8 +34,20 @@
     var quizzes = document.querySelectorAll('.quiz-container');
     for (var i = 0; i < quizzes.length; i++) {
       var quiz = quizzes[i];
-      var certa = quiz.querySelector('[data-correct="true"]');
-      if (certa) window.IntelIQuiz.responder(quiz, certa);
+      // querySelectorAll, nao querySelector: um quiz pode ter mais de uma
+      // opcao correta, e o gabarito do PDF precisa marcar todas, senao o
+      // professor confere a aula com um gabarito incompleto. So a primeira
+      // chamada passa por window.IntelIQuiz.responder (que grava
+      // dataset.respondido e escreve o paragrafo de feedback); as demais
+      // opcoes corretas so precisam da classe visual, adicionada direto.
+      var corretas = quiz.querySelectorAll('[data-correct="true"]');
+      for (var j = 0; j < corretas.length; j++) {
+        if (j === 0) {
+          window.IntelIQuiz.responder(quiz, corretas[j]);
+        } else {
+          corretas[j].classList.add('certa');
+        }
+      }
     }
   }
 

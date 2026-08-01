@@ -284,17 +284,32 @@
    troca classe, nunca escreve cor, entao esses estados moram aqui, so
    tokens. .certa e .errada marcam a opcao clicada; .revelada marca a opcao
    certa quando a pessoa erra; .quiz-feedback e o paragrafo com a mensagem
-   que o JS injeta apos a resposta. */
-.certa {
+   que o JS injeta apos a resposta.
+
+   Seletor composto (".quiz-options li.certa" em vez de so ".certa"), mesmo
+   raciocinio do ".quiz-container .quiz-feedback" logo abaixo: especificidade
+   (0,1,1) da regra ".quiz-options li" (linha ~267) vence um seletor de
+   classe sozinho (0,0,1) e a borda/fundo default nunca aparecia. Corrigido
+   na rodada de revisao 1 depois de o revisor medir com getComputedStyle e
+   achar borderLeftColor identico entre opcao certa, errada e intocada. */
+.quiz-options li.certa {
   border-left: 4px solid var(--seg-secundaria);
 }
 
-.errada {
+.quiz-options li.errada {
   border-left: 4px solid var(--seg-destaque);
 }
 
-.revelada {
-  background: var(--seg-superficie);
+/* var(--seg-superficie), o valor pedido originalmente para .revelada, e o
+   MESMO valor que ".quiz-options li" acima ja usa como fundo de repouso de
+   toda opcao: virou um no-op medido pelo revisor (backgroundColor identico
+   entre a opcao revelada e uma opcao intocada, mesmo com o seletor
+   composto corrigido). Trocado para var(--seg-secundaria), o mesmo verde
+   que ".certa" usa na borda (par roxo-sobre-verde ja usado sem problema de
+   contraste em ".section-slide"), para a opcao correta realmente se
+   destacar quando revelada sem ter sido clicada. */
+.quiz-options li.revelada {
+  background: var(--seg-secundaria);
 }
 
 /* Especificidade maior que ".reveal p" (0,1,1) de proposito: precisa ganhar
