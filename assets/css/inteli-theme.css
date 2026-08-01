@@ -125,27 +125,81 @@
 .slide-title-area { margin-bottom: 24px; }
 .slide-title-area h2 { margin: 0; }
 
-/* Slide de abertura e de fechamento (bookend): bloco de cor cheio, sem
-   top-bar, sem logo de canto e sem rodape, porque sao paginas de marca,
-   nao paginas de trabalho. O grafismo fica ao lado do bloco de titulo, em
-   fluxo normal (flex row), nunca atras dele com position: absolute: assim
-   nunca cobre o titulo por engano.
+/* Slide de abertura (capa): o grafismo NAO e um elemento ao lado de um
+   fundo, ele E o fundo. A p.77 do brandbook mostra o painel das tres faces
+   sangrando a peca inteira, sem moldura; nenhum tom solido da paleta da
+   contraste as tres faces ao mesmo tempo (correcao registrada no plano),
+   entao a solucao certa nunca foi "cor de fundo + grafismo por cima": e
+   ladrilhar a capa inteira com as tres faces e escrever o titulo sobre
+   UMA delas so, nunca sobre as tres (p.82).
 
    Selector composto (".reveal .slides section.cover-slide" em vez de so
    ".cover-slide"): a regra base ".reveal .slides section" tem duas classes
    mais um elemento e vence ".cover-slide" sozinho no empate de
-   especificidade, deixando o fundo e o alinhamento sempre brancos. Mesmo
-   raciocinio para .section-slide e .end-slide logo abaixo. */
+   especificidade, deixando o alinhamento sempre no padrao. Mesmo raciocinio
+   para .section-slide e .end-slide logo abaixo. */
 .reveal .slides section.cover-slide {
-  background: var(--seg-primaria);
-  color: var(--inteli-branco);
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 40px;
+  /* Sem "background": quem preenche o slide e o .cover-panel abaixo, nao
+     uma cor solida atras dele. */
+  padding: 0;
 }
 
-.cover-content { max-width: 56%; }
+/* Unico filho do slide, ocupa a secao inteira (1280x720, sem o padding
+   que as outras classes de slide tem, porque aqui nao ha moldura) e
+   empilha o ladrilho de tres faces com o bloco de texto na mesma celula
+   de grid, sem "position: absolute" (a segunda armadilha do repositorio):
+   grid com uma linha e uma coluna colocando os filhos na mesma celula faz
+   o mesmo papel de uma pilha posicionada, sem tocar em "position".
+
+   As tres faces, redesenhadas a partir dos mesmos 120 graus do grafismo
+   pequeno (assets/img/inteli-grafismo-graduacao.svg), so que recalculadas
+   para o retangulo de 1280x720 em vez do viewBox quadrado do icone: um
+   hexagono do mesmo tamanho do icone, so ampliado, deixaria sobrar margem
+   transparente nas laterais (o viewBox do icone tem respiro em volta do
+   hexagono) e o vertice de cima ficaria fora da tela de qualquer jeito.
+   Em vez de recortar o SVG pequeno, um "conic-gradient" particiona os
+   1280x720 em tres fatias de exatos 120 graus a partir de um unico centro
+   (640px 570px, mesmo ponto de encontro das tres faces do icone pequeno,
+   so que a distancia dos vertices opostos do hexagono e tao grande, para
+   cobrir a largura toda, que eles ficam fora da tela de qualquer forma:
+   o efeito visto por perto de um centro assim e indistinguivel de tres
+   losangos genuinos). A primeira tentativa desenhava as tres faces como
+   "clip-path" em divs separadas, mas isso disparou um bug de pintura no
+   Chrome headless (os divs recortados sempre ficavam por cima do texto,
+   nunca por baixo, mesmo vindo antes dele no DOM); um unico
+   "conic-gradient" tem a mesma particao angular sem esse problema. */
+.cover-panel {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  background: conic-gradient(
+    from 0deg at 640px 570px,
+    var(--seg-primaria) 0deg 120deg,
+    var(--seg-borda) 120deg 240deg,
+    var(--seg-secundaria) 240deg 360deg
+  );
+}
+
+.cover-panel > * {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* Texto sobre a face roxa (unica face sob o bloco de titulo, nunca as
+   tres): metade direita da capa, onde o conic-gradient acima (0-120 graus
+   a partir do centro) cobre 100% da largura visivel naquela faixa
+   vertical. Texto claro, porque e a face que comporta texto claro (a
+   verde e a cinza-media comportam var(--seg-texto), sem uso nesta capa
+   mas documentado para quem for reaproveitar o padrao noutro slide). */
+.cover-content {
+  align-self: center;
+  justify-self: end;
+  max-width: 42%;
+  padding: 0 64px 0 0;
+  color: var(--inteli-branco);
+}
 
 .cover-eyebrow {
   font-size: var(--escala-complementar);
@@ -155,16 +209,8 @@
   margin: 0 0 12px;
 }
 
-.cover-slide h1 { color: var(--inteli-branco); margin: 0 0 16px; }
-.cover-slide h3 { color: var(--inteli-branco); font-weight: 400; margin: 0; }
-
-.cover-grafismo {
-  /* Maximo 40% da largura (p.82). Em fluxo normal ao lado do bloco de
-     titulo, nunca sobre as tres faces. */
-  width: 36%;
-  height: auto;
-  flex-shrink: 0;
-}
+.cover-content h1 { color: var(--inteli-branco); margin: 0 0 16px; }
+.cover-content h3 { color: var(--inteli-branco); font-weight: 400; margin: 0; }
 
 .reveal .slides section.section-slide {
   background: var(--seg-secundaria);

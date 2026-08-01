@@ -49,5 +49,5 @@ def test_grafismo_tem_exatamente_tres_faces():
     faces = raiz.findall(".//%spolygon" % SVG_NS)
     assert len(faces) == 3, "o grafismo tem sempre tres modulos (p.77)"
     cores = {(f.get("fill") or "").lower() for f in faces}
-    assert cores == {"#89cea5", "#2e2640", "#e6eaeb"}, \
-        "combinacao do segmento Graduacao (p.77)"
+    assert cores == {"#89cea5", "#2e2640", "#caced6"}, \
+        "combinacao do segmento Graduacao (p.77): face inferior e cinza medio"
