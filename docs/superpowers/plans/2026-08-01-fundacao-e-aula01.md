@@ -1007,7 +1007,21 @@ git -c user.name="canaldoovidio" -c user.email="canaldoovidio@users.noreply.gith
 
 Adicionar ao `inteli-theme.css` as três classes de estado, usando só tokens: `.certa` com borda
 esquerda em `var(--seg-secundaria)`, `.errada` com borda esquerda em `var(--seg-destaque)`, e
-`.revelada` com fundo `var(--seg-superficie)`.
+`.revelada` com fundo `var(--seg-secundaria)`.
+
+Duas armadilhas que já morderam aqui, as duas invisíveis na leitura do CSS:
+
+1. **Especificidade.** Escrever `.certa` solto não funciona: a regra base `.quiz-options li` tem
+   especificidade maior e vence para borda e fundo. As classes de estado precisam ser
+   `.quiz-options li.certa` e assim por diante. O quiz chega a responder e nenhuma opção muda de
+   aparência.
+2. **Cor idêntica ao default.** `.revelada` não pode usar `var(--seg-superficie)`, porque é
+   exatamente o fundo que toda opção já tem: com o seletor certo e essa cor, a opção revelada
+   continua indistinguível de uma intocada.
+
+A prova de que qualquer uma das três classes funciona é `getComputedStyle` comparando a opção
+marcada com uma intocada. Screenshot não serve: a diferença é fina demais e a leitura tende a
+confirmar o que se espera ver.
 
 - [ ] **Step 2: Escrever o inteli-zoom.js**
 
