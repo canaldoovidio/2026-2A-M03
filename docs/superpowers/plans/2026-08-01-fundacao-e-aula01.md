@@ -1307,25 +1307,55 @@ git -c user.name="canaldoovidio" -c user.email="canaldoovidio@users.noreply.gith
 
 **Interfaces:**
 - Consumes: API do SIDRA/IBGE.
-- Produces: cinco CSV em `dados/`, com as colunas `periodo` (texto `AAAA-MM`), `valor` (float) e
-  `unidade` (texto). Nomes exatos: `abate_bovinos.csv`, `abate_suinos.csv`, `abate_frangos.csv`,
-  `producao_ovos.csv`, `producao_leite.csv`. Consumidos pelo notebook da Task 16 e por todo o
-  fan-out.
+- Produces: cinco CSV em `dados/`, com as colunas `periodo` (texto `AAAA-TN`, por exemplo
+  `1997-T1`), `valor` (float) e `unidade` (texto). Nomes exatos: `abate_bovinos.csv`,
+  `abate_suinos.csv`, `abate_frangos.csv`, `producao_ovos.csv`, `producao_leite.csv`.
+  Consumidos pelo notebook da Task 16 e por todo o fan-out.
+
+### As séries são TRIMESTRAIS, e isso foi verificado na API
+
+Antes de escrever este passo eu supus que as tabelas fossem mensais, porque o TAPI fala em
+"abate mensal" e pede "projeções mensais". **A suposição estava errada.** As cinco tabelas são da
+Pesquisa Trimestral do IBGE e o código de período vem como `AAAATT`, onde `202504` é o quarto
+trimestre de 2025. Consultado na API em 01/08/2026.
+
+Decisão do professor, tomada com esses fatos na mão: **o acervo trabalha em base trimestral, com
+horizonte de 8 trimestres**, que cobre os mesmos 24 meses que o parceiro pediu. Não se interpola
+trimestre em mês: inventar observação que não foi medida contamina qualquer métrica de erro e é
+péssimo exemplo num módulo sobre modelo preditivo.
+
+O descompasso entre o que o parceiro pediu e o que o dado permite **vira conteúdo de aula**, não
+nota de rodapé: a Aula 02 (CRISP-DM) e a ART.1 (Entendimento do negócio) discutem essa diferença
+explicitamente, porque negociar granularidade com quem pede o modelo é trabalho real de projeto.
 
 - [ ] **Step 1: Escrever o baixador**
 
-`tools/baixar_dados.py`. A API do SIDRA responde em
-`https://apisidra.ibge.gov.br/values/t/{tabela}/n1/all/v/all/p/all`, devolvendo JSON em que a
-**primeira linha é o cabeçalho com os rótulos** e as demais são os dados, com as chaves `D3C`
-(código do período) e `V` (valor). Tabelas, conforme o TAPI:
+`tools/baixar_dados.py`. Os parâmetros abaixo foram todos confirmados contra a API real em
+01/08/2026, não deduzidos da documentação.
 
-| Tabela | Arquivo | Conteúdo |
-|---|---|---|
-| 1092 | `abate_bovinos.csv` | abate de bovinos |
-| 1093 | `abate_suinos.csv` | abate de suínos |
-| 1094 | `abate_frangos.csv` | abate de frangos |
-| 7524 | `producao_ovos.csv` | produção de ovos de galinha |
-| 1086 | `producao_leite.csv` | produção de leite cru |
+A resposta é um JSON em que a **primeira linha é o cabeçalho com os rótulos** e as demais são os
+dados. O período está em `D3C`, no formato `AAAATT`, e o valor em `V`.
+
+**Cada tabela devolve de 4 a 8 variáveis diferentes**, incluindo percentuais e "número de
+informantes". Usar `v/all` traria tudo embaralhado num mesmo CSV. É obrigatório pedir a variável
+específica de cada série:
+
+| Tabela | Variável | Arquivo | Série |
+|---|---|---|---|
+| 1092 | `285` | `abate_bovinos.csv` | peso total das carcaças de bovinos |
+| 1093 | `285` | `abate_suinos.csv` | peso total das carcaças de suínos |
+| 1094 | `285` | `abate_frangos.csv` | peso total das carcaças de frangos |
+| 7524 | `29` | `producao_ovos.csv` | quantidade de ovos produzidos |
+| 1086 | `282` | `producao_leite.csv` | leite cru adquirido |
+
+A URL fica `https://apisidra.ibge.gov.br/values/t/{tabela}/n1/all/v/{variavel}/p/all`.
+
+**As tabelas ainda têm dimensões extras** (`D4`, `D5` e, na 1092, também `D6`), que separam tipo
+de rebanho, tipo de inspeção e afins. As linhas úteis são as que trazem "Total" nessas dimensões.
+Filtrar por elas, ou o CSV sai com o mesmo período repetido em vários recortes.
+
+Referência do que a 1092 devolve com a variável 285 e as dimensões totais: 117 períodos, de
+`199701` a `202601`, em quilogramas.
 
 ```python
 #!/usr/bin/env python3
@@ -1367,10 +1397,11 @@ def baixar(tabela):
 
 
 def normalizar_periodo(codigo):
-    """O SIDRA devolve AAAAMM; o contrato do acervo e AAAA-MM."""
+    """O SIDRA devolve AAAATT (202504 = 4o trimestre de 2025).
+    O contrato do acervo e AAAA-TN, entao 202504 vira 2025-T4."""
     texto = str(codigo).strip()
     if len(texto) == 6 and texto.isdigit():
-        return "%s-%s" % (texto[:4], texto[4:])
+        return "%s-T%d" % (texto[:4], int(texto[4:]))
     return texto
 
 
@@ -1477,18 +1508,29 @@ def test_colunas_do_contrato():
         assert set(linhas[0]) == {"periodo", "valor", "unidade"}, nome
 
 
-def test_periodo_em_ano_mes_ordenado():
+def test_periodo_em_ano_trimestre_ordenado():
     for nome in ESPERADOS:
         periodos = [l["periodo"] for l in _ler(nome)]
         assert periodos == sorted(periodos), nome
         for p in periodos:
-            ano, mes = p.split("-")
-            assert len(ano) == 4 and 1 <= int(mes) <= 12, "%s: %s" % (nome, p)
+            ano, tri = p.split("-")
+            assert len(ano) == 4 and ano.isdigit(), "%s: %s" % (nome, p)
+            assert tri[0] == "T" and 1 <= int(tri[1:]) <= 4, "%s: %s" % (nome, p)
 
 
 def test_serie_cobre_ao_menos_dez_anos():
+    # Trimestral: 10 anos sao 40 periodos. A serie real passa de 100.
     for nome in ESPERADOS:
-        assert len(_ler(nome)) >= 120, nome
+        assert len(_ler(nome)) >= 40, nome
+
+
+def test_um_registro_por_periodo():
+    # As tabelas tem dimensoes extras (tipo de rebanho, inspecao). Se o filtro
+    # de "Total" falhar, o mesmo periodo aparece varias vezes com recortes
+    # diferentes, e a serie fica silenciosamente errada.
+    for nome in ESPERADOS:
+        periodos = [l["periodo"] for l in _ler(nome)]
+        assert len(periodos) == len(set(periodos)), nome
 
 
 def test_valores_sao_numericos_ou_vazios():
