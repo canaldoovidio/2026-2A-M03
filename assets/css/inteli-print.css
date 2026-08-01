@@ -12,12 +12,28 @@
 }
 
 @media print {
+  /* Fundo da pagina (a moldura ao redor do slide, se houver), nao do slide
+     em si: o slide de trabalho, capa, secao e encerramento ja declaram o
+     proprio fundo em inteli-theme.css (branco, roxo ou verde conforme a
+     classe). Um "!important" aqui pegava ".reveal .slides section" junto
+     com "html, body" e, como "!important" vence por importancia e nao por
+     especificidade, atropelava o fundo roxo/verde dessas classes: a capa e
+     o encerramento saiam brancos no PDF real, com texto branco sobre
+     branco, invisivel. Por isso o fundo fica restrito a html/body, sem
+     tocar a section. */
+  html,
+  body {
+    background: var(--seg-base);
+  }
+
   html,
   body,
   .reveal,
   .reveal .slides,
   .reveal .slides section {
-    background: var(--seg-base) !important;
+    /* Sem cor aqui: so a instrucao para o navegador nao remover as cores
+       de fundo declaradas em cada slide ao gerar o PDF, que e o
+       comportamento padrao para economizar tinta. */
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

@@ -88,7 +88,13 @@
   display: flex;
   justify-content: space-between;
   font-size: var(--escala-complementar);
-  color: var(--seg-texto-suave);
+  /* var(--seg-texto-suave) (#b2b6bf) sobre fundo branco da 2,03:1 de
+     contraste, ilegivel do fundo da sala projetada. A paleta oficial nao
+     tem um cinza intermediario que passe nisso, entao o rodape usa o
+     mesmo texto escuro do corpo do slide; o peso visual menor vem do
+     tamanho da fonte (--escala-complementar), nao de opacidade, que
+     derrubaria o contraste de novo. */
+  color: var(--seg-texto);
 }
 
 .slide-footer p {
