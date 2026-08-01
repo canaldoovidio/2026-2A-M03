@@ -84,23 +84,44 @@ def e_linha_total(item):
 
 
 def extrair_linhas(payload):
-    """A primeira linha do JSON do SIDRA e o cabecalho com os rotulos."""
+    """A primeira linha do JSON do SIDRA e o cabecalho com os rotulos.
+
+    Depois do filtro de 'Total' (e_linha_total), cada periodo so pode
+    aparecer uma vez. Se aparecer mais de uma, o filtro nao isolou um unico
+    recorte e o CSV sairia com o mesmo trimestre repetido em cortes
+    diferentes, silenciosamente errado. Isso precisa parar a geracao, nao
+    virar um CSV plausivel e errado: por isso levanta erro em vez de
+    descartar a duplicata em silencio."""
     cabecalho, *dados = payload
     unidade = cabecalho.get("MN", "") or cabecalho.get("MC", "")
-    vistos = set()
-    linhas = []
+    linhas_por_periodo = {}
+    contagem = {}
     for item in dados:
         if not e_linha_total(item):
             continue
         periodo = normalizar_periodo(item.get("D3C") or item.get("D2C", ""))
-        if not periodo or periodo in vistos:
+        if not periodo:
             continue
-        vistos.add(periodo)
-        linhas.append({
+        contagem[periodo] = contagem.get(periodo, 0) + 1
+        linhas_por_periodo.setdefault(periodo, {
             "periodo": periodo,
             "valor": converter(item.get("V", "")),
             "unidade": item.get("MN", unidade),
         })
+
+    duplicados = {p: n for p, n in contagem.items() if n > 1}
+    if duplicados:
+        detalhe = ", ".join(
+            "%s (%d linhas)" % (p, n) for p, n in sorted(duplicados.items())
+        )
+        raise ValueError(
+            "periodo duplicado apos o filtro de 'Total': %s. "
+            "O filtro de dimensoes extras (e_linha_total) deixou passar mais "
+            "de um recorte para o mesmo periodo; corrija o filtro antes de "
+            "aceitar o CSV." % detalhe
+        )
+
+    linhas = list(linhas_por_periodo.values())
     linhas.sort(key=lambda l: l["periodo"])
     return linhas
 

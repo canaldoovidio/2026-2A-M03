@@ -1,8 +1,15 @@
 import csv
 import os
+import sys
+
+import pytest
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DADOS = os.path.join(RAIZ, "dados")
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import baixar_dados  # noqa: E402
 
 ESPERADOS = [
     "abate_bovinos.csv", "abate_suinos.csv", "abate_frangos.csv",
@@ -81,3 +88,60 @@ def test_ordem_de_grandeza_plausivel():
     for nome, minimo in limites_minimos.items():
         valores = [float(l["valor"]) for l in _ler(nome) if l["valor"]]
         assert min(valores) >= minimo, "%s: valor abaixo do plausivel (%r)" % (nome, min(valores))
+
+
+def _item_sidra(periodo, dimensao_total="Total", valor="100"):
+    return {
+        "V": valor,
+        "D3C": periodo,
+        "MN": "Quilogramas",
+        "D4N": dimensao_total,
+    }
+
+
+def test_extrair_linhas_falha_quando_periodo_duplica_apos_filtro_total():
+    # Se o filtro de dimensoes extras (e_linha_total) um dia parar de isolar
+    # um unico recorte por periodo, o mesmo trimestre chegaria duas vezes
+    # aqui, ambas marcadas como "Total". Isso precisa parar a geracao com
+    # erro, nunca silenciosamente ficar so com a primeira ocorrencia.
+    payload = [
+        {"MN": "Quilogramas"},
+        _item_sidra("199701", valor="100"),
+        _item_sidra("199701", valor="200"),  # mesmo periodo, outro recorte
+        _item_sidra("199702", valor="300"),
+    ]
+    with pytest.raises(ValueError) as excinfo:
+        baixar_dados.extrair_linhas(payload)
+    mensagem = str(excinfo.value)
+    assert "1997-T1" in mensagem
+    assert "2 linhas" in mensagem
+
+
+def test_extrair_linhas_payload_limpo_um_registro_por_periodo():
+    payload = [
+        {"MN": "Quilogramas"},
+        _item_sidra("199701", valor="100"),
+        _item_sidra("199702", valor="200"),
+    ]
+    linhas = baixar_dados.extrair_linhas(payload)
+    assert [l["periodo"] for l in linhas] == ["1997-T1", "1997-T2"]
+    assert [l["valor"] for l in linhas] == ["100.0", "200.0"]
+
+
+def test_converter_marcadores_de_ausencia_viram_vazio():
+    for marcador in ["...", "..", "-", "X", "*", ""]:
+        assert baixar_dados.converter(marcador) == ""
+
+
+def test_converter_marcador_ausente_nao_vira_zero():
+    # Zero entraria na media e contaminaria qualquer metrica de erro do
+    # modelo; dado ausente precisa ficar vazio, nunca 0.0.
+    assert baixar_dados.converter("...") != "0.0"
+
+
+def test_converter_numero_normal():
+    assert baixar_dados.converter("1234567") == "1234567.0"
+
+
+def test_converter_numero_com_virgula_decimal():
+    assert baixar_dados.converter("123,45") == "123.45"
