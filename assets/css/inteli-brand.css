@@ -77,3 +77,24 @@ code, pre, kbd, samp, .mono {
   font-family: var(--fonte-mono);
   font-size: var(--escala-complementar);
 }
+
+/* Iconografia da marca, p.88: Google Material Symbols, nunca emoji. A fonte
+   e importada no topo deste arquivo; a classe que ativa a ligadura (o nome
+   do icone em texto vira glifo) so pode morar aqui, porque e a unica
+   declaracao de font-family autorizada no acervo. Consumidor: qualquer
+   <span class="material-symbols-outlined"> com o nome do icone como
+   conteudo de texto. */
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+}
