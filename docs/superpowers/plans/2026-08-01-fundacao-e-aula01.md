@@ -499,12 +499,15 @@ varre exatamente 120° a partir do centro.
      aria-label="Grafismo Inteli, segmento Graduacao">
   <title>Grafismo Inteli, tres faces em 120 graus</title>
   <!-- Face superior esquerda: verde. Face superior direita: roxo.
-       Face inferior: cinza claro. Combinacao do segmento Graduacao, p.77.
+       Face inferior: cinza MEDIO. Combinacao do segmento Graduacao, p.77,
+       conferida por amostragem de pixel no painel Graduacao daquela pagina.
+       Nao usar cinza claro #e6eaeb aqui: e a cor de superficie do tema e a
+       face sumiria em qualquer fundo claro.
        Os tres losangos partem do centro (100,100) para vertices do hexagono,
        o que garante os 120 graus exigidos na p.78. -->
   <polygon points="100,100 100,13.4 25,56.7 25,143.3" fill="#89cea5"/>
   <polygon points="100,100 100,13.4 175,56.7 175,143.3" fill="#2e2640"/>
-  <polygon points="100,100 25,143.3 100,186.6 175,143.3" fill="#e6eaeb"/>
+  <polygon points="100,100 25,143.3 100,186.6 175,143.3" fill="#caced6"/>
 </svg>
 ```
 
@@ -568,7 +571,7 @@ def test_grafismo_tem_exatamente_tres_faces():
     faces = raiz.findall(".//%spolygon" % SVG_NS)
     assert len(faces) == 3, "o grafismo tem sempre tres modulos (p.77)"
     cores = {(f.get("fill") or "").lower() for f in faces}
-    assert cores == {"#89cea5", "#2e2640", "#e6eaeb"}, \
+    assert cores == {"#89cea5", "#2e2640", "#caced6"}, \
         "combinacao do segmento Graduacao (p.77)"
 ```
 
@@ -704,8 +707,19 @@ O resto das regras, todas igualmente verificáveis:
 - `.inteli-logo-header` posiciona `inteli-logo-positiva.svg` no canto superior direito, com
   margem mínima igual à largura entre o "i" e o "n" da marca (p.51). Na prática: `margin: 28px`
   para um logo de 96px de largura.
-- `.cover-slide` usa `inteli-grafismo-graduacao.svg` como elemento de fundo, ocupando no máximo
-  40% da largura e sem texto sobre as três faces (p.82).
+- `.cover-slide`: **o grafismo é a capa, não um objeto sobre um fundo.** As três faces sangram e
+  ladrilham os 1280x720 inteiros, como no painel Graduação da p.77. Não existe cor de fundo da
+  capa, porque não existe fundo: o que se vê é o grafismo.
+
+  Isso não é preferência estética, é a única solução que funciona. Medido na revisão da Task 3:
+  nenhum fundo sólido da paleta dá contraste às três faces ao mesmo tempo. Sobre roxo a face
+  roxa some, sobre branco some a cinza, sobre cinza-escuro some a verde. Tratar o grafismo como
+  objeto flutuante recria o problema em qualquer cor que se escolha.
+
+  Título, data e sprint ficam sobre **uma** face só, como detalhe curto (p.82 proíbe preencher
+  as três). A face roxa é a que comporta texto claro; a verde e a cinza-média comportam texto em
+  `var(--seg-texto)`. Verificar o contraste do texto contra a face que ele ocupa, não contra uma
+  cor de fundo que não existe.
 - `.code-compact` reduz a fonte do bloco de código para `var(--escala-complementar)` e existe
   justamente para o caso "código em slide que já tem `concept-cards`".
 
@@ -1801,6 +1815,12 @@ As armadilhas, escritas como aviso e não como sugestão:
 - bloco de código junto de `concept-cards` estoura. Usar `code-compact` e no máximo 18 linhas.
 - o `inteli-print.js` revela o gabarito dos quizzes: PDF exportado por ele não se distribui antes
   da aula.
+- **screenshot de `?print-pdf` não é teste de impressão.** Abrir a URL com `?print-pdf` e tirar
+  print de tela renderiza no modo de tela e **não aciona `@media print`**. Um bug de impressão
+  fica invisível nesse método. Aconteceu na Task 3: um `background !important` no CSS de
+  impressão apagava o fundo da capa e do encerramento, e o PDF saía branco sobre branco, sem que
+  o screenshot mostrasse nada. Para validar impressão, gere o PDF de verdade, via
+  `Page.printToPDF` do CDP ou impressão do navegador, converta as páginas em imagem e olhe.
 - rodar o `revisor-slides` antes de commitar qualquer deck. Não é opcional e não precisa ser
   pedido.
 
