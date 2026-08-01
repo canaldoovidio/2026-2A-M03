@@ -1376,7 +1376,7 @@ import urllib.request
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DESTINO = os.path.join(RAIZ, "dados")
-URL = "https://apisidra.ibge.gov.br/values/t/%s/n1/all/v/all/p/all"
+URL = "https://apisidra.ibge.gov.br/values/t/%s/n1/all/v/%s/p/all"
 
 # Tabelas do SIDRA citadas no TAPI da Louis Dreyfus Company
 SERIES = [
