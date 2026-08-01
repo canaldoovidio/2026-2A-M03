@@ -1,0 +1,12 @@
+.DS_Store
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Fontes de trabalho, nao versionadas.
+# O TAPI tem secao de conteudo restrito e o Turma.xlsx tem dado pessoal de aluno
+# (nome, presenca, nota). O repositorio e publicado inteiro no GitHub Pages.
+# O que vai para o repositorio sao os derivados: PLANO_DE_ENSINO.md,
+# PLANEJAMENTO_AULA_A_AULA.md e docs/autoestudos-por-semana.md.
+Turma.xlsx
+TURMA-*-TAPI-*.pdf
