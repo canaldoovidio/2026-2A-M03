@@ -1,0 +1,229 @@
+/* Tema Reveal.js do segmento Graduacao.
+   Nenhuma cor literal e nenhum font-family aqui: tudo vem de inteli-brand.css.
+   Verificado por tools/check_brand.py. */
+
+.reveal .slides section {
+  /* Altura fixa: conteudo que nao cabe NAO rola, quebra o slide.
+     E por isso que scrollHeight nao detecta estouro e o check_slides.py
+     precisa medir o retangulo de cada descendente. */
+  width: 1280px;
+  height: 720px;
+  padding: 44px 56px 72px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  background: var(--seg-base);
+  color: var(--seg-texto);
+}
+
+/* O proprio Reveal.js, via JS, escreve style="display: block" no slide
+   ativo (config "display", default "block", trocado para "present" via
+   classList.add ao mesmo tempo). Estilo inline vence qualquer regra de
+   folha de estilo por especificidade, entao o "display: flex" da regra
+   acima nunca pega no slide visivel, silenciosamente, sem erro no
+   console: confirmado olhando o slide de capa renderizado, onde o
+   grafismo caia abaixo do titulo em vez de ao lado dele. So um
+   "!important" vence estilo inline sem "!important". Restrito a
+   ".present" para nao acender os slides escondidos, que o Reveal marca
+   com style="display: none" e cuja ocultacao nao pode ser desfeita. */
+.reveal .slides section.present {
+  display: flex !important;
+}
+
+.reveal p,
+.reveal li {
+  /* Piso de legibilidade para projecao. Nao reduzir para caber mais texto:
+     se nao cabe, o slide tem conteudo demais. */
+  font-size: var(--escala-texto);
+  line-height: 1.5;
+}
+
+.reveal h2 { font-size: var(--escala-titulo); }
+.reveal h3 { font-size: var(--escala-subtitulo); }
+
+.accent-bar {
+  width: 64px;
+  height: 6px;
+  background: var(--seg-secundaria);
+  margin-bottom: 16px;
+}
+
+.inteli-logo-header {
+  position: absolute;
+  top: 28px;
+  right: 28px;
+  width: 96px;
+  /* Resguardo da marca, p.51: a distancia minima e a largura entre o "i" e o
+     "n". Para 96px de marca, 28px cobre com folga. Reduzir isso faz o titulo
+     longo encostar no logo, defeito que o check_slides.py acusa como
+     TITULO NO LOGO. */
+}
+
+.concept-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+.concept-card {
+  background: var(--seg-superficie);
+  border-top: 4px solid var(--seg-secundaria);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+
+.side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+.code-compact {
+  /* Existe para o caso "bloco de codigo em slide que ja tem concept-cards".
+     Sem isso o slide estoura os 720px. Manter o trecho em ate 18 linhas. */
+  font-size: var(--escala-complementar);
+  line-height: 1.35;
+  max-height: 300px;
+  overflow: hidden;
+}
+
+.slide-footer {
+  position: absolute;
+  left: 56px;
+  right: 56px;
+  bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--escala-complementar);
+  color: var(--seg-texto-suave);
+}
+
+.slide-footer p {
+  /* Zera a margem padrao de paragrafo: aqui e uma linha unica de rodape,
+     nao corpo de texto. */
+  margin: 0;
+  font-size: var(--escala-complementar);
+}
+
+/* Faixa decorativa no topo dos slides "de trabalho" (conteudo, quiz,
+   exercicio). E decoracao de borda, igual ao slide-footer, por isso o
+   check_slides.py exclui .top-bar da checagem de sobreposicao junto com
+   .slide-footer e os elementos de logo-header. NAO usar position: absolute
+   em nenhum outro bloco alem destes tres. */
+.top-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--seg-secundaria);
+}
+
+/* Area de titulo dos slides de trabalho: titulo + accent-bar, sempre no
+   topo do bloco de conteudo (que comeca depois do padding-top de 44px,
+   longe da faixa de 6px do top-bar e do logo, que termina em 28px + ~57px
+   de altura). */
+.slide-title-area { margin-bottom: 24px; }
+.slide-title-area h2 { margin: 0; }
+
+/* Slide de abertura e de fechamento (bookend): bloco de cor cheio, sem
+   top-bar, sem logo de canto e sem rodape, porque sao paginas de marca,
+   nao paginas de trabalho. O grafismo fica ao lado do bloco de titulo, em
+   fluxo normal (flex row), nunca atras dele com position: absolute: assim
+   nunca cobre o titulo por engano.
+
+   Selector composto (".reveal .slides section.cover-slide" em vez de so
+   ".cover-slide"): a regra base ".reveal .slides section" tem duas classes
+   mais um elemento e vence ".cover-slide" sozinho no empate de
+   especificidade, deixando o fundo e o alinhamento sempre brancos. Mesmo
+   raciocinio para .section-slide e .end-slide logo abaixo. */
+.reveal .slides section.cover-slide {
+  background: var(--seg-primaria);
+  color: var(--inteli-branco);
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.cover-content { max-width: 56%; }
+
+.cover-eyebrow {
+  font-size: var(--escala-complementar);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--seg-secundaria);
+  margin: 0 0 12px;
+}
+
+.cover-slide h1 { color: var(--inteli-branco); margin: 0 0 16px; }
+.cover-slide h3 { color: var(--inteli-branco); font-weight: 400; margin: 0; }
+
+.cover-grafismo {
+  /* Maximo 40% da largura (p.82). Em fluxo normal ao lado do bloco de
+     titulo, nunca sobre as tres faces. */
+  width: 36%;
+  height: auto;
+  flex-shrink: 0;
+}
+
+.reveal .slides section.section-slide {
+  background: var(--seg-secundaria);
+  color: var(--seg-texto);
+  justify-content: center;
+  text-align: center;
+  align-items: center;
+}
+
+.section-slide .accent-bar {
+  /* Sobre fundo verde o accent-bar padrao (tambem verde) some: troca para
+     roxo, unica excecao de cor por contraste, ainda assim um token. */
+  background: var(--seg-primaria);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-slide h2 { margin: 0 0 8px; }
+.section-slide h3 { font-weight: 400; margin: 0; }
+
+.reveal .slides section.end-slide {
+  background: var(--seg-primaria);
+  color: var(--inteli-branco);
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.end-slide h1,
+.end-slide h3 { color: var(--inteli-branco); margin: 0 0 12px; }
+.end-slide h3 { font-weight: 400; margin: 0; }
+
+/* Quiz: apenas o markup e o visual estatico aqui. Os estados de acerto e
+   erro (que leem data-correct, data-correct-msg, data-incorrect-msg) chegam
+   com o JS da proxima tarefa. */
+.quiz-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 720px;
+}
+
+.quiz-question { margin: 0; }
+
+.quiz-options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.quiz-options li {
+  background: var(--seg-superficie);
+  border: 1px solid var(--seg-borda);
+  border-radius: 10px;
+  padding: 14px 18px;
+  cursor: pointer;
+}
+
+.exercise-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding-left: 28px;
+}
