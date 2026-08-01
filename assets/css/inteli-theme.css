@@ -279,3 +279,44 @@
   margin: 0;
   padding-left: 28px;
 }
+
+/* Estados do quiz, escritos pelo inteli-quiz.js via classList.add: o JS so
+   troca classe, nunca escreve cor, entao esses estados moram aqui, so
+   tokens. .certa e .errada marcam a opcao clicada; .revelada marca a opcao
+   certa quando a pessoa erra; .quiz-feedback e o paragrafo com a mensagem
+   que o JS injeta apos a resposta. */
+.certa {
+  border-left: 4px solid var(--seg-secundaria);
+}
+
+.errada {
+  border-left: 4px solid var(--seg-destaque);
+}
+
+.revelada {
+  background: var(--seg-superficie);
+}
+
+/* Especificidade maior que ".reveal p" (0,1,1) de proposito: precisa ganhar
+   dessa regra geral para poder reduzir o corpo do feedback e caber no
+   slide depois que o paragrafo e injetado no DOM (ver check_slides.py). */
+.quiz-container .quiz-feedback {
+  margin: 0;
+  font-size: var(--escala-complementar);
+}
+
+/* Botao flutuante que o inteli-print.js injeta. Escondido no proprio modo
+   de impressao por inteli-print.css (".print-button { display: none }"),
+   entao so aparece na tela normal do deck. */
+.print-button {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1000;
+  padding: 10px 18px;
+  border: 1px solid var(--seg-borda);
+  border-radius: 8px;
+  background: var(--seg-base);
+  color: var(--seg-texto);
+  cursor: pointer;
+}
