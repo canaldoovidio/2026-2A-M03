@@ -73,10 +73,10 @@ def renderizar(dados):
         "# Autoestudos e encontros por semana",
         "",
         "Gerado por `tools/extrair_autoestudos.py` a partir do `Turma.xlsx`.",
-        "Nao editar a mao: rodar o script de novo quando a Adalove mudar.",
+        "Não editar à mão: rodar o script de novo quando a Adalove mudar.",
         "",
-        "As paginas de `referencias/` consomem este arquivo. Autoestudo que nao",
-        "esta aqui nao entra na pagina de referencias da aula.",
+        "As páginas de `referencias/` consomem este arquivo. Autoestudo que não",
+        "está aqui não entra na página de referências da aula.",
         "",
     ]
     for semana, registro in dados.items():
