@@ -195,10 +195,19 @@ JS_MEDIR = """
 """
 
 
-def checar(page, url, nome, shots_dir=None):
+def checar(page, url, nome, shots_dir=None, contador=None):
     page.goto(url, wait_until="networkidle")
     page.wait_for_timeout(900)
     slides = page.evaluate(JS_MEDIR)
+
+    # Contagem independente de quantos slides foram de fato medidos, para
+    # main() poder exigir esse numero > 0 antes de reportar sucesso. Nao
+    # depende do "return 1" alguns paragrafos abaixo estar certo: mesmo que
+    # aquele branch regredisse por engano para "return 0", o total de slides
+    # medidos continuaria refletindo a realidade (zero), e main() ainda
+    # reprovaria.
+    if contador is not None:
+        contador["medidos"] += len(slides)
 
     print("\n%s  (%d slides)" % (nome, len(slides)))
     if not slides:
@@ -272,20 +281,44 @@ def _parse_args(argv):
     return decks, shots_dir
 
 
+def _descobrir_decks(pasta_aulas):
+    """Lista os nomes de arquivo elegiveis (.html, sem comecar com "_")
+    dentro da pasta de aulas. Separado de main() para o teste de regressao
+    poder exercitar uma pasta sem nenhum deck elegivel de verdade (uma pasta
+    temporaria com so um arquivo "_algo.html", o mesmo formato do fixture do
+    tema), sem depender do estado atual do repositorio nem criar um deck
+    temporario dentro de aulas/ so para o teste ter o que achar."""
+    return sorted(
+        f for f in os.listdir(pasta_aulas)
+        if f.endswith(".html") and not f.startswith("_")
+    )
+
+
 def main():
     decks, shots_dir = _parse_args(sys.argv[1:])
 
     if not decks:
         pasta = os.path.join(RAIZ, "aulas")
-        decks = [
-            os.path.join("aulas", f)
-            for f in sorted(os.listdir(pasta))
-            if f.endswith(".html") and not f.startswith("_")
-        ]
+        decks = [os.path.join("aulas", f) for f in _descobrir_decks(pasta)]
+
+    if not decks:
+        # Pasta aulas/ sem nenhum arquivo elegivel (por exemplo, so o
+        # fixture do tema, que o filtro acima exclui de proposito) nao pode
+        # terminar em sucesso: sem isso, "nenhum deck encontrado" e "nada
+        # estourou" ficam indistinguiveis, e o validador aprova um acervo
+        # que ele nunca examinou.
+        print("ERRO: nenhum deck encontrado em aulas/, nada foi validado.")
+        return 1
 
     porta = porta_livre()
     httpd = servir(porta)
-    total = 0
+    problemas_totais = 0
+    # Slides efetivamente medidos, independente de terem dado problema ou
+    # nao. main() exige esse numero > 0 para reportar sucesso: assim "nada
+    # medido" nao consegue se disfarcar de sucesso por construcao, mesmo se
+    # algum caminho novo, ainda nao previsto, zerar problemas_totais sem
+    # medir nada de verdade.
+    contador = {"medidos": 0}
 
     try:
         with sync_playwright() as p:
@@ -295,14 +328,27 @@ def main():
                 # Aceita caminho absoluto ou relativo: o servidor serve a partir da RAIZ
                 rel = os.path.relpath(os.path.abspath(deck), RAIZ).replace(os.sep, "/")
                 url = "http://127.0.0.1:%d/%s" % (porta, rel)
-                total += checar(page, url, os.path.basename(deck), shots_dir)
+                try:
+                    problemas_totais += checar(
+                        page, url, os.path.basename(deck), shots_dir, contador
+                    )
+                except Exception as exc:
+                    # Uma excecao aqui (navegacao que trava, pagina que
+                    # derruba o processo do navegador etc.) nao pode
+                    # desaparecer: conta como problema e o deck seguinte
+                    # continua sendo verificado.
+                    print("\n%s  ERRO ao verificar: %s" % (os.path.basename(deck), exc))
+                    problemas_totais += 1
             navegador.close()
     finally:
         httpd.shutdown()
 
     print("\n" + "=" * 62)
-    if total:
-        print("%d slide(s) com problema de layout, entre estouro e sobreposicao." % total)
+    if contador["medidos"] == 0:
+        print("Nenhum slide foi medido: o validador nao pode reportar sucesso sem medir nada.")
+        return 1
+    if problemas_totais:
+        print("%d slide(s) com problema de layout, entre estouro e sobreposicao." % problemas_totais)
         return 1
     print("Todos os slides cabem em 1280x720, sem bloco sobreposto.")
     return 0

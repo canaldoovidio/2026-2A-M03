@@ -115,3 +115,38 @@ def test_url_404_reprova(servidor):
         "nao-existe-de-proposito.html",
     )
     assert resultado != 0
+
+
+# --- Regressao da rodada de correcao 2: "nenhum deck" tambem e falso-verde -
+
+def test_descobrir_decks_ignora_pasta_so_com_fixture_do_tema(tmp_path):
+    """Pasta de aulas com so um arquivo "_algo.html" (o formato real de
+    aulas/_fixture-tema.html) precisa devolver lista vazia. Usa uma pasta
+    temporaria de verdade, isolada do estado atual do repositorio: nao
+    depende de aulas/ ter ou nao decks reais no momento em que o teste
+    roda."""
+    (tmp_path / "_fixture-tema.html").write_text("<html></html>", encoding="utf-8")
+    assert check_slides._descobrir_decks(str(tmp_path)) == []
+
+
+def test_descobrir_decks_acha_html_elegivel(tmp_path):
+    """Contraprova do teste acima: um .html sem "_" na frente e elegivel."""
+    (tmp_path / "_fixture-tema.html").write_text("<html></html>", encoding="utf-8")
+    (tmp_path / "aula01.html").write_text("<html></html>", encoding="utf-8")
+    assert check_slides._descobrir_decks(str(tmp_path)) == ["aula01.html"]
+
+
+def test_main_reprova_quando_aulas_nao_tem_deck_elegivel(tmp_path, monkeypatch):
+    """Fim a fim, sem navegador: com aulas/ contendo so o fixture do tema (o
+    estado real do repositorio antes da Task 14), main() precisa devolver 1
+    e nunca chegar a subir o Playwright, porque o guard roda antes disso.
+    Monkeypatcha check_slides.RAIZ para uma pasta temporaria isolada, para
+    nao depender do estado real de aulas/ nem criar nenhum deck ali."""
+    aulas = tmp_path / "aulas"
+    aulas.mkdir()
+    (aulas / "_fixture-tema.html").write_text("<html></html>", encoding="utf-8")
+
+    monkeypatch.setattr(check_slides, "RAIZ", str(tmp_path))
+    monkeypatch.setattr(sys, "argv", ["check_slides.py"])
+
+    assert check_slides.main() == 1
