@@ -25,8 +25,10 @@ Valem para toda tarefa deste plano.
   dois-pontos, vírgula, parênteses ou hífen.
 - **Emoji é proibido** em deck, portal, material, referências, favicon e nome de arquivo. A
   iconografia da marca é o Google Material Symbols (Brandbook p.88).
-- **Cor:** nenhum arquivo declara cor literal fora de `assets/css/inteli-brand.css`. Todo o resto
-  consome `var(--inteli-*)` ou `var(--seg-*)`.
+- **Cor:** nenhuma **declaração CSS** de cor fora de `assets/css/inteli-brand.css`. CSS, HTML e JS
+  consomem `var(--inteli-*)` ou `var(--seg-*)`. Única exceção, e é exceção de formato e não de
+  paleta: os atributos `fill` dos SVG em `assets/img/`, que são atributos XML e não declaração
+  CSS. Eles continuam obrigados à paleta oficial, verificado por `test_assets_marca.py`.
 - **Paleta oficial (p.66), os únicos 9 hex permitidos:** `#2e2640` `#ff4545` `#90a5e5` `#89cea5`
   `#066d73` `#b2b6bf` `#caced6` `#e6eaeb` `#ffffff`.
 - **Segmento Graduação (p.68):** `#90a5e5` (lilás, de Escolas) e `#066d73` (verde escuro, de
@@ -365,6 +367,24 @@ Se algum falhar, corrigir o validador antes de seguir.
   --fonte-titulo: "Platypi", Georgia, serif;
   --fonte-texto: "Manrope", system-ui, sans-serif;
   --fonte-mono: "Space Mono", monospace;
+}
+
+/* A aplicacao das familias mora aqui e so aqui, porque o check_brand.py
+   proibe font-family em qualquer outro arquivo. Sem estas tres regras os
+   tokens acima ficam declarados e nunca usados, que foi exatamente o defeito
+   do CSS de 2026.1: ele pedia "Azurio" e a fonte nunca era carregada. */
+body {
+  font-family: var(--fonte-texto);
+  font-size: var(--escala-texto);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--fonte-titulo);
+  font-weight: 500;  /* Azurio Medium e o peso de titulo do brandbook, p.69 */
+}
+
+code, pre, kbd, samp, .mono {
+  font-family: var(--fonte-mono);
 
   /* Hierarquia. O brandbook (p.73) define 55/20/15pt em pagina de 1920x1080.
      A razao entre os niveis e preservada; o corpo sobe para 18px porque
@@ -661,9 +681,9 @@ O resto das regras, todas igualmente verificáveis:
 - nenhum hex literal: só `var(--seg-*)` e `var(--inteli-*)`
 - nenhum `font-family`: herdar de `body`, que já vem do brand
 - `.reveal p, .reveal li { font-size: var(--escala-texto); }`, que é o piso de 18px
-- `.reveal h2 { font-family` **não**: usar `--fonte-titulo` via uma regra em `inteli-brand.css`
-  aplicada a `h1, h2, h3`. Se for preciso declarar família aqui, mover a declaração para o brand
-  e consumir por herança. O validador da Task 1 é a autoridade.
+- **nenhum `font-family` aqui.** As famílias já são aplicadas a `body` e a `h1, h2, h3, h4` em
+  `inteli-brand.css` (Task 1), e o deck herda. Se surgir vontade de declarar família neste
+  arquivo, a declaração vai para o brand. O validador da Task 1 é a autoridade.
 - `.inteli-logo-header` posiciona `inteli-logo-positiva.svg` no canto superior direito, com
   margem mínima igual à largura entre o "i" e o "n" da marca (p.51). Na prática: `margin: 28px`
   para um logo de 96px de largura.
