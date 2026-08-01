@@ -487,8 +487,10 @@ Cada arquivo precisa ter `viewBox`, `xmlns="http://www.w3.org/2000/svg"` e nenhu
 - [ ] **Step 4: Escrever o grafismo do segmento Graduação**
 
 Três faces isométricas em 120° (p.75 a p.78). A construção: um hexágono regular dividido em três
-losangos a partir do centro. Para um hexágono de raio 100 centrado em (100, 100), os vértices
-ficam em ângulos de 30°, 90°, 150°, 210°, 270° e 330°.
+losangos a partir do centro. O hexágono está centrado em (100, 100) numa `viewBox` de 200x200,
+com circunraio 86,6 (ou seja, 100 vezes o cosseno de 30°), de modo que ele caiba na caixa sem
+sangrar. Os seis vértices ficam nos ângulos de 30°, 90°, 150°, 210°, 270° e 330°, e cada losango
+varre exatamente 120° a partir do centro.
 
 `assets/img/inteli-grafismo-graduacao.svg`:
 
