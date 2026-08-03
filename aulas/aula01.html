@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 01 &middot; Introdução ao Python &middot; Módulo 03 IN</title>
+
+  <!-- Aula 01, 04/08/2026, Sprint 1. Roteiro em PLANEJAMENTO_AULA_A_AULA.md.
+       Todo numero citado aqui vem de dados/abate_bovinos.csv; os dois
+       tracebacks foram capturados executando o codigo de verdade. -->
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-theme.css">
+  <link rel="stylesheet" href="../assets/css/inteli-print.css" media="print">
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- 1 - Capa -->
+      <section class="cover-slide">
+        <div class="cover-panel">
+          <div class="cover-content">
+            <p class="cover-eyebrow">Módulo 03 IN &middot; Aula 01 &middot; 04/08/2026</p>
+            <h1>Introdução ao Python</h1>
+            <h3>O primeiro dado real do case da Louis Dreyfus Company</h3>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 - Agenda -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Agenda do encontro</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>08h00 &middot; 10h00</h3>
+            <p>Autoestudo na Adalove, feito antes da aula [5].</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h00 &middot; 10h15</h3>
+            <p>Daily: o que fiz, o que vou fazer, impedimentos. Hoje, ambiente confirmado em cada máquina.</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h15 &middot; 12h00</h3>
+            <p>Sete blocos de 15 minutos, cada um fechando em pergunta, dupla ou prática.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">2</p>
+        </div>
+      </section>
+
+      <!-- 3 - Abertura: o case -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Não há aula anterior: há um pedido</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <p>A Louis Dreyfus Company compra milho, farelo de soja, sorgo, trigo e DDGS
+            para a indústria de ração. Hoje ela projeta essa demanda com coeficientes fixos.</p>
+            <p>O pedido do parceiro: prever a produção de proteína animal no Brasil e
+            desdobrar isso em macroingredientes, com horizonte de 24 meses.</p>
+          </div>
+          <div>
+            <p><strong>Pergunta disparada à turma, respostas no quadro:</strong></p>
+            <p>o que vocês esperam prever a partir de um CSV de abate de bovinos?</p>
+            <p>Guardem as respostas. Vamos conferir cada uma contra o arquivo de verdade
+            nos próximos 15 minutos.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">3</p>
+        </div>
+      </section>
+
+      <!-- 4 - Os tres modelos -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Três modelos encadeados</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>1. Proteína</h3>
+            <p>Produção por categoria: aves, suínos, bovinos, ovos e leite.</p>
+          </div>
+          <div class="concept-card">
+            <h3>2. Ração</h3>
+            <p>A produção de proteína virando demanda total de ração.</p>
+          </div>
+          <div class="concept-card">
+            <h3>3. Ingredientes</h3>
+            <p>A ração desdobrada em milho, farelo de soja, sorgo, trigo e DDGS.</p>
+          </div>
+        </div>
+        <p>Cada modelo come a saída do anterior. Um erro no primeiro atravessa os três, e
+        é por isso que o módulo começa olhando o dado de entrada, não o algoritmo.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">4</p>
+        </div>
+      </section>
+
+      <!-- 5 - O dado real -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O arquivo que abre o módulo</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <p><code>dados/abate_bovinos.csv</code>, da Pesquisa Trimestral do Abate de
+            Animais do IBGE [1].</p>
+            <p><strong>117 registros</strong>, de <strong>1997-T1</strong> a
+            <strong>2026-T1</strong>. Três colunas, sempre as mesmas.</p>
+            <p>Em 1997 foram 3.334.889.048 kg. Em 2025, 11.103.215.151 kg: 3,33 vezes mais.</p>
+          </div>
+          <pre class="code-compact"><code>periodo,valor,unidade
+1997-T1,782228696.0,Quilogramas
+1997-T2,827133992.0,Quilogramas
+1997-T3,850132635.0,Quilogramas
+1997-T4,875393725.0,Quilogramas
+...
+2025-T3,2980054814.0,Quilogramas
+2025-T4,2937449898.0,Quilogramas
+2026-T1,2634899004.0,Quilogramas</code></pre>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">5</p>
+        </div>
+      </section>
+
+      <!-- 6 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Tipos e estruturas</h2>
+        <h3>10h30 &middot; 10h45 &middot; do objeto Javascript ao dicionário Python</h3>
+      </section>
+
+      <!-- 7 - Tipos primitivos -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Tudo que sai de um CSV é texto</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <p>O arquivo não guarda número: guarda os caracteres <code>2937449898.0</code>.
+            Somar antes de converter é o primeiro erro clássico do módulo.</p>
+            <p><strong>Pergunta:</strong> por que <code>"10" + "2"</code> devolve
+            <code>"102"</code> e não <code>12</code>?</p>
+          </div>
+          <pre class="code-compact"><code>bruto = "2937449898.0"
+type(bruto)          # str
+
+valor = float(bruto)
+type(valor)          # float
+
+valor / 1_000_000    # 2937.449898
+                     # em toneladas
+
+int("2025")          # 2025
+"10" + "2"           # "102", nao 12</code></pre>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">7</p>
+        </div>
+      </section>
+
+      <!-- 8 - Listas, tuplas, conjuntos -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Lista, tupla, conjunto</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>Lista</h3>
+            <p><code>[782228696.0, ...]</code></p>
+            <p>Ordenada e mutável: os 117 valores na ordem do arquivo.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Tupla</h3>
+            <p><code>("2025-T4", 2937449898.0)</code></p>
+            <p>Ordenada e imutável: um registro que não deve ser alterado.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Conjunto</h3>
+            <p><code>{"Quilogramas"}</code></p>
+            <p>Sem ordem e sem repetição: responde "quantas unidades diferentes existem?".</p>
+          </div>
+        </div>
+        <p>Aplicado ao arquivo: o conjunto das unidades tem tamanho 1, então a série inteira
+        está na mesma unidade e pode ser somada sem conversão [3].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">8</p>
+        </div>
+      </section>
+
+      <!-- 9 - Dicionario -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O dicionário é o objeto que você já conhece</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>// Javascript
+const registro = {
+  periodo: "2025-T4",
+  valor: 2937449898.0
+};
+registro.periodo;
+Object.keys(registro);</code></pre>
+          <pre class="code-compact"><code># Python
+registro = {
+    "periodo": "2025-T4",
+    "valor": 2937449898.0,
+}
+registro["periodo"]
+registro.keys()</code></pre>
+        </div>
+        <p>Mesma ideia de chave e valor, três diferenças que pegam quem vem do Javascript:
+        a chave é escrita entre colchetes e aspas, não com ponto; a chave é um objeto Python
+        qualquer, não só texto; e chave ausente levanta erro em vez de devolver
+        <code>undefined</code>. Essa terceira diferença volta em 20 minutos.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">9</p>
+        </div>
+      </section>
+
+      <!-- 10 - Exercicio ao vivo -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Exercício ao vivo, 5 minutos</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Converta este objeto Javascript em um dicionário Python equivalente:
+          <code>{ serie: "abate_bovinos", inicio: "1997-T1", registros: 117 }</code></li>
+          <li>Imprima só o valor de <code>registros</code> a partir do dicionário.</li>
+          <li>Agora tente ler a chave <code>fim</code>, que não existe. Não corrija o erro:
+          leia a mensagem e guarde o nome dela.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">10</p>
+        </div>
+      </section>
+
+      <!-- 11 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Ler o arquivo</h2>
+        <h3>10h45 &middot; 11h00 &middot; prática guiada em duplas</h3>
+      </section>
+
+      <!-- 12 - csv.reader -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Quinze linhas resolvem o arquivo inteiro</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>import csv
+
+with open("dados/abate_bovinos.csv") as arquivo:
+    leitor = csv.reader(arquivo)
+    cabecalho = next(leitor)
+    linhas = list(leitor)
+
+cabecalho
+# ['periodo', 'valor', 'unidade']
+
+len(linhas)
+# 117
+
+linhas[0]
+# ['1997-T1', '782228696.0', 'Quilogramas']</code></pre>
+          <div>
+            <p><code>with</code> fecha o arquivo mesmo se o código falhar no meio [2].</p>
+            <p><code>next()</code> consome a primeira linha, que é o cabeçalho, e deixa o
+            leitor posicionado no primeiro registro de dado.</p>
+            <p>Cada linha vem como <strong>lista de textos</strong>. Nada de número ainda.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">12</p>
+        </div>
+      </section>
+
+      <!-- 13 - Pratica guiada -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática guiada, em duplas</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Abra <code>dados/abate_bovinos.csv</code> no Jupyter e leia com
+          <code>csv.reader</code>.</li>
+          <li>Conte os registros. A dupla que não chegar em 117 avisa: o erro mais comum é
+          contar o cabeçalho junto.</li>
+          <li>Nomeie as três colunas do contrato do arquivo e diga, em uma frase, o que cada
+          uma guarda.</li>
+          <li>Some os quatro trimestres de 2025 e confira contra 11.103.215.151 kg.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">13</p>
+        </div>
+      </section>
+
+      <!-- 14 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Ler o traceback</h2>
+        <h3>11h00 &middot; 11h30 &middot; o erro é a mensagem, não o fracasso</h3>
+      </section>
+
+      <!-- 15 - IndexError -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>IndexError: pedi a quarta de três colunas</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>for linha in leitor:
+    print(linha[3])
+
+Traceback (most recent call last):
+  File "leitura.py", line 6, in &lt;module&gt;
+    print(linha[3])
+          ~~~~~^^^
+IndexError: list index out of range</code></pre>
+          <div>
+            <p>Leia de baixo para cima [4]. A <strong>última linha</strong> diz o tipo e a
+            causa. As de cima dizem onde.</p>
+            <p><code>linha</code> tem três posições: 0, 1 e 2. A posição 3 é a quarta, e ela
+            não existe.</p>
+            <p><strong>Pergunta:</strong> qual índice devolve a unidade?</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">15</p>
+        </div>
+      </section>
+
+      <!-- 16 - KeyError -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>KeyError: pedi um mês a um arquivo trimestral</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>for linha in csv.DictReader(arquivo):
+    print(linha["mes"])
+
+Traceback (most recent call last):
+  File "leitura.py", line 4, in &lt;module&gt;
+    print(linha["mes"])
+          ~~~~~^^^^^^^
+KeyError: 'mes'</code></pre>
+          <div>
+            <p>O <code>KeyError</code> traz a chave pedida entre aspas: <code>'mes'</code>.
+            Ele não diz que a chave está errada, diz que ela não está lá.</p>
+            <p>Em Javascript isso devolveria <code>undefined</code> e o erro apareceria
+            muito depois, longe da causa. Python interrompe no lugar do problema.</p>
+            <p>E o arquivo não tem mês porque não tem: guardem isso.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">16</p>
+        </div>
+      </section>
+
+      <!-- 17 - Pratica de erros -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática, em duplas: provoque e conserte</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Provoque um <code>ValueError</code> passando a coluna <code>periodo</code>
+          para <code>float()</code>. Anote a mensagem inteira.</li>
+          <li>Provoque um <code>FileNotFoundError</code> errando o nome do arquivo de
+          propósito. Compare com o anterior: o que muda na última linha?</li>
+          <li>Conserte os dois e escreva, no notebook, uma frase por traceback dizendo o que
+          a mensagem estava informando.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">17</p>
+        </div>
+      </section>
+
+      <!-- 18 - Quiz -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Verificação rápida</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">O código lê o CSV com <code>csv.reader</code> e faz
+          <code>soma = soma + linha[1]</code>. O que acontece?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: o arquivo entrega texto, e texto com texto concatena em vez de somar.">Soma os valores corretamente</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: linha[1] é str, então o + concatena. Sem float() antes, o resultado é um texto gigante ou um TypeError."
+                data-incorrect-msg="Não.">Concatena texto em vez de somar</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: o índice 1 existe, são três colunas. IndexError seria o índice 3.">Levanta IndexError</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: KeyError é de dicionário. csv.reader devolve lista, indexada por posição.">Levanta KeyError</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">18</p>
+        </div>
+      </section>
+
+      <!-- 19 - Discussao dirigida -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>2025-T4 não é um mês</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <p>A coluna <code>periodo</code> traz <code>2025-T4</code>: quarto
+            <strong>trimestre</strong>. São quatro observações por ano, não doze. Por isso
+            117 registros cobrem 1997 a 2026 [1].</p>
+            <p>O parceiro pediu projeção <strong>mensal</strong> com horizonte de 24 meses.</p>
+          </div>
+          <div>
+            <p><strong>Pergunta disparada:</strong> por que vocês acham que o dado vem assim?</p>
+            <p>As respostas ficam <strong>em aberto</strong>. A Aula 02 abre o CRISP-DM
+            justamente aqui, e essa discrepância entre o que foi pedido e o que a fonte
+            permite medir é conteúdo da ART.1.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">19</p>
+        </div>
+      </section>
+
+      <!-- 20 - Hands-on -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Hands-on: o notebook da aula</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li><code>notebooks/aula01.ipynb</code>, no repositório ou pelo badge do Colab no
+          topo do próprio notebook.</li>
+          <li>Ler o CSV com o módulo <code>csv</code>, sem pandas: pandas entra na Aula 03.</li>
+          <li>Agrupar o abate por ano em um dicionário e responder qual ano teve o maior total.</li>
+          <li>A célula do <code>KeyError</code> falha de propósito. Não conserte antes de ler
+          a mensagem.</li>
+        </ol>
+        <p>Material escrito da aula: <a href="../materiais/aula01.html">materiais/aula01.html</a>
+        &middot; Referências: <a href="../referencias/aula01.html">referencias/aula01.html</a></p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">20</p>
+        </div>
+      </section>
+
+      <!-- 21 - Amarracao com a sprint -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que hoje entrega para a Sprint 1</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>ART.1, peso 6</h3>
+            <p>Entendimento do negócio. A leitura do CSV é o primeiro passo do entendimento
+            do dado real do case.</p>
+          </div>
+          <div class="concept-card">
+            <h3>ART.2, peso 3</h3>
+            <p>UX parte 1. Não depende desta aula, mas fecha na mesma data.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Sprint 1</h3>
+            <p>Planning em 03/08, Review em 14/08. Os dois entregáveis fecham em 14/08.</p>
+          </div>
+        </div>
+        <p>Levem para a ART.1 a evidência de hoje: 117 registros trimestrais, unidade única,
+        e o pedido de mensal que o dado aberto não sustenta.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">21</p>
+        </div>
+      </section>
+
+      <!-- 22 - Referencias -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Referências</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais, tabela 1092 do SIDRA. Série em
+          <code>dados/abate_bovinos.csv</code>, contrato em <code>dados/README.md</code>.</li>
+          <li>Python Software Foundation. Biblioteca padrão, módulo <code>csv</code>.</li>
+          <li>Python Software Foundation. Tutorial, estruturas de dados: listas, tuplas,
+          conjuntos e dicionários.</li>
+          <li>Python Software Foundation. Tutorial, erros e exceções.</li>
+          <li>Autoestudos da Semana 01 na Adalove, listados em
+          <a href="../referencias/aula01.html">referencias/aula01.html</a>.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 01 &middot; Sprint 1</p>
+          <p class="footer-page">22</p>
+        </div>
+      </section>
+
+      <!-- 23 - Encerramento -->
+      <section class="end-slide">
+        <h1>Até 07/08</h1>
+        <h3>Aula 02: o que fazer com um pedido mensal sobre um dado trimestral</h3>
+        <p>Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot; 2026-2A</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      width: 1280, height: 720, center: false, margin: 0,
+      hash: true, slideNumber: false, transition: 'fade'
+    });
+  </script>
+  <script src="../assets/js/inteli-quiz.js"></script>
+  <script src="../assets/js/inteli-zoom.js"></script>
+  <script src="../assets/js/inteli-print.js"></script>
+</body>
+</html>
