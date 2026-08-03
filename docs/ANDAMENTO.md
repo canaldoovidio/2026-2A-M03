@@ -37,6 +37,16 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
   `referencias/aula01.html`, `notebooks/aula01.ipynb`) mais as notas do professor
   (`docs/notas-do-professor/aula01.md`). Os quatro botões do card da Aula 01 no portal estão
   habilitados.
+- **ADRs** (`docs/adrs/ADR-001` a `ADR-006`): as seis decisões de arquitetura do acervo, para o
+  fan-out não relitigar nenhuma. Motor Reveal.js, Platypi no lugar da Azurio, regressão tabular em
+  base trimestral, case só com fonte aberta, os quatro artefatos por aula e as skills globais.
+- **Integração contínua** (`.github/workflows/validate.yml` e `.github/workflows/static.yml`):
+  validação em push e pull_request (marca, links, layout, pytest e execução dos notebooks, mais um
+  passo que reprova se a validação alterar arquivo versionado) e publicação da raiz do repositório
+  no GitHub Pages a cada push em `main`.
+
+**Com isso, as 16 tasks do plano estão implementadas.** O que falta do plano é só o portão de
+saída, abaixo.
 
 ## Em andamento / não iniciado
 
@@ -44,15 +54,13 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
   aconteceu. Os validadores passam, mas o que o professor aprovar na capa, na densidade dos
   slides e no tom do material é o que vira contrato para as 13 aulas seguintes. Ver "Achados
   abertos" abaixo: são justamente as decisões que dependem dele.
-- **ADRs** (`docs/adrs/`): seis decisões de arquitetura ainda não documentadas (motor Reveal.js
-  em vez do motor próprio do IN02T26, Platypi no lugar da Azurio, regressão tabular em vez de
-  série temporal, granularidade trimestral, os quatro artefatos por aula, skills globais).
-- **Integração contínua** (`.github/workflows/validate.yml` e `.github/workflows/static.yml`):
-  ainda não existem. Hoje não há publicação automática no GitHub Pages nem validação automática
-  em push/PR; os validadores e a suíte pytest só rodam localmente ou via hook.
+- **Publicação no Pages nunca rodou.** O `static.yml` dispara em push em `main`, e o trabalho
+  desta rodada está na branch `fundacao-e-aula01`. O site só sobe depois do merge em `main`, e a
+  primeira execução costuma exigir habilitar Pages com origem "GitHub Actions" nas configurações
+  do repositório.
 - **Aulas 02 a 14**: dependem do agente `construtor-aulas` rodando em fan-out depois que a
   revisão da Aula 01 fechar o padrão-ouro. Os cards dessas aulas no portal seguem com os quatro
-  botões em `aria-disabled="true"`.
+  botões em `aria-disabled="true"`. A Aula 02 é em **07/08**, então é a primeira da fila.
 
 ## Achados abertos da revisão da Aula 01
 
@@ -102,20 +110,18 @@ inteiro no GitHub Pages, então qualquer arquivo commitado fica público.
   com a estrutura fixa que o fan-out replica, mas a curadoria do professor ainda não foi feita.
   Hoje ela lista as quatro fontes efetivamente citadas no deck (a tabela 1092 do SIDRA e três
   páginas da documentação de Python). Substituir ou completar quando o professor indicar.
-- **Publicação no GitHub Pages** ainda não está configurada (depende da task de Integração
-  Contínua). O link do portal em `README.md` aponta para a URL esperada
-  (`https://canaldoovidio.github.io/2026-2A-M03/`), que só fica no ar depois desse workflow
-  existir.
 - **`nbconvert` não está instalado no Python do sistema.** O Homebrew marca o ambiente como
   gerenciado externamente (PEP 668), então a execução do notebook da Aula 01 foi validada num
-  venv descartável. O workflow de CI precisa instalar `nbconvert` e `ipykernel`, e quem rodar a
-  bateria localmente precisa de um venv.
+  venv descartável. O `validate.yml` instala `nbconvert` e `ipykernel` no runner, mas quem rodar a
+  bateria localmente precisa de um venv próprio. Quando as dependências de notebook crescerem, na
+  Aula 03 (pandas, numpy, matplotlib, seaborn), trocar a linha de `pip install` do workflow por um
+  `requirements-ci.txt` em vez de continuar acumulando pacote no YAML.
 - **O notebook é versionado sem saída de execução, de propósito.** O plano previa
   `nbconvert --execute --inplace`, mas gravar a saída no arquivo entrega o gabarito: a célula do
   desafio imprime as respostas das duas primeiras perguntas, e a célula do `KeyError` mostra o
-  traceback que o aluno deveria ler por conta própria. A validação executa uma cópia, com
-  `--output` apontando para fora do repositório. O workflow de CI precisa fazer o mesmo em vez de
-  `--inplace`, senão o CI passa a sujar a árvore de trabalho.
+  traceback que o aluno deveria ler por conta própria. A validação, local e no CI, executa uma
+  cópia fora da árvore de trabalho, e o `validate.yml` tem um passo final que reprova se algum
+  arquivo versionado for alterado pela validação.
 - **`--shots` do `check_slides.py` só salva PNG de slide com problema.** O plano supunha que ele
   fotografava todos os slides, e não é o caso: a conferência visual da Aula 01 foi feita com um
   script próprio de captura. Se a conferência a olho vai ser passo obrigatório de toda aula, vale
