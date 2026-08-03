@@ -110,12 +110,12 @@ type(bruto)             # &lt;class 'str'&gt;
 bruto + bruto           # '2937449898.02937449898.0'  concatenou
 float(bruto) * 2        # 5874899796.0                somou
 
-float(bruto) / 1_000_000  # 2937.449898, o mesmo valor em toneladas</code></pre>
+float(bruto) / 1_000    # 2937449.898, o mesmo valor em toneladas</code></pre>
         <p>O erro clássico é acumular soma antes de converter. Com <code>csv.reader</code>, cada
         linha é uma lista de textos, então <code>soma = soma + linha[1]</code> concatena texto:
         se <code>soma</code> começou como <code>0</code>, o interpretador levanta
         <code>TypeError</code>; se começou como <code>""</code>, o programa não falha e produz
-        uma string de 1.300 caracteres que parece um número enorme. O segundo caso é pior,
+        uma string de 1.389 caracteres que parece um número enorme. O segundo caso é pior,
         porque não avisa.</p>
         <p>O sublinhado em <code>1_000_000</code> é só separador visual de milhar em Python.
         Ele não muda o valor.</p>
