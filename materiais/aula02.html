@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material de apoio &middot; Aula 02 &middot; ML, IA e Ciência de Dados</title>
+  <meta name="description" content="Material de apoio da Aula 02 do Módulo 03 IN: ML, IA e Ciência de Dados, os quatro tipos de análise, CRISP-DM aplicado ao case da LDC, qualidade e taxonomia do dado.">
+
+  <!-- Este material NAO e o roteiro do deck em prosa. Ele aprofunda o que o
+       slide so pode apontar. Todo numero citado vem dos cinco CSVs de dados/. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 02 &middot; 07/08/2026 &middot; Sprint 1</p>
+      <h1>Material de apoio: ML, IA e Ciência de Dados</h1>
+      <p class="doc-subtitulo">A aula de hoje é a única do módulo em que quase não se escreve
+      código, e é a que decide o compasso de todas as outras. Este material aprofunda por que uma
+      decisão de granularidade vale mais que uma escolha de algoritmo.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#tres-nomes">Três nomes que não são sinônimos</a></li>
+        <li><a href="#quatro-analises">Os quatro tipos de análise</a></li>
+        <li><a href="#crisp">CRISP-DM: por que as setas voltam</a></li>
+        <li><a href="#descompasso">O descompasso, em números</a></li>
+        <li><a href="#pilares">Os seis pilares, nas cinco séries</a></li>
+        <li><a href="#escalas">Escalas de medida: o que se pode calcular</a></li>
+        <li><a href="#leite">O risco que nenhum teste pega</a></li>
+        <li><a href="#art1">O que levar para a ART.1</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="tres-nomes">
+        <h2>1. Três nomes que não são sinônimos</h2>
+        <p><strong>Inteligência Artificial</strong> é o campo guarda-chuva: sistemas que executam
+        tarefas que, sem eles, exigiriam decisão humana. Um sistema de regras escritas à mão é IA e
+        não aprende nada.</p>
+        <p><strong>Machine Learning</strong> é o subconjunto em que o comportamento é ajustado a
+        partir de dados em vez de escrito em regras. Os três modelos do TAPI vivem aqui.</p>
+        <p><strong>Ciência de Dados</strong> não é subconjunto de IA: é a prática que atravessa o
+        problema inteiro, do entendimento do negócio até a comunicação do resultado. Boa parte do
+        trabalho de ciência de dados num projeto real não é modelagem.</p>
+        <div class="doc-nota">
+          <p><strong>Por que a distinção importa neste case.</strong> O que a LDC usa hoje para
+          converter produção de proteína em demanda de ração é um coeficiente fixo: uma regra. Isso
+          é IA sem Machine Learning, e funciona há anos.</p>
+          <p>Consequência direta para o projeto: o baseline contra o qual o modelo de vocês vai ser
+          medido <strong>não é zero e não é a média</strong>, é o coeficiente fixo que já está em
+          produção. Um modelo com RMSE baixo que perde para o coeficiente fixo não entrega valor.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="quatro-analises">
+        <h2>2. Os quatro tipos de análise</h2>
+        <p>Os quatro tipos não são níveis de dificuldade nem etapas em sequência. São
+        <strong>perguntas diferentes</strong>, e a mesma base responde as quatro.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Tipo</th><th>Pergunta</th><th>No case da LDC</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Descritiva</strong></td>
+                <td>o que aconteceu?</td>
+                <td>quanto o Brasil abateu de frango em 2025-T4? Uma consulta ao CSV responde</td>
+              </tr>
+              <tr>
+                <td><strong>Diagnóstica</strong></td>
+                <td>por que aconteceu?</td>
+                <td>por que o abate de bovinos caiu em 2021 contra 2020? O CSV mostra a queda, a
+                causa está fora dele</td>
+              </tr>
+              <tr>
+                <td><strong>Preditiva</strong></td>
+                <td>o que vai acontecer?</td>
+                <td>quanta proteína animal nos próximos 8 trimestres? É o Modelo 1</td>
+              </tr>
+              <tr>
+                <td><strong>Prescritiva</strong></td>
+                <td>o que fazer a respeito?</td>
+                <td>quanto de milho comprar, e quando? É o Modelo 3, e é o que o parceiro quer</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>A armadilha da análise diagnóstica</h3>
+        <p>A queda de 2021 está no dado: o notebook desta aula a encontra sozinho. A
+        <strong>causa</strong> não está. Ciclo pecuário, preço de reposição de bezerro, câmbio,
+        exportação: nada disso é coluna dos cinco CSVs.</p>
+        <p>Confundir "o dado mostra a queda" com "o dado explica a queda" é o erro mais comum
+        quando se aprende análise diagnóstica. O que uma série sozinha oferece é correlação com o
+        próprio passado, e a Aula 09 volta a esse ponto quando tratar de variável omitida.</p>
+      </section>
+
+      <section class="doc-secao" id="crisp">
+        <h2>3. CRISP-DM: por que as setas voltam</h2>
+        <p>As seis fases são Entendimento do negócio, Entendimento dos dados, Preparação dos dados,
+        Modelagem, Avaliação e Implantação. O detalhe que quase todo resumo de CRISP-DM perde é que
+        o diagrama original tem <strong>setas de volta</strong>, e a mais importante delas liga a
+        fase 2 de volta à fase 1.</p>
+        <p>Essa seta existe porque o entendimento dos dados costuma contradizer o entendimento do
+        negócio. Não é falha de planejamento: é a função da fase.</p>
+        <h3>O que aconteceu neste acervo, de verdade</h3>
+        <p>A fundação deste repositório passou pela seta de volta antes de existir uma linha de
+        modelo:</p>
+        <ol>
+          <li><strong>Fase 1.</strong> O TAPI pede projeção mensal de abate, horizonte de 24 meses.</li>
+          <li><strong>Fase 2.</strong> Ao consultar a API do SIDRA, apareceu que as cinco tabelas
+          pertencem à Pesquisa Trimestral. Não existe versão mensal aberta.</li>
+          <li><strong>Volta para a fase 1.</strong> A granularidade do projeto foi renegociada:
+          base trimestral, horizonte de 8 trimestres.</li>
+        </ol>
+        <p>Se o projeto tivesse seguido direto para a fase 3, o resultado seria um modelo mensal
+        treinado sobre observações interpoladas, avaliado por métricas calculadas contra dado
+        inventado. Tudo funcionaria, nada valeria.</p>
+      </section>
+
+      <section class="doc-secao" id="descompasso">
+        <h2>4. O descompasso, em números</h2>
+        <p>A API do SIDRA devolve o período como <code>AAAATT</code>. O <code>202504</code> é o
+        <strong>quarto trimestre</strong> de 2025. Lido como data mensal, viraria abril de 2025, e o
+        acervo converte para <code>2025-T4</code> exatamente para essa leitura errada não ser
+        possível.</p>
+        <p>Suponha que alguém decida interpolar de trimestre para mês. A conta:</p>
+        <pre class="doc-codigo"><code>117 trimestres medidos
+117 x 3 = 351 meses na base interpolada
+
+observacoes medidas:    117  (33%)
+observacoes inventadas: 234  (67%)</code></pre>
+        <p>Dois terços da base passariam a ser invenção. E o problema não é estético: o RMSE e o
+        MAPE do modelo seriam calculados comparando previsão com valor interpolado, ou seja,
+        medindo o quanto o modelo acerta um número que ninguém observou.</p>
+        <div class="doc-nota">
+          <p><strong>A decisão do professor.</strong> Base trimestral, horizonte de 8 trimestres,
+          que cobre os mesmos 24 meses pedidos pelo parceiro, na granularidade que o dado permite
+          medir. Está registrada na seção 2.1 do <code>PLANO_DE_ENSINO.md</code>.</p>
+          <p>O que a ART.1 precisa conter não é a decisão pronta: é a <strong>negociação</strong>.
+          Dizer o que foi pedido, o que a fonte permite, o que se propõe no lugar e o que o parceiro
+          perde e ganha com a troca.</p>
+        </div>
+        <h3>E a Sindirações?</h3>
+        <p>A segunda fonte do case, os boletins da Sindirações, é <strong>anual</strong>. Ou seja, o
+        Modelo 2 (produção de proteína virando demanda de ração) atravessa uma mudança de
+        granularidade de trimestral para anual. É o ponto que o exercício em papel desta aula pede
+        para marcar com um X, e é onde o projeto vai doer mais na Sprint 2.</p>
+      </section>
+
+      <section class="doc-secao" id="pilares">
+        <h2>5. Os seis pilares, nas cinco séries</h2>
+        <p>Os seis pilares abaixo seguem a formulação da DAMA UK (completude, unicidade,
+        atualidade, validade, acurácia, consistência). Cada linha da tabela é um risco
+        <strong>real</strong>, documentado em <code>dados/README.md</code>, não um exemplo genérico.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Pilar</th><th>O risco concreto</th><th>O que aconteceria se ninguém notasse</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Completude</strong></td>
+                <td>ovos tem 157 registros desde 1987-T1; as outras quatro têm 117 desde 1997-T1</td>
+                <td>um <code>join</code> pelas cinco séries descartaria dez anos de ovos em
+                silêncio, ou geraria nulo em quatro colunas</td>
+              </tr>
+              <tr>
+                <td><strong>Unicidade</strong></td>
+                <td>as tabelas SIDRA têm dimensões extras (tipo de rebanho, tipo de inspeção, mês
+                dentro do trimestre)</td>
+                <td>sem filtrar por "Total", o mesmo trimestre apareceria várias vezes e a soma
+                ficaria inflada</td>
+              </tr>
+              <tr>
+                <td><strong>Atualidade</strong></td>
+                <td>o dado mais recente é 2026-T1, um único trimestre de 2026</td>
+                <td>comparar o total de 2026 com um ano completo, ou treinar achando que a base vai
+                até o fim de 2026</td>
+              </tr>
+              <tr>
+                <td><strong>Validade</strong></td>
+                <td>o período vem como <code>202504</code> na API</td>
+                <td>o eixo de tempo do modelo viraria mensal e errado, com 2025-T4 lido como abril</td>
+              </tr>
+              <tr>
+                <td><strong>Acurácia</strong></td>
+                <td>pedir <code>v/all</code> ao SIDRA devolve peso, número de informantes e
+                percentuais na mesma tabela</td>
+                <td>a série de "abate" conteria contagem de informantes, valores na casa das
+                centenas misturados a bilhões</td>
+              </tr>
+              <tr>
+                <td><strong>Consistência</strong></td>
+                <td>três unidades entre as cinco séries: quilogramas, mil litros, mil dúzias</td>
+                <td>somar as cinco para obter "proteína animal total" produziria um número sem
+                significado físico</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Repare que quatro dos seis riscos já <strong>foram tratados</strong> em
+        <code>tools/baixar_dados.py</code> e estão documentados. Os dois que continuam abertos
+        (completude da série de ovos e as três unidades) são decisão de modelagem, não de carga, e
+        voltam na Aula 04.</p>
+      </section>
+
+      <section class="doc-secao" id="escalas">
+        <h2>6. Escalas de medida: o que se pode calcular</h2>
+        <p>A taxonomia clássica de escalas de medida vem de Stevens (1946): nominal, ordinal,
+        intervalar e de razão. Ela não é curiosidade acadêmica: ela decide qual operação faz
+        sentido em cada coluna.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Coluna</th><th>Escala</th><th>Faz sentido</th><th>Não faz sentido</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>unidade</code></td>
+                <td>nominal</td>
+                <td>contar categorias distintas</td>
+                <td>ordenar, somar, tirar média</td>
+              </tr>
+              <tr>
+                <td><code>periodo</code></td>
+                <td>ordinal como rótulo</td>
+                <td>ordenar, dizer o anterior e o seguinte</td>
+                <td>média de <code>"2025-T4"</code></td>
+              </tr>
+              <tr>
+                <td><code>valor</code></td>
+                <td>de razão</td>
+                <td>somar, média, dizer "3,33 vezes mais"</td>
+                <td>somar valores de unidades diferentes</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O caso interessante é o <code>periodo</code>. Como rótulo, ele é ordinal. Convertido em
+        índice de tempo (1997-T1 vira 0, 1997-T2 vira 1, e assim por diante), ele passa a ser
+        <strong>intervalar</strong>: a distância entre dois pontos vira uma quantidade, e é isso que
+        permite calcular defasagem e janela móvel. Essa conversão é o primeiro passo da Aula 04.</p>
+        <div class="doc-nota">
+          <p><strong>Por que isso é armadilha na prática.</strong> Nenhuma biblioteca impede o
+          cálculo errado. O Pandas calcula a média de uma coluna de códigos numéricos de categoria
+          sem reclamar. A escala mora no significado do dado, não no tipo da coluna, e é por isso
+          que ela é assunto de aula e não de validador.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="leite">
+        <h2>7. O risco que nenhum teste pega</h2>
+        <p>A série de leite vem da tabela 1086 do SIDRA, variável 282: "Quantidade de leite cru,
+        resfriado ou não, <strong>adquirido</strong>". A palavra que importa é a última.</p>
+        <p>A série não mede a produção de leite do Brasil. Mede o volume que os laticínios
+        <strong>compraram</strong>. Leite consumido na propriedade, vendido informalmente ou
+        processado fora do circuito formal não aparece.</p>
+        <p>Os cinco arquivos passam em todos os testes de <code>tools/tests/test_dados.py</code>:</p>
+        <ul>
+          <li>as três colunas do contrato estão lá;</li>
+          <li>todo período casa com <code>AAAA-TN</code>;</li>
+          <li>não há período repetido;</li>
+          <li>a unidade é única em cada arquivo;</li>
+          <li>a série cobre mais de dez anos;</li>
+          <li>a ordem de grandeza é plausível.</li>
+        </ul>
+        <p><strong>Este risco é invisível para todos os seis testes.</strong> Ele não é um defeito
+        do arquivo: o arquivo está correto. É um defeito de interpretação, que só aparece lendo a
+        documentação da variável na fonte.</p>
+        <div class="doc-nota">
+          <p>É o argumento mais forte a favor de existir uma fase de "entendimento dos dados"
+          separada da carga: nenhum script sabe que "adquirido" não é "produzido". Para o Modelo 2
+          (demanda de ração), usar captação formal como proxy de produção subestima o rebanho
+          leiteiro, e o erro entra no modelo como viés, não como ruído: ele não desaparece com mais
+          dado.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="art1">
+        <h2>8. O que levar para a ART.1</h2>
+        <p>A Sprint 1 fecha em 14/08 com a <strong>ART.1 Entendimento do negócio (peso 6)</strong> e
+        a ART.2 UX parte 1 (peso 3). Da Aula 01 e desta aula, cinco itens entram direto:</p>
+        <ol>
+          <li><strong>A granularidade real da fonte</strong>, medida e não suposta: 117 trimestres
+          nas quatro séries de abate e leite, 157 em ovos.</li>
+          <li><strong>A negociação de granularidade</strong>: o que foi pedido, o que existe, o que
+          se propõe (8 trimestres) e o que o parceiro ganha e perde com a troca.</li>
+          <li><strong>Os três modelos encadeados</strong>, com a fonte de cada um e o ponto em que a
+          granularidade muda de trimestral para anual.</li>
+          <li><strong>As seis frases do CRISP-DM</strong> aplicadas ao case, incluindo, com
+          honestidade, qual delas vocês ainda não conseguem escrever.</li>
+          <li><strong>O baseline</strong>: o coeficiente fixo que a LDC usa hoje. É contra ele que a
+          avaliação vai comparar, não contra zero.</li>
+        </ol>
+        <p>Os autoestudos da semana e a leitura complementar estão em
+        <a href="../referencias/aula02.html">referencias/aula02.html</a>. O laboratório executável é
+        <code>notebooks/aula02.ipynb</code>, que produz a evidência dos seis pilares em código, em
+        vez de pedir que vocês acreditem nos números do slide.</p>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula02.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../referencias/aula02.html"><span class="material-symbols-outlined" aria-hidden="true">link</span>Referências</a>
+  </nav>
+</body>
+</html>

@@ -37,6 +37,11 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
   `referencias/aula01.html`, `notebooks/aula01.ipynb`) mais as notas do professor
   (`docs/notas-do-professor/aula01.md`). Os quatro botões do card da Aula 01 no portal estão
   habilitados.
+- **Aula 02 completa, os quatro artefatos** (`aulas/aula02.html`, `materiais/aula02.html`,
+  `referencias/aula02.html`, `notebooks/aula02.ipynb`) mais as notas do professor
+  (`docs/notas-do-professor/aula02.md`). O notebook dela é a fase 2 do CRISP-DM executada: mede os
+  seis pilares de qualidade sobre as cinco séries, ainda sem pandas. Os quatro botões do card no
+  portal estão habilitados.
 - **ADRs** (`docs/adrs/ADR-001` a `ADR-006`): as seis decisões de arquitetura do acervo, para o
   fan-out não relitigar nenhuma. Motor Reveal.js, Platypi no lugar da Azurio, regressão tabular em
   base trimestral, case só com fonte aberta, os quatro artefatos por aula e as skills globais.
@@ -54,13 +59,15 @@ saída, abaixo.
   aconteceu. Os validadores passam, mas o que o professor aprovar na capa, na densidade dos
   slides e no tom do material é o que vira contrato para as 13 aulas seguintes. Ver "Achados
   abertos" abaixo: são justamente as decisões que dependem dele.
-- **Publicação no Pages nunca rodou.** O `static.yml` dispara em push em `main`, e o trabalho
-  desta rodada está na branch `fundacao-e-aula01`. O site só sobe depois do merge em `main`, e a
-  primeira execução costuma exigir habilitar Pages com origem "GitHub Actions" nas configurações
-  do repositório.
-- **Aulas 02 a 14**: dependem do agente `construtor-aulas` rodando em fan-out depois que a
-  revisão da Aula 01 fechar o padrão-ouro. Os cards dessas aulas no portal seguem com os quatro
-  botões em `aria-disabled="true"`. A Aula 02 é em **07/08**, então é a primeira da fila.
+- **Publicação no Pages ainda não aconteceu.** O `static.yml` já rodou no push em `main` de
+  03/08 e **falhou**, porque o GitHub Pages não está habilitado no repositório (a API responde 404
+  para `/pages`: não existe site). Para resolver, habilitar Pages com origem **"GitHub Actions"**
+  nas configurações do repositório e disparar o workflow de novo. Vale conferir também a branch
+  padrão do repositório, que hoje é `fundacao-e-aula01` e não `main`.
+- **Aulas 03 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
+  `aria-disabled="true"`. A Aula 03 é em **11/08** e é a primeira da fila. O agente
+  `construtor-aulas` existe para esse fan-out, mas as aulas 01 e 02 foram escritas sem ele, à mão,
+  seguindo as mesmas skills.
 
 ## Achados abertos da revisão da Aula 01
 
@@ -106,10 +113,18 @@ inteiro no GitHub Pages, então qualquer arquivo commitado fica público.
 
 ## Pendências abertas
 
-- **Leitura complementar do professor na Aula 01.** A seção 2 de `referencias/aula01.html` existe
-  com a estrutura fixa que o fan-out replica, mas a curadoria do professor ainda não foi feita.
-  Hoje ela lista as quatro fontes efetivamente citadas no deck (a tabela 1092 do SIDRA e três
-  páginas da documentação de Python). Substituir ou completar quando o professor indicar.
+- **Leitura complementar do professor, nas aulas 01 e 02.** A seção 2 de
+  `referencias/aula01.html` e de `referencias/aula02.html` existe com a estrutura fixa que o
+  fan-out replica, mas a curadoria do professor ainda não foi feita. Hoje elas listam as fontes
+  efetivamente citadas no deck e no material (na Aula 01, a tabela 1092 do SIDRA e três páginas da
+  documentação de Python; na Aula 02, as cinco tabelas do SIDRA, o guia do CRISP-DM, os seis
+  pilares da DAMA UK e Stevens 1946). Substituir ou completar quando o professor indicar.
+- **Um autoestudo oficial tem travessão em dash no título.** "Opcional: Riscos e benefícios da IA
+  — AI4People (Floridi et al., 2018)", da Semana 01, citado em `referencias/aula02.html`. O
+  caractere é proibido no texto que o acervo escreve, mas aqui é citação literal do título da
+  Adalove: alterá-lo quebraria a conferência título por título contra
+  `docs/autoestudos-por-semana.md`. Está preservado de propósito, com o motivo escrito na própria
+  página, para ninguém "corrigir" depois.
 - **`nbconvert` não está instalado no Python do sistema.** O Homebrew marca o ambiente como
   gerenciado externamente (PEP 668), então a execução do notebook da Aula 01 foi validada num
   venv descartável. O `validate.yml` instala `nbconvert` e `ipykernel` no runner, mas quem rodar a

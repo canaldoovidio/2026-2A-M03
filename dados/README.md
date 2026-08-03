@@ -113,7 +113,8 @@ Verificado manualmente que a ordem de grandeza de cada série é compatível com
   três séries de abate, compatível com o Brasil ser um dos maiores produtores mundiais de carne de
   frango.
 - **Produção de ovos**: entre 289 mil e 1,26 milhão de "mil dúzias" por trimestre (ou seja, entre
-  cerca de 3,5 e 15 bilhões de dúzias de ovos por trimestre), plausível para produção nacional.
+  cerca de 289 milhões e 1,26 bilhão de dúzias, o que dá entre cerca de 3,5 e 15 bilhões de ovos
+  por trimestre), plausível para produção nacional.
 - **Produção de leite (captação formal)**: entre 2,4 e 7,4 bilhões de litros por trimestre,
   plausível para leite cru formalmente adquirido pelos laticínios (é menor que a produção total
   estimada da pecuária leiteira, porque não conta o leite não comercializado formalmente).

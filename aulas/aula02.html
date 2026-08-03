@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 02 &middot; Visão Geral de ML, IA e Ciência de Dados &middot; Módulo 03 IN</title>
+
+  <!-- Aula 02, 07/08/2026, Sprint 1. Roteiro em PLANEJAMENTO_AULA_A_AULA.md.
+       Todo numero citado aqui vem dos cinco CSVs de dados/ e do contrato
+       documentado em dados/README.md. -->
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-theme.css">
+  <link rel="stylesheet" href="../assets/css/inteli-print.css" media="print">
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- 1 - Capa -->
+      <section class="cover-slide">
+        <div class="cover-panel">
+          <div class="cover-content">
+            <p class="cover-eyebrow">Módulo 03 IN &middot; Aula 02 &middot; 07/08/2026</p>
+            <h1>ML, IA e Ciência de Dados</h1>
+            <h3>CRISP-DM sobre o problema da Louis Dreyfus Company</h3>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 - Agenda -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Agenda do encontro</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>08h00 &middot; 10h00</h3>
+            <p>Autoestudo na Adalove: qualidade dos dados, taxonomia, o que é Machine Learning [5].</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h00 &middot; 10h15</h3>
+            <p>Daily. Checkpoint: todas as duplas conseguiram ler o CSV de abate bovino?</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h15 &middot; 12h00</h3>
+            <p>Sete blocos de 15 minutos. Hoje tem papel e caneta, não só teclado.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">2</p>
+        </div>
+      </section>
+
+      <!-- 3 - Resgate -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que a Aula 01 deixou pronto</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <p>Duas coisas, e a segunda é a que organiza a aula de hoje:</p>
+            <p><strong>1.</strong> a leitura do CSV de abate bovino, com os 117 registros contados
+            e a unidade conferida;</p>
+            <p><strong>2.</strong> o reparo de que a coluna <code>periodo</code> vem em
+            <strong>trimestres</strong>, não em meses.</p>
+          </div>
+          <div>
+            <p><strong>Pergunta disparada:</strong></p>
+            <p>o TAPI da LDC pede previsão mensal. Nosso dado é trimestral.</p>
+            <p><strong>O que fazemos com isso?</strong></p>
+            <p>Não respondam ainda pelo lado técnico. Respondam pelo lado do projeto.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">3</p>
+        </div>
+      </section>
+
+      <!-- 4 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>ML, IA e Ciência de Dados</h2>
+        <h3>10h30 &middot; 10h45 &middot; três nomes que não são sinônimos</h3>
+      </section>
+
+      <!-- 5 - Os tres termos -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Três nomes, três escopos</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>IA</h3>
+            <p>O campo guarda-chuva: sistemas que executam tarefas que exigiriam decisão humana.
+            Inclui coisas sem aprendizado nenhum.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Machine Learning</h3>
+            <p>Subconjunto da IA: o comportamento é ajustado a partir de dados, não escrito em
+            regras. É onde os três modelos da LDC moram.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Ciência de Dados</h3>
+            <p>A prática que atravessa tudo: entender o problema, o dado, medir e comunicar. Não é
+            subconjunto de IA.</p>
+          </div>
+        </div>
+        <p>O que a LDC usa hoje (coeficientes fixos de conversão de proteína em ração) é um sistema
+        de regras: não é Machine Learning, e funciona. O trabalho do módulo é mostrar, com RMSE e
+        MAPE, se um modelo aprendido bate essa referência.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">5</p>
+        </div>
+      </section>
+
+      <!-- 6 - Os quatro tipos de analise -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Quatro tipos de análise, no mesmo dado</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <p><strong>Olham para trás</strong></p>
+            <p><strong>Descritiva:</strong> quanto o Brasil abateu de frango no 4&ordm; trimestre
+            de 2025? Uma consulta ao CSV responde.</p>
+            <p><strong>Diagnóstica:</strong> por que o abate de bovinos caiu em 2021 em relação a
+            2020? O CSV mostra a queda; a causa está fora dele.</p>
+          </div>
+          <div>
+            <p><strong>Olham para frente</strong></p>
+            <p><strong>Preditiva:</strong> quanto de proteína animal o Brasil produz nos próximos
+            8 trimestres? É o Modelo 1 do TAPI.</p>
+            <p><strong>Prescritiva:</strong> quanto de milho a LDC deve comprar, e quando? É o
+            Modelo 3, e é o que o parceiro de fato quer.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">6</p>
+        </div>
+      </section>
+
+      <!-- 7 - Exercicio dos quatro tipos -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Exercício em duplas, 6 minutos</h2>
+        </div>
+        <p>Classifiquem cada pergunta do case em descritiva, diagnóstica, preditiva ou prescritiva.
+        Duas delas admitem mais de uma resposta: a discussão é o exercício.</p>
+        <ol class="exercise-steps">
+          <li>Qual das cinco séries tem o histórico mais longo?</li>
+          <li>A demanda de ração vai crescer mais que a produção de proteína nos próximos dois anos?</li>
+          <li>O que explica a produção de leite captada formalmente ser menor que a produção total estimada?</li>
+          <li>Devemos travar contrato de farelo de soja agora ou esperar o próximo trimestre?</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">7</p>
+        </div>
+      </section>
+
+      <!-- 8 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>CRISP-DM</h2>
+        <h3>10h45 &middot; 11h00 &middot; seis fases sobre o problema da LDC</h3>
+      </section>
+
+      <!-- 9 - As seis fases -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>As seis fases, aplicadas ao case</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>1. Negócio</h3>
+            <p>A LDC compra macroingredientes com coeficiente fixo. O que ela ganha se acertar mais?</p>
+          </div>
+          <div class="concept-card">
+            <h3>2. Dados</h3>
+            <p>Cinco séries do SIDRA, trimestrais, em três unidades diferentes.</p>
+          </div>
+          <div class="concept-card">
+            <h3>3. Preparação</h3>
+            <p>Unir SIDRA e Sindirações, criar defasagem e sazonalidade. É a Aula 04.</p>
+          </div>
+          <div class="concept-card">
+            <h3>4. Modelagem</h3>
+            <p>Regressão tabular, sem série temporal: o TAPI proíbe. Aulas 05 a 11.</p>
+          </div>
+          <div class="concept-card">
+            <h3>5. Avaliação</h3>
+            <p>RMSE e MAPE contra o coeficiente fixo de hoje. Nunca contra zero.</p>
+          </div>
+          <div class="concept-card">
+            <h3>6. Implantação</h3>
+            <p>Pipeline e app de cenários. Aulas 12 e 13.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">9</p>
+        </div>
+      </section>
+
+      <!-- 10 - Por que a fase 1 existe -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Por que o CRISP-DM começa fora do dado</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <p>O CRISP-DM não é uma lista de tarefas em ordem: as setas voltam [2]. A fase 2
+            (Entendimento dos dados) devolve o projeto para a fase 1 sempre que o dado contradiz o
+            pedido.</p>
+            <p>É exatamente o que aconteceu aqui, na fundação deste acervo, antes de qualquer
+            modelo existir.</p>
+          </div>
+          <div>
+            <p><strong>O que a fase 2 descobriu:</strong> as cinco tabelas pertencem à Pesquisa
+            Trimestral do IBGE. Não existe versão mensal aberta.</p>
+            <p><strong>O que isso obrigou:</strong> voltar à fase 1 e renegociar a granularidade
+            com quem encomendou o modelo.</p>
+            <p>Um projeto que pula essa volta entrega um modelo no compasso errado, e descobre
+            isso na apresentação final.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">10</p>
+        </div>
+      </section>
+
+      <!-- 11 - Exercicio CRISP-DM -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Exercício em duplas, 6 minutos</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Escrevam <strong>uma frase por fase</strong> do CRISP-DM, aplicada ao case da LDC. A
+          frase precisa dizer o que <em>vocês</em> vão fazer, não o que a fase significa.</li>
+          <li>Marquem qual das seis frases vocês ainda não conseguem escrever com o que sabem hoje.</li>
+          <li>Essa frase que faltou é o item mais honesto da sua ART.1.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">11</p>
+        </div>
+      </section>
+
+      <!-- 12 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>O descompasso</h2>
+        <h3>11h00 &middot; 11h15 &middot; o pedido, a fonte, e a decisão</h3>
+      </section>
+
+      <!-- 13 - A evidencia -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que foi pedido e o que existe</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <p><strong>O pedido:</strong> abate mensal, projeções mensais, horizonte de 24 meses.</p>
+            <p><strong>A fonte:</strong> Pesquisa Trimestral do IBGE. O período vem da API como
+            <code>AAAATT</code>, então <code>202504</code> é o quarto trimestre, não abril [1].</p>
+            <p>Sindirações, a outra fonte do case, publica boletim <strong>anual</strong>.</p>
+          </div>
+          <div>
+            <p><strong>Por que não interpolar</strong></p>
+            <p>Transformar 1 trimestre em 3 meses cria 2 observações que ninguém mediu, para cada
+            1 medida. Dois terços da base viram invenção.</p>
+            <p>E o erro do modelo passa a ser medido contra dado inventado, o que destrói o
+            sentido de RMSE e MAPE.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">13</p>
+        </div>
+      </section>
+
+      <!-- 14 - A decisao -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A decisão: 8 trimestres</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>O que muda</h3>
+            <p>O módulo trabalha em base trimestral, com horizonte de 8 trimestres [6].</p>
+          </div>
+          <div class="concept-card">
+            <h3>O que não muda</h3>
+            <p>8 trimestres cobrem os mesmos 24 meses que o parceiro pediu.</p>
+          </div>
+          <div class="concept-card">
+            <h3>O que se ganha</h3>
+            <p>Toda observação da base foi medida por alguém. Nenhuma foi inventada.</p>
+          </div>
+        </div>
+        <p><strong>Votação, levantando a mão:</strong> vocês teriam aceitado o pedido do parceiro
+        sem checar a fonte de dados primeiro? Contar os dois lados antes de seguir.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">14</p>
+        </div>
+      </section>
+
+      <!-- 15 - Pratica em papel -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática em duplas, no papel, 12 minutos</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Desenhem os <strong>três modelos encadeados</strong> do TAPI, em caixas, com as
+          setas entre eles: produção por categoria, demanda de ração, macroingredientes.</li>
+          <li>Ao lado de cada caixa, escrevam <strong>qual fonte alimenta aquele modelo</strong>:
+          SIDRA (as cinco séries trimestrais) ou Sindirações (boletim anual do setor).</li>
+          <li>Marquem com um X o ponto do desenho em que a granularidade muda de trimestral para
+          anual. É ali que o projeto vai doer.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">15</p>
+        </div>
+      </section>
+
+      <!-- 16 - Quiz -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Verificação rápida</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">A fase 2 do CRISP-DM revela que o dado não tem a granularidade
+          que o cliente pediu. Qual é a atitude correta?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: interpolar cria observação que ninguém mediu, e o erro do modelo passa a ser medido contra dado inventado.">Interpolar para chegar na granularidade pedida</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: as setas do CRISP-DM voltam. O dado contradisse o pedido, então o pedido é renegociado antes de modelar."
+                data-incorrect-msg="Não.">Voltar à fase 1 e renegociar o pedido</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: entregar e avisar depois transforma um problema de escopo em retrabalho na apresentação final.">Seguir para a modelagem e avisar na entrega</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: procurar outra fonte é legítimo, mas aqui já foi verificado que não existe versão mensal aberta dessas séries.">Descartar a fonte e procurar outra</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">16</p>
+        </div>
+      </section>
+
+      <!-- 17 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Qualidade e taxonomia do dado</h2>
+        <h3>11h30 &middot; 11h45 &middot; os seis pilares nas cinco séries</h3>
+      </section>
+
+      <!-- 18 - Os seis pilares -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Seis pilares, seis riscos reais</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>Completude</h3>
+            <p>Ovos tem 157 registros desde 1987-T1. As outras quatro, 117 desde 1997-T1.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Unicidade</h3>
+            <p>Sem filtrar as dimensões extras por "Total", o mesmo trimestre repetiria por tipo
+            de inspeção.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Atualidade</h3>
+            <p>O dado mais recente é 2026-T1, e o parceiro quer 8 trimestres à frente.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Validade</h3>
+            <p><code>202504</code> é o quarto trimestre. Lido como mês, viraria abril.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Acurácia</h3>
+            <p>Pedir <code>v/all</code> ao SIDRA traria número de informantes junto com peso.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Consistência</h3>
+            <p>Três unidades entre as cinco séries: quilogramas, mil litros e mil dúzias.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">18</p>
+        </div>
+      </section>
+
+      <!-- 19 - Taxonomia -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>As três colunas, três escalas diferentes</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <p><code>unidade</code> é <strong>nominal</strong>: categoria sem ordem. Não faz
+            sentido dizer que Quilogramas é maior que Mil litros [4].</p>
+            <p><code>periodo</code> é <strong>ordinal</strong> como rótulo: 2025-T4 vem depois de
+            2025-T3. Vira <strong>intervalar</strong> quando convertido em índice de tempo, o que
+            a Aula 04 vai fazer para criar defasagem.</p>
+          </div>
+          <div>
+            <p><code>valor</code> é de <strong>razão</strong>: tem zero absoluto e razões fazem
+            sentido. "O abate de 2025 foi 3,33 vezes o de 1997" é uma frase válida.</p>
+            <p><strong>Por que isso importa agora:</strong> a escala decide o que se pode calcular.
+            Média de <code>unidade</code> não existe. Média de <code>periodo</code> como rótulo
+            não existe. E é erro comum tratar tudo como número porque o Pandas aceita.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">19</p>
+        </div>
+      </section>
+
+      <!-- 20 - O caso do leite -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O risco que nenhum validador pega</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>producao_leite.csv
+  tabela SIDRA 1086
+  variavel 282
+  "Quantidade de leite cru,
+   resfriado ou nao,
+   ADQUIRIDO"
+  unidade: Mil litros
+  2,4 a 7,4 bilhoes de
+  litros por trimestre</code></pre>
+          <div>
+            <p>A série de leite não mede produção: mede o que os laticínios
+            <strong>compraram</strong>. Leite não comercializado formalmente não entra.</p>
+            <p>Os cinco arquivos passam em todos os testes de
+            <code>tools/tests/test_dados.py</code>: colunas certas, período válido, unidade única,
+            ordem de grandeza plausível. Este risco é invisível para todos eles.</p>
+            <p><strong>Só a leitura da documentação da variável pega isso.</strong> É por isso que
+            o CRISP-DM tem uma fase de entendimento dos dados, e não só um script de carga.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">20</p>
+        </div>
+      </section>
+
+      <!-- 21 - Exercicio de qualidade -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Exercício em duplas, 5 minutos</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Abram <code>dados/README.md</code> e escolham <strong>um</strong> risco de qualidade
+          documentado ali que ainda não apareceu neste slide.</li>
+          <li>Digam a qual dos seis pilares ele pertence.</li>
+          <li>Digam o que aconteceria com o Modelo 1 se ninguém tivesse notado esse risco.</li>
+        </ol>
+        <p>Cada dupla apresenta em uma frase. Riscos repetidos não valem: quem vier depois procura
+        outro.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">21</p>
+        </div>
+      </section>
+
+      <!-- 22 - Amarracao com a sprint -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que hoje entrega para a Sprint 1</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>ART.1, peso 6</h3>
+            <p>Entendimento do negócio. Hoje ele fica formalizado, com a negociação de
+            granularidade escrita, não subentendida.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Fecha o ciclo</h3>
+            <p>A Aula 01 achou o descompasso no dado. A Aula 02 transformou o achado em decisão de
+            projeto.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Sprint 1</h3>
+            <p>Review em 14/08, com ART.1 (6) e ART.2 UX parte 1 (3).</p>
+          </div>
+        </div>
+        <p>Levem para a ART.1 os quatro artefatos de hoje: os três modelos desenhados com as
+        fontes, as seis frases do CRISP-DM, a decisão dos 8 trimestres e o risco de qualidade que a
+        sua dupla apontou.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">22</p>
+        </div>
+      </section>
+
+      <!-- 23 - Referencias -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Referências</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite, tabelas
+          1092, 1093, 1094, 7524 e 1086 do SIDRA. Contrato e riscos em
+          <code>dados/README.md</code>.</li>
+          <li>Chapman, P. et al. <em>CRISP-DM 1.0: step-by-step data mining guide</em>, 2000.</li>
+          <li>DAMA UK. <em>The six primary dimensions for data quality assessment</em>, 2013.</li>
+          <li>Stevens, S. S. <em>On the theory of scales of measurement</em>. Science, 1946.</li>
+          <li>Autoestudos da Semana 01 na Adalove, listados em
+          <a href="../referencias/aula02.html">referencias/aula02.html</a>.</li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seção 2.1: o registro da decisão de granularidade.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">23</p>
+        </div>
+      </section>
+
+      <!-- 24 - Encerramento -->
+      <section class="end-slide">
+        <h1>Até 11/08</h1>
+        <h3>Aula 03: as cinco séries de verdade, com Pandas</h3>
+        <p>Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot; 2026-2A</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      width: 1280, height: 720, center: false, margin: 0,
+      hash: true, slideNumber: false, transition: 'fade'
+    });
+  </script>
+  <script src="../assets/js/inteli-quiz.js"></script>
+  <script src="../assets/js/inteli-zoom.js"></script>
+  <script src="../assets/js/inteli-print.js"></script>
+</body>
+</html>
