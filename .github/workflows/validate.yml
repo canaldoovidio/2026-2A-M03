@@ -1,0 +1,85 @@
+# Portao do acervo: nada de material quebrado entra em main.
+#
+# Roda exatamente a mesma bateria que se roda na maquina antes de commitar,
+# na mesma ordem: fidelidade ao brandbook, links locais, layout dos decks,
+# suite de testes dos validadores e execucao dos notebooks.
+name: Validar o acervo
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar o repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar o Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # openpyxl: tools/extrair_autoestudos.py (o teste dele se pula sozinho
+      #   aqui, porque o Turma.xlsx nao e versionado, ver ADR-004).
+      # playwright: tools/check_slides.py.
+      # nbconvert, jupyter e ipykernel: execucao dos notebooks.
+      # pandas: os notebooks a partir da Aula 03 usam. Quando a lista de
+      #   dependencia de notebook crescer (numpy, matplotlib, seaborn,
+      #   scikit-learn, pycaret), trocar esta linha por um requirements-ci.txt
+      #   em vez de continuar acumulando pacote aqui.
+      - name: Instalar dependencias
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install playwright pytest openpyxl pandas nbconvert jupyter ipykernel
+
+      - name: Instalar o Chromium do Playwright
+        run: python3 -m playwright install --with-deps chromium
+
+      - name: Fidelidade ao brandbook
+        run: python3 tools/check_brand.py
+
+      - name: Links locais
+        run: python3 tools/check_links.py
+
+      # Sem argumento, descobre os decks em aulas/. Falha com "nenhum deck
+      # encontrado" se a pasta estiver vazia: nada medido nunca le como
+      # sucesso.
+      - name: Layout dos decks
+        run: python3 tools/check_slides.py
+
+      - name: Suite de testes dos validadores
+        run: python3 -m pytest tools/tests/ -v
+
+      # NAO usar --inplace aqui, apesar de o plano original preve-lo: gravar a
+      # saida da execucao dentro do notebook versionado entrega o gabarito (a
+      # celula de desafio imprime as respostas e a celula de erro mostra o
+      # traceback que o aluno deveria ler por conta). A execucao escreve fora
+      # da arvore de trabalho, em RUNNER_TEMP, e o que importa aqui e o codigo
+      # de saida, nao o arquivo produzido.
+      #
+      # A condicao de existencia nao e "|| true": um passo que engole falha
+      # transforma notebook quebrado em CI verde. Ela so distingue "nao ha
+      # notebook" de "o notebook falhou".
+      - name: Executar os notebooks
+        run: |
+          if [ -n "$(ls -A notebooks/*.ipynb 2>/dev/null)" ]; then
+            jupyter nbconvert --to notebook --execute \
+              --output-dir "${RUNNER_TEMP}/notebooks-executados" \
+              notebooks/*.ipynb
+          else
+            echo "nenhum notebook em notebooks/: nada a executar"
+          fi
+
+      # Se algum passo acima alterou arquivo versionado, o acervo publicado
+      # deixa de ser o acervo revisado. Ja aconteceu com nbconvert --inplace.
+      - name: A arvore de trabalho precisa continuar limpa
+        run: |
+          git diff --exit-code
+          test -z "$(git status --porcelain)" || {
+            echo "arquivos alterados ou criados pela validacao:"
+            git status --porcelain
+            exit 1
+          }
