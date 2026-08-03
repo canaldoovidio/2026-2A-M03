@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referências &middot; Aula 01 &middot; Introdução ao Python</title>
+  <meta name="description" content="Autoestudos da Semana 01 na Adalove e leitura complementar da Aula 01 do Módulo 03 IN.">
+
+  <!-- Duas secoes fixas, nesta ordem, em TODAS as 14 aulas:
+       1. Autoestudos da semana (Adalove), copiados de
+          docs/autoestudos-por-semana.md, titulo por titulo, sem inventar
+          nenhum e sem alterar caractere.
+       2. Leitura complementar do professor.
+       A segunda secao nunca e omitida, mesmo sem curadoria fechada: o
+       fan-out das aulas 02 a 14 copia esta estrutura. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 01 &middot; 04/08/2026 &middot; Semana 01</p>
+      <h1>Referências: Introdução ao Python</h1>
+      <p class="doc-subtitulo">Os autoestudos abaixo vêm da Adalove, na Semana 01, com título
+      exato. O bloco de metodologia ativa da aula pressupõe que eles foram feitos entre
+      08h00 e 10h00.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#autoestudos">Autoestudos da semana (Adalove)</a></li>
+        <li><a href="#complementar">Leitura complementar do professor</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="autoestudos">
+        <h2>1. Autoestudos da semana (Adalove)</h2>
+        <p>Semana 01, que cobre os encontros de 04/08 (Aula 01) e 07/08 (Aula 02). Os que se
+        aplicam a esta aula, na ordem em que o roteiro os usa:</p>
+        <ol class="doc-referencias">
+          <li>Instalação do Python e Jupyter Notebooks em VS Code
+            <span class="doc-porque">Pressuposto do daily: o ambiente precisa estar rodando em
+            cada máquina antes do primeiro bloco.</span></li>
+          <li>Migrando do Javascript para o Python
+            <span class="doc-porque">Base da comparação entre objeto Javascript e dicionário
+            Python, no bloco de 10h30 às 10h45.</span></li>
+          <li>Listas, Tuplas, Conjuntos e Dicionários em Python
+            <span class="doc-porque">As quatro estruturas usadas para agrupar o abate por
+            período e para conferir a unidade da série.</span></li>
+          <li>Aprendendo a ler erros em Python
+            <span class="doc-porque">Base do bloco de 11h00 às 11h30, em que os erros são
+            provocados de propósito sobre o CSV do IBGE.</span></li>
+          <li>Melhor forma de aprender Python (Google Colab Notebook)
+            <span class="doc-porque">O laboratório da aula roda no Colab pelo badge do próprio
+            notebook.</span></li>
+          <li>Opcional: Listas e Tuplas - o que são e como usar estes Tipos Agregados em Python
+            <span class="doc-porque">Reforço opcional da diferença entre lista e tupla, que a
+            aula usa mas não esgota.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>Os quatro primeiros são os que o roteiro da Aula 01 cita nominalmente. Os demais
+          autoestudos da Semana 01 na Adalove (qualidade dos dados, tipos de dados, taxonomia,
+          introdução a Machine Learning e IA) são pressupostos da <strong>Aula 02</strong>, em
+          07/08, e aparecem na página de referências dela.</p>
+          <p>Estes títulos são cópia literal de <code>docs/autoestudos-por-semana.md</code>, que
+          é gerado do <code>Turma.xlsx</code> oficial. Autoestudo que não está lá não entra aqui.
+          O acesso ao conteúdo é pela Adalove, com o login institucional.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="complementar">
+        <h2>2. Leitura complementar do professor</h2>
+        <p>A curadoria definitiva desta seção ainda será fechada pelo professor. Até lá, ficam
+        aqui as fontes efetivamente citadas no deck e no material de apoio desta aula, na mesma
+        numeração usada no slide de referências:</p>
+        <ol class="doc-referencias">
+          <li>IBGE. <a href="https://sidra.ibge.gov.br/tabela/1092">Pesquisa Trimestral do
+            Abate de Animais, tabela 1092 do SIDRA</a>.
+            <span class="doc-porque">A origem do arquivo da aula. Vale abrir para ver que a
+            própria interface do IBGE só oferece trimestre, o que confirma o reparo feito em
+            sala. A série usada está versionada em <code>dados/abate_bovinos.csv</code>, com o
+            contrato de colunas em <code>dados/README.md</code>.</span></li>
+          <li>Python Software Foundation. <a href="https://docs.python.org/pt-br/3/library/csv.html">Biblioteca
+            padrão, módulo <code>csv</code></a>.
+            <span class="doc-porque">A diferença entre <code>csv.reader</code> (que devolve
+            lista, indexada por posição) e <code>csv.DictReader</code> (que devolve dicionário,
+            indexado por chave) é a origem dos dois erros provocados na aula.</span></li>
+          <li>Python Software Foundation. <a href="https://docs.python.org/pt-br/3/tutorial/datastructures.html">Tutorial,
+            estruturas de dados</a>.
+            <span class="doc-porque">Lista, tupla, conjunto e dicionário no texto oficial, com
+            os métodos que a aula usa: <code>get</code>, <code>keys</code> e as
+            compreensões.</span></li>
+          <li>Python Software Foundation. <a href="https://docs.python.org/pt-br/3/tutorial/errors.html">Tutorial,
+            erros e exceções</a>.
+            <span class="doc-porque">A anatomia do traceback e a hierarquia das exceções. Ler a
+            seção de exceções antes da Aula 09, quando o tratamento de erro deixa de ser
+            diagnóstico e passa a ser parte do pipeline.</span></li>
+        </ol>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula01.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../materiais/aula01.html"><span class="material-symbols-outlined" aria-hidden="true">menu_book</span>Material</a>
+  </nav>
+</body>
+</html>

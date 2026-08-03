@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material de apoio &middot; Aula 01 &middot; Introdução ao Python</title>
+  <meta name="description" content="Material de apoio da Aula 01 do Módulo 03 IN: o contrato do CSV do SIDRA, tipos, estruturas de dados e leitura de traceback em Python.">
+
+  <!-- Este material NAO e o roteiro do deck em prosa. Ele aprofunda o que o
+       slide so pode apontar. Todo numero citado vem de dados/abate_bovinos.csv. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 01 &middot; 04/08/2026 &middot; Sprint 1</p>
+      <h1>Material de apoio: Introdução ao Python</h1>
+      <p class="doc-subtitulo">O que o slide só pôde apontar. Cada seção aqui responde uma
+      pergunta que costuma aparecer depois da aula, sobre o arquivo de abate de bovinos do
+      IBGE que abre o case da Louis Dreyfus Company.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#por-que-um-arquivo">Por que o módulo começa lendo um arquivo</a></li>
+        <li><a href="#contrato">O contrato do arquivo</a></li>
+        <li><a href="#tudo-e-texto">Por que tudo sai como texto</a></li>
+        <li><a href="#estruturas">Lista, tupla e conjunto: qual escolher</a></li>
+        <li><a href="#dicionario">Por que o dicionário resolve o agrupamento</a></li>
+        <li><a href="#traceback">Ler o traceback</a></li>
+        <li><a href="#valor-vazio">O valor vazio, e por que tratar o que não aparece</a></li>
+        <li><a href="#art1">O que levar para a ART.1</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="por-que-um-arquivo">
+        <h2>1. Por que o módulo começa lendo um arquivo</h2>
+        <p>O pedido da Louis Dreyfus Company tem três modelos encadeados: prever a produção de
+        proteína animal por categoria, converter isso em demanda de ração, e desdobrar a ração
+        em milho, farelo de soja, sorgo, trigo e DDGS. Cada modelo consome a saída do anterior.</p>
+        <p>Numa cadeia assim, um erro na entrada não fica na entrada: ele atravessa os três
+        modelos e reaparece no fim como uma projeção de compra errada. É por isso que a primeira
+        aula não é sobre algoritmo. É sobre abrir o arquivo e descobrir o que ele realmente
+        contém, antes de qualquer modelagem.</p>
+        <p>O arquivo desta aula é <code>dados/abate_bovinos.csv</code>, gerado a partir da
+        Pesquisa Trimestral do Abate de Animais do IBGE e versionado no repositório. Ele nunca
+        é baixado durante a aula: se o SIDRA estiver fora do ar no dia, a aula continua.</p>
+      </section>
+
+      <section class="doc-secao" id="contrato">
+        <h2>2. O contrato do arquivo</h2>
+        <p>As cinco séries do case seguem o mesmo contrato de três colunas, documentado em
+        <code>dados/README.md</code>:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+          <thead>
+            <tr><th>Coluna</th><th>Tipo no arquivo</th><th>O que guarda</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>periodo</code></td>
+              <td>texto <code>AAAA-TN</code></td>
+              <td>o trimestre da observação, por exemplo <code>2025-T4</code></td>
+            </tr>
+            <tr>
+              <td><code>valor</code></td>
+              <td>texto de número, ou vazio</td>
+              <td>a medida da série, ou nada quando o IBGE marcou o dado como ausente</td>
+            </tr>
+            <tr>
+              <td><code>unidade</code></td>
+              <td>texto</td>
+              <td>a unidade do IBGE, igual em todas as linhas do arquivo</td>
+            </tr>
+          </tbody>
+          </table>
+        </div>
+        <p>Em <code>dados/abate_bovinos.csv</code> são <strong>117 registros</strong>, de
+        <code>1997-T1</code> a <code>2026-T1</code>, todos em <code>Quilogramas</code>. Somando
+        os quatro trimestres, 1997 fecha em 3.334.889.048 kg e 2025 em 11.103.215.151 kg.</p>
+        <h3>O que o "T" faz nessa string</h3>
+        <p>A API do SIDRA devolve o período no formato <code>AAAATT</code>, então
+        <code>202504</code> é o <strong>quarto trimestre de 2025</strong>, e não o mês de abril
+        de 2025. O acervo converte isso para <code>2025-T4</code> justamente porque
+        <code>202504</code> se confunde com uma data mensal à primeira vista, e essa confusão,
+        se passar, produz um modelo treinado sobre um eixo de tempo que não existe.</p>
+        <div class="doc-nota">
+          <p><strong>O reparo da aula.</strong> Quatro observações por ano, não doze. O TAPI do
+          parceiro pede projeção mensal com horizonte de 24 meses, e o dado aberto não tem mês.
+          A discussão do que fazer com isso é conteúdo da Aula 02 e da ART.1, não um detalhe
+          técnico a ser resolvido com interpolação: inventar oito observações que ninguém mediu
+          contaminaria qualquer métrica de erro do modelo.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="tudo-e-texto">
+        <h2>3. Por que tudo sai como texto</h2>
+        <p>Um CSV é um arquivo de texto. Ele não tem como guardar a diferença entre o número
+        2937449898.0 e os caracteres <code>2937449898.0</code>: só existe a segunda coisa. O
+        módulo <code>csv</code> devolve exatamente o que está no arquivo, sem adivinhar tipo.</p>
+        <pre class="doc-codigo"><code>bruto = "2937449898.0"
+type(bruto)             # &lt;class 'str'&gt;
+
+bruto + bruto           # '2937449898.02937449898.0'  concatenou
+float(bruto) * 2        # 5874899796.0                somou
+
+float(bruto) / 1_000_000  # 2937.449898, o mesmo valor em toneladas</code></pre>
+        <p>O erro clássico é acumular soma antes de converter. Com <code>csv.reader</code>, cada
+        linha é uma lista de textos, então <code>soma = soma + linha[1]</code> concatena texto:
+        se <code>soma</code> começou como <code>0</code>, o interpretador levanta
+        <code>TypeError</code>; se começou como <code>""</code>, o programa não falha e produz
+        uma string de 1.300 caracteres que parece um número enorme. O segundo caso é pior,
+        porque não avisa.</p>
+        <p>O sublinhado em <code>1_000_000</code> é só separador visual de milhar em Python.
+        Ele não muda o valor.</p>
+      </section>
+
+      <section class="doc-secao" id="estruturas">
+        <h2>4. Lista, tupla e conjunto: qual escolher</h2>
+        <p>As três guardam vários itens. A pergunta que decide qual usar não é "qual é mais
+        rápida", é <strong>o que a estrutura precisa proibir</strong>.</p>
+        <ul>
+          <li><strong>Lista</strong>: ordenada e mutável. Serve para os 117 valores na ordem em
+          que aparecem no arquivo, porque a ordem é a informação (é o eixo do tempo) e porque
+          a lista ainda vai crescer enquanto o arquivo é lido.</li>
+          <li><strong>Tupla</strong>: ordenada e imutável. Serve para um registro já formado,
+          <code>("2025-T4", 2937449898.0)</code>. A imutabilidade não é preciosismo: um registro
+          de observação medida pelo IBGE não deveria poder ser alterado por acidente no meio de
+          um laço.</li>
+          <li><strong>Conjunto</strong>: sem ordem e sem repetição. Serve para responder
+          "quantos valores distintos existem nesta coluna?". Aplicado à coluna
+          <code>unidade</code> do arquivo, o conjunto resultante é
+          <code>{"Quilogramas"}</code>, de tamanho 1, e isso é a prova de que a série inteira
+          está na mesma unidade e pode ser somada sem conversão.</li>
+        </ul>
+        <pre class="doc-codigo"><code>import csv
+
+with open("dados/abate_bovinos.csv") as arquivo:
+    linhas = list(csv.reader(arquivo))
+
+cabecalho, registros = linhas[0], linhas[1:]
+
+unidades = {linha[2] for linha in registros}
+len(unidades)    # 1
+unidades         # {'Quilogramas'}</code></pre>
+        <p>Esse conjunto de uma linha é uma verificação de qualidade de dado, o assunto dos
+        autoestudos da semana seguinte. Se ele tivesse tamanho 2, somar a coluna
+        <code>valor</code> seria somar quilograma com litro.</p>
+      </section>
+
+      <section class="doc-secao" id="dicionario">
+        <h2>5. Por que o dicionário resolve o agrupamento</h2>
+        <p>A primeira pergunta útil sobre a série é de agrupamento: qual foi o abate total de
+        cada ano? Sem dicionário, a saída natural é varrer a lista uma vez por ano, o que
+        significa percorrer 117 registros 29 vezes, e ainda exige saber a lista de anos de
+        antemão.</p>
+        <p>O dicionário inverte isso. A chave é o próprio ano encontrado no dado, então uma
+        única passagem resolve, e a lista de anos aparece como efeito colateral:</p>
+        <pre class="doc-codigo"><code>por_ano = {}
+
+for periodo, valor, unidade in registros:
+    ano = periodo.split("-")[0]          # '2025-T4' -> '2025'
+    por_ano[ano] = por_ano.get(ano, 0.0) + float(valor)
+
+len(por_ano)            # 30 chaves: 1997 a 2026
+por_ano["2025"]         # 11103215151.0
+max(por_ano, key=por_ano.get)   # o ano de maior abate total</code></pre>
+        <h3>O papel do <code>get</code> com valor padrão</h3>
+        <p>Na primeira vez que um ano aparece, a chave ainda não existe, e
+        <code>por_ano[ano]</code> levantaria <code>KeyError</code>.
+        <code>por_ano.get(ano, 0.0)</code> devolve <code>0.0</code> nesse caso em vez de falhar,
+        e é o que permite escrever o acumulador em uma linha. A alternativa explícita, um
+        <code>if ano not in por_ano</code> antes da soma, faz a mesma coisa em três linhas.</p>
+        <div class="doc-nota">
+          <p><strong>Cuidado com 2026.</strong> O dicionário tem 30 chaves, mas 2026 só tem o
+          primeiro trimestre no arquivo. Comparar o total de 2026 com o de qualquer ano
+          completo é comparar um trimestre com quatro. Esse é o primeiro caso de dado parcial do
+          módulo, e ele volta na Aula 04, quando as janelas móveis entrarem.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="traceback">
+        <h2>6. Ler o traceback</h2>
+        <p>Um traceback de Python se lê <strong>de baixo para cima</strong>. A última linha diz
+        o tipo do erro e a causa; as linhas acima dizem o caminho até ali, do arquivo mais
+        externo para o ponto exato. Em Python 3.11 e adiante, os sinais <code>~~~~~^^^</code>
+        apontam a subexpressão culpada dentro da linha.</p>
+        <pre class="doc-codigo"><code>Traceback (most recent call last):
+  File "leitura.py", line 6, in &lt;module&gt;
+    print(linha[3])
+          ~~~~~^^^
+IndexError: list index out of range</code></pre>
+        <p>Traduzindo: o erro é <code>IndexError</code>, a causa é índice fora do intervalo, o
+        lugar é a linha 6 de <code>leitura.py</code>, e o culpado é <code>linha[3]</code>, não
+        o <code>print</code>. Como o arquivo tem três colunas, os índices válidos são 0, 1 e 2.</p>
+        <h3>Os quatro erros que esta aula provoca de propósito</h3>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+          <thead>
+            <tr><th>Erro</th><th>O que você fez</th><th>O que a mensagem está dizendo</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>IndexError</code></td>
+              <td><code>linha[3]</code> numa lista de 3 itens</td>
+              <td>a posição pedida não existe nesta lista</td>
+            </tr>
+            <tr>
+              <td><code>KeyError: 'mes'</code></td>
+              <td><code>linha["mes"]</code> num <code>DictReader</code></td>
+              <td>esta chave não está no dicionário, e a chave pedida vem entre aspas na mensagem</td>
+            </tr>
+            <tr>
+              <td><code>ValueError</code></td>
+              <td><code>float("2025-T4")</code></td>
+              <td>o tipo está certo (é texto), o conteúdo do texto é que não representa número</td>
+            </tr>
+            <tr>
+              <td><code>FileNotFoundError</code></td>
+              <td><code>open("dados/abate_bovino.csv")</code></td>
+              <td>o caminho não existe a partir de onde o programa está rodando</td>
+            </tr>
+          </tbody>
+          </table>
+        </div>
+        <p>A distinção entre <code>ValueError</code> e <code>TypeError</code> é a que mais se
+        confunde. <code>float("2025-T4")</code> é <code>ValueError</code>: a função aceita
+        texto, este texto é que não serve. <code>float(None)</code> é <code>TypeError</code>: a
+        função não aceita esse tipo, ponto.</p>
+        <h3>Por que o KeyError é uma boa notícia</h3>
+        <p>Quem vem do Javascript espera que <code>registro.mes</code> devolva
+        <code>undefined</code> para uma chave ausente. O programa segue, o
+        <code>undefined</code> viaja, e o erro aparece muito depois, longe da causa. Python
+        interrompe no lugar do problema, com o nome da chave na mensagem. Num pipeline de três
+        modelos encadeados, falhar cedo e perto da causa é a diferença entre uma hora e um dia
+        de depuração.</p>
+      </section>
+
+      <section class="doc-secao" id="valor-vazio">
+        <h2>7. O valor vazio, e por que tratar o que não aparece</h2>
+        <p>O contrato do arquivo diz que <code>valor</code> pode vir vazio, quando o IBGE marca
+        a observação como ausente ou suprimida. Nas cinco séries versionadas hoje no acervo
+        <strong>não existe nenhuma linha assim</strong>: são 117 registros preenchidos em
+        abate de bovinos, suínos e frangos e em produção de leite, e 157 em produção de ovos.</p>
+        <p>Isso não autoriza ignorar o caso. Os CSVs podem ser regenerados com
+        <code>python3 tools/baixar_dados.py</code>, e uma revisão futura do IBGE pode suprimir
+        um trimestre. Um leitor que faz <code>float(valor)</code> direto quebra com
+        <code>ValueError: could not convert string to float: ''</code> no dia em que isso
+        acontecer, e quebra no meio de um laço, sem dizer qual período era.</p>
+        <pre class="doc-codigo"><code>faltantes = []
+
+for periodo, valor, unidade in registros:
+    if not valor:                   # string vazia e falsa em Python
+        faltantes.append(periodo)
+        continue
+    por_ano[periodo[:4]] = por_ano.get(periodo[:4], 0.0) + float(valor)
+
+faltantes    # [] nos dados versionados hoje</code></pre>
+        <div class="doc-nota">
+          <p><strong>Ausente não é zero.</strong> Trocar o vazio por <code>0.0</code> parece
+          resolver e é pior que falhar: um trimestre com abate zero é uma afirmação sobre a
+          realidade, e a série passa a dizer que o Brasil não abateu nenhum bovino naquele
+          período. A lista de faltantes existe para o dado ausente continuar visível como
+          ausente. Preenchimento de valor faltante é assunto da Aula 09, com nome próprio e
+          critério, não um contorno de leitura.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="art1">
+        <h2>8. O que levar para a ART.1</h2>
+        <p>A Sprint 1 fecha em 14/08 com a <strong>ART.1 Entendimento do negócio (peso 6)</strong>
+        e a ART.2 UX parte 1 (peso 3). Desta aula, três evidências entram direto na ART.1:</p>
+        <ol>
+          <li><strong>A granularidade real da fonte.</strong> 117 observações trimestrais, de
+          1997-T1 a 2026-T1. Não existe versão mensal aberta dessas séries.</li>
+          <li><strong>A discrepância com o pedido.</strong> O TAPI pede projeção mensal com
+          horizonte de 24 meses. A proposta do módulo é horizonte de 8 trimestres, que cobre os
+          mesmos 24 meses na granularidade que o dado permite medir.</li>
+          <li><strong>A verificação de unidade.</strong> O conjunto das unidades tem tamanho 1,
+          então a série é somável. Registrar isso é registrar que a checagem foi feita, não
+          assumida.</li>
+        </ol>
+        <p>Os autoestudos da semana e a leitura complementar estão em
+        <a href="../referencias/aula01.html">referencias/aula01.html</a>. O laboratório
+        executável é <code>notebooks/aula01.ipynb</code>.</p>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula01.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../referencias/aula01.html"><span class="material-symbols-outlined" aria-hidden="true">link</span>Referências</a>
+  </nav>
+</body>
+</html>
