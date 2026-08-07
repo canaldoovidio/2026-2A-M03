@@ -4,10 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Material de apoio &middot; Aula 02 &middot; ML, IA e Ciência de Dados</title>
-  <meta name="description" content="Material de apoio da Aula 02 do Módulo 03 IN: ML, IA e Ciência de Dados, os quatro tipos de análise, CRISP-DM aplicado ao case da LDC, qualidade e taxonomia do dado.">
+  <meta name="description" content="Material de apoio da Aula 02 do Módulo 03 IN: taxonomia disputada de IA/ML/Ciência de Dados, CRISP-DM com as setas corretas, os quatro tipos de análise, escalas de Stevens, qualidade de dado (DAMA UK) e a justificativa técnica da granularidade trimestral.">
 
   <!-- Este material NAO e o roteiro do deck em prosa. Ele aprofunda o que o
-       slide so pode apontar. Todo numero citado vem dos cinco CSVs de dados/. -->
+       slide so pode apontar. Todo numero citado vem dos cinco CSVs de dados/.
+       Reescrita completa em conjunto com o deck: ver
+       .superpowers/sdd/2026-08-01-fundacao-e-aula01/pesquisa-visual-aula02.md
+       para a pesquisa que sustenta cada secao nova. -->
 
   <link rel="stylesheet" href="../assets/css/inteli-brand.css">
   <link rel="stylesheet" href="../assets/css/inteli-material.css">
@@ -20,16 +23,19 @@
       <h1>Material de apoio: ML, IA e Ciência de Dados</h1>
       <p class="doc-subtitulo">A aula de hoje é a única do módulo em que quase não se escreve
       código, e é a que decide o compasso de todas as outras. Este material aprofunda por que uma
-      decisão de granularidade vale mais que uma escolha de algoritmo.</p>
+      decisão de granularidade vale mais que uma escolha de algoritmo, e por que a taxonomia bonita
+      que aparece em todo deck de introdução a IA é, na verdade, uma disputa sem consenso.</p>
     </header>
 
     <nav class="doc-toc" aria-label="Sumário">
       <h2>Nesta página</h2>
       <ol>
-        <li><a href="#tres-nomes">Três nomes que não são sinônimos</a></li>
+        <li><a href="#tres-nomes">IA, ML e Ciência de Dados: uma taxonomia em disputa</a></li>
+        <li><a href="#regra-dado">Regra contra dado aprendido</a></li>
         <li><a href="#quatro-analises">Os quatro tipos de análise</a></li>
-        <li><a href="#crisp">CRISP-DM: por que as setas voltam</a></li>
-        <li><a href="#descompasso">O descompasso, em números</a></li>
+        <li><a href="#crisp">CRISP-DM: o diagrama que os blogs cortam</a></li>
+        <li><a href="#falha">Onde os projetos de dados falham, com número</a></li>
+        <li><a href="#descompasso">O descompasso, em números e em evidência técnica</a></li>
         <li><a href="#pilares">Os seis pilares, nas cinco séries</a></li>
         <li><a href="#escalas">Escalas de medida: o que se pode calcular</a></li>
         <li><a href="#leite">O risco que nenhum teste pega</a></li>
@@ -40,29 +46,91 @@
     <main class="doc-conteudo">
 
       <section class="doc-secao" id="tres-nomes">
-        <h2>1. Três nomes que não são sinônimos</h2>
-        <p><strong>Inteligência Artificial</strong> é o campo guarda-chuva: sistemas que executam
-        tarefas que, sem eles, exigiriam decisão humana. Um sistema de regras escritas à mão é IA e
-        não aprende nada.</p>
-        <p><strong>Machine Learning</strong> é o subconjunto em que o comportamento é ajustado a
-        partir de dados em vez de escrito em regras. Os três modelos do TAPI vivem aqui.</p>
-        <p><strong>Ciência de Dados</strong> não é subconjunto de IA: é a prática que atravessa o
-        problema inteiro, do entendimento do negócio até a comunicação do resultado. Boa parte do
-        trabalho de ciência de dados num projeto real não é modelagem.</p>
+        <h2>1. IA, ML e Ciência de Dados: uma taxonomia em disputa</h2>
+        <p><strong>Inteligência Artificial</strong> contém <strong>Machine Learning</strong>, que
+        contém <strong>Deep Learning</strong>. Esse aninhamento em círculos concêntricos é consenso:
+        aparece do mesmo jeito na NVIDIA, na IBM e no livro-texto mais citado da área, Goodfellow,
+        Bengio e Courville, <em>Deep Learning</em> (MIT Press, 2016).</p>
+        <p>O que a maioria das reproduções perde é que a figura original do livro-texto (Fig. 1.4)
+        tem <strong>quatro</strong> camadas, não três. Entre Machine Learning e Deep Learning existe
+        uma camada chamada <strong>Representation Learning</strong> (aprendizado de representação):
+        é o que separa um modelo com engenharia manual de atributo (você decide quais colunas
+        calcular, como defasagem ou média móvel) de um modelo que aprende os próprios atributos a
+        partir do dado bruto. Colapsar essa camada em ML puro apaga justamente a distinção que
+        explica por que a <strong>Aula 04, Feature Engineering, existe</strong>: ela é a camada que
+        o módulo trata explicitamente à mão, antes de qualquer técnica de representation learning
+        entrar em cena mais adiante no curso de ciência de dados.</p>
+
+        <h3>Onde a Ciência de Dados entra: três leituras, nenhuma consensual</h3>
+        <p>Diferente do aninhamento IA/ML/DL, a posição da Ciência de Dados nessa figura é onde as
+        fontes discordam de verdade, e a discordância é o ponto pedagógico mais rico do tema:</p>
+        <ol>
+          <li><strong>Círculo sobreposto, não contido</strong> (padme.ai): IA, ML e DL são
+          ferramentas que a Ciência de Dados usa, mas o trabalho de um cientista de dados (limpeza,
+          storytelling, infraestrutura) extrapola IA.</li>
+          <li><strong>Disciplinas distintas que se cruzam</strong> (arXiv:2301.13761, "Foundations
+          and Scoping of Data Science"): fora da interseção com IA/ML, Ciência de Dados cobre
+          qualidade de dado, governança em escala, interpretabilidade e ética. Nessa leitura, CD
+          <strong>não é subconjunto</strong> de IA.</li>
+          <li><strong>Ciência de Dados como círculo mais externo de todos</strong>: leitura popular
+          em blogs de marketing técnico, com menos lastro em fonte primária. Google, IBM e
+          DeepLearning.AI não a adotam nos materiais introdutórios revisados nesta pesquisa.</li>
+        </ol>
+        <p>Existe ainda um <strong>segundo diagrama</strong>, independente deste, que responde uma
+        pergunta diferente: o que é Ciência de Dados <em>por dentro</em>. É o diagrama de Drew
+        Conway (2010): três círculos que se cruzam em estatística/matemática, programação e
+        conhecimento de domínio, com Ciência de Dados na interseção dos três. Confundir os dois
+        diagramas (onde CD se encaixa em relação a IA/ML/DL, versus do que CD é feita) produz um
+        Venn de cinco círculos sem sentido.</p>
         <div class="doc-nota">
-          <p><strong>Por que a distinção importa neste case.</strong> O que a LDC usa hoje para
-          converter produção de proteína em demanda de ração é um coeficiente fixo: uma regra. Isso
-          é IA sem Machine Learning, e funciona há anos.</p>
-          <p>Consequência direta para o projeto: o baseline contra o qual o modelo de vocês vai ser
-          medido <strong>não é zero e não é a média</strong>, é o coeficiente fixo que já está em
-          produção. Um modelo com RMSE baixo que perde para o coeficiente fixo não entrega valor.</p>
+          <p><strong>A lição não é decorar qual leitura está certa.</strong> É perceber que
+          <strong>taxonomia de campo técnico é convenção sob disputa</strong>, não fato objetivo.
+          Um aluno que já programa entende "biblioteca dentro de framework dentro de linguagem" por
+          analogia direta; o ganho real de ver as três leituras lado a lado é aprender a questionar
+          a próxima figura bonita de um pitch de produto ou de um artigo, em vez de aceitá-la como
+          verdade estabelecida.</p>
         </div>
       </section>
 
+      <section class="doc-secao" id="regra-dado">
+        <h2>2. Regra contra dado aprendido</h2>
+        <p>François Chollet, em <em>Deep Learning with Python</em> (Manning, 2018), descreve a
+        inversão que Machine Learning representa com um diagrama de duas caixas:</p>
+        <blockquote>"In classical programming... humans input rules (a program) and data to be
+        processed according to these rules, and out come answers. With machine learning, humans
+        input data as well as the answers expected from the data, and out come the rules. These
+        rules can then be applied to new data to produce original answers."</blockquote>
+        <p>Um sistema de ML é <strong>treinado, não programado explicitamente</strong>. As regras
+        aprendidas continuam sendo aplicadas por um programa comum depois: o que muda é a
+        <strong>origem</strong> da regra, não a necessidade de código. É um erro comum ler esse
+        diagrama como "ML não precisa de programação"; o próprio Chollet é explícito de que precisa.</p>
+        <p>Isso conecta direto ao case: o coeficiente fixo que a LDC usa hoje para converter
+        produção de proteína em demanda de ração é a caixa de cima, programação tradicional, e
+        funciona. Martin Zinkevich (Google), em <em>Rules of Machine Learning: Best Practices for ML
+        Engineering</em>, dá dois critérios objetivos, direto de um guia de engenharia, não de
+        opinião de blog:</p>
+        <ul>
+          <li><strong>Regra 1</strong>: "Don't be afraid to launch a product without machine
+          learning." Uma heurística simples costuma entregar cerca de metade do ganho de ML, a um
+          custo de engenharia muito menor, e ainda gera o dado de produção necessário para treinar
+          um modelo depois.</li>
+          <li><strong>Regra 3</strong>: "Choose machine learning over a complex heuristic." O
+          critério de virada não é "ML é mais avançado": é <strong>custo de manutenção</strong>.
+          Quando a heurística cresce a ponto de virar uma lista de regras manuais frágil (o
+          documento cita o limiar prático de cerca de 195 regras impossíveis de atualizar sem
+          quebrar algo), o custo de manter a heurística passa a ser maior que o de treinar e operar
+          um modelo.</li>
+        </ul>
+        <p>O trabalho do módulo, com RMSE e MAPE, é justamente mostrar se um modelo aprendido bate
+        essa referência. Não é presumido que vá bater.</p>
+      </section>
+
       <section class="doc-secao" id="quatro-analises">
-        <h2>2. Os quatro tipos de análise</h2>
-        <p>Os quatro tipos não são níveis de dificuldade nem etapas em sequência. São
-        <strong>perguntas diferentes</strong>, e a mesma base responde as quatro.</p>
+        <h2>3. Os quatro tipos de análise</h2>
+        <p>O modelo mais citado para os quatro tipos de análise é a <strong>Analytic Value
+        Escalator</strong> da Gartner: um gráfico de dois eixos contínuos, dificuldade no eixo
+        horizontal e valor de negócio no eixo vertical, com os quatro tipos como degraus
+        ascendentes, sempre nesta ordem:</p>
         <div class="doc-tabela-rolagem">
           <table class="doc-tabela">
             <thead>
@@ -93,26 +161,44 @@
             </tbody>
           </table>
         </div>
+        <p>Duas notas que não cabem no slide: os quatro tipos não são fases obrigatórias de um
+        cronograma (um projeto pode ir direto a preditiva sem nunca produzir um relatório descritivo
+        formal), e a Descritiva/Diagnóstica dão "hindsight" (retrovisão), enquanto Preditiva/
+        Prescritiva dão "foresight" (visão de futuro). Para quem programa: é a mesma lógica de
+        custo/benefício de uma decisão de arquitetura ("vale o esforço de cache distribuído para o
+        ganho de latência?"), aplicada a que tipo de análise um problema de negócio realmente pede.</p>
         <h3>A armadilha da análise diagnóstica</h3>
         <p>A queda de 2021 está no dado: o notebook desta aula a encontra sozinho. A
         <strong>causa</strong> não está. Ciclo pecuário, preço de reposição de bezerro, câmbio,
-        exportação: nada disso é coluna dos cinco CSVs.</p>
-        <p>Confundir "o dado mostra a queda" com "o dado explica a queda" é o erro mais comum
-        quando se aprende análise diagnóstica. O que uma série sozinha oferece é correlação com o
-        próprio passado, e a Aula 09 volta a esse ponto quando tratar de variável omitida.</p>
+        exportação: nada disso é coluna dos cinco CSVs. Confundir "o dado mostra a queda" com "o
+        dado explica a queda" é o erro mais comum quando se aprende análise diagnóstica.</p>
       </section>
 
       <section class="doc-secao" id="crisp">
-        <h2>3. CRISP-DM: por que as setas voltam</h2>
+        <h2>4. CRISP-DM: o diagrama que os blogs cortam</h2>
         <p>As seis fases são Entendimento do negócio, Entendimento dos dados, Preparação dos dados,
-        Modelagem, Avaliação e Implantação. O detalhe que quase todo resumo de CRISP-DM perde é que
-        o diagrama original tem <strong>setas de volta</strong>, e a mais importante delas liga a
-        fase 2 de volta à fase 1.</p>
-        <p>Essa seta existe porque o entendimento dos dados costuma contradizer o entendimento do
-        negócio. Não é falha de planejamento: é a função da fase.</p>
+        Modelagem, Avaliação e Implantação. O guia original (Chapman et al., <em>CRISP-DM 1.0</em>,
+        2000) usa <strong>seta simples</strong> para dependência entre fases adjacentes e
+        <strong>seta dupla</strong> apenas para relações reconhecidamente repetíveis. Duas voltas
+        internas são documentadas com consistência entre as fontes secundárias técnicas:</p>
+        <ol>
+          <li><strong>Preparação dos Dados ↔ Modelagem</strong>: técnicas de modelagem específicas
+          frequentemente exigem reformatar, recodificar ou reamostrar o dado já preparado.</li>
+          <li><strong>Entendimento dos Dados ↔ Entendimento do Negócio</strong>: ajustar os
+          objetivos do negócio à luz do que o dado de fato permite responder, e vice-versa, antes
+          mesmo de chegar à modelagem.</li>
+        </ol>
+        <p>Além dessas duas voltas locais, existe o <strong>círculo externo geral</strong>
+        (Implantação de volta a Entendimento do Negócio), representando o ciclo de vida completo
+        como iterativo por natureza: o próximo projeto começa informado pelo anterior.</p>
+        <p>A quase totalidade das reproduções de blog desenha só o círculo externo contínuo (as
+        seis fases em sequência fechada, como uma roda de bicicleta) e <strong>omite as duas setas
+        de retorno internas</strong>. Essa simplificação transmite a mensagem errada de que só
+        existe uma volta grande no fim do projeto, quando o diagrama original já embute retorno
+        local, de curto alcance, dentro do próprio ciclo.</p>
         <h3>O que aconteceu neste acervo, de verdade</h3>
-        <p>A fundação deste repositório passou pela seta de volta antes de existir uma linha de
-        modelo:</p>
+        <p>A fundação deste repositório passou pela volta Dados ↔ Negócio antes de existir uma
+        linha de modelo:</p>
         <ol>
           <li><strong>Fase 1.</strong> O TAPI pede projeção mensal de abate, horizonte de 24 meses.</li>
           <li><strong>Fase 2.</strong> Ao consultar a API do SIDRA, apareceu que as cinco tabelas
@@ -123,10 +209,54 @@
         <p>Se o projeto tivesse seguido direto para a fase 3, o resultado seria um modelo mensal
         treinado sobre observações interpoladas, avaliado por métricas calculadas contra dado
         inventado. Tudo funcionaria, nada valeria.</p>
+        <h3>Onde o tempo do projeto realmente vai</h3>
+        <p>Não existe, no guia original de 2000, um número oficial de percentual de esforço por
+        fase (o documento é qualitativo). O número mais citado vem de pesquisas de mercado
+        independentes: CrowdFlower (2016), citada pela Forbes, encontrou cerca de <strong>60% do
+        tempo em limpeza e organização de dado</strong>, mais 19% coletando, somando cerca de 80%
+        antes de qualquer modelagem. Pesquisas mais recentes da Anaconda apontam algo entre 39% e
+        45% em preparação de dado. Um artigo cético (blog.ldodds.com, 2020) questiona a robustez da
+        cifra de 80%, mostrando que ela se origina de uma amostra pequena (cerca de 80 respondentes)
+        e se tornou repetida sem verificação.</p>
+        <div class="doc-nota">
+          <p><strong>Por que isso entra num material de ciência de dados.</strong> É um exemplo de
+          número que "todo mundo cita" sem checar a fonte primária, o que é, em si, uma lição de
+          ciência de dados: confira o dado, mesmo quando o dado é uma estatística sobre o próprio
+          campo. A conclusão segura é uma faixa (40% a 80%), não um número único, e o padrão de que
+          <strong>preparação de dado domina o tempo do projeto</strong> se mantém em toda fonte
+          consultada.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="falha">
+        <h2>5. Onde os projetos de dados falham, com número</h2>
+        <p>RAND Corporation, <em>The Root Causes of Failure for Artificial Intelligence Projects and
+        How They Can Succeed</em> (2024), entrevistou 65 cientistas de dados e engenheiros
+        experientes em governo e indústria nos Estados Unidos. Achados centrais:</p>
+        <ul>
+          <li><strong>Mais de 80% dos projetos de IA falham</strong> em chegar à implantação em
+          produção com valor real, o dobro da taxa de falha de projetos de TI sem componente de IA.</li>
+          <li><strong>"Liderança e enquadramento do problema são as principais causas-raiz de
+          falha, à frente de limitações de tecnologia."</strong></li>
+          <li>Exemplo direto do estudo: líderes de negócio às vezes pedem "um algoritmo de ML que
+          diga o preço a definir", quando precisam de "o preço que dá a maior margem de lucro, não
+          o preço que vende mais unidades". A métrica errada entra no projeto antes de qualquer
+          linha de código, e nenhuma técnica de modelagem corrige isso depois.</li>
+        </ul>
+        <p>O estudo consolida sete causas-raiz recorrentes, todas anteriores ou paralelas à
+        modelagem: problema errado escolhido, dado não está pronto, ausência de dono de negócio
+        responsável, métrica de sucesso ausente ou vaga, subestimar a gestão de mudança
+        organizacional, ausência de governança de risco, e tratar IA como projeto único em vez de
+        capacidade contínua.</p>
+        <p>Esse achado, com metodologia declarada, corrobora um achado qualitativo anterior de
+        James Taylor (KDnuggets, 2017, "Four Problems in Using CRISP-DM and How To Fix Them"): os
+        quatro problemas que ele descreve (metas vagas, retrabalho às cegas buscando "mais dado ou
+        nova técnica" em vez de voltar a discutir com quem decide, entrega às cegas para TI, e
+        falha em iterar depois da implantação) têm raiz comum em Entendimento do Negócio malfeito.</p>
       </section>
 
       <section class="doc-secao" id="descompasso">
-        <h2>4. O descompasso, em números</h2>
+        <h2>6. O descompasso, em números e em evidência técnica</h2>
         <p>A API do SIDRA devolve o período como <code>AAAATT</code>. O <code>202504</code> é o
         <strong>quarto trimestre</strong> de 2025. Lido como data mensal, viraria abril de 2025, e o
         acervo converte para <code>2025-T4</code> exatamente para essa leitura errada não ser
@@ -140,68 +270,99 @@ observacoes inventadas: 234  (67%)</code></pre>
         <p>Dois terços da base passariam a ser invenção. E o problema não é estético: o RMSE e o
         MAPE do modelo seriam calculados comparando previsão com valor interpolado, ou seja,
         medindo o quanto o modelo acerta um número que ninguém observou.</p>
+
+        <h3>Por que a fonte é trimestral: não é limitação técnica</h3>
+        <p>Tommaso Di Fonzo, para a Eurostat (<em>Temporal disaggregation of economic time
+        series</em>, 2003), documenta o motivo, direto do texto:</p>
+        <blockquote>"A traditional problem often faced by National Statistical Institutes...
+        [is that], due to the high costs involved in collecting the statistical information needed
+        for estimating national accounts, [NSIs] conduct large sample surveys only annually."</blockquote>
+        <p>A escolha de granularidade de um instituto de estatística oficial (IBGE incluído) é uma
+        decisão de <strong>custo de coleta</strong>, não uma limitação técnica de quem constrói o
+        modelo depois. O trimestre é o ponto de equilíbrio entre custo e utilidade que o instituto
+        consegue sustentar.</p>
+        <p>Existem métodos para desagregar tecnicamente (Chow-Lin, Denton, entre outros), mas todos
+        produzem uma série mensal <strong>estimada</strong>, nunca observada: a distribuição
+        intra-trimestral é inferida, não medida. Toda desagregação acrescenta incerteza que a série
+        trimestral original não tinha.</p>
+
+        <h3>O que desagregar custaria de verdade: o paradoxo da granularidade</h3>
+        <p>"The Granularity Paradox: How Temporal Disaggregation Inflates In-Sample Fit and
+        Compounds Out-of-Sample Error" (arXiv:2607.05450, julho de 2026) traz o argumento técnico
+        completo, não só descritivo: desagregar uma série <strong>melhora o ajuste dentro da
+        amostra</strong> e <strong>piora a acurácia da previsão fora da amostra</strong> em
+        múltiplos passos, por <strong>composição recursiva de erro</strong>. Modelos
+        autorregressivos alimentam a própria previsão de volta como entrada do passo seguinte, e o
+        erro se amplia a cada passo.</p>
+        <p>Desagregar de trimestral para mensal <strong>multiplica por três o horizonte de
+        passos</strong> necessário para cobrir o mesmo período de planejamento (8 trimestres viram
+        24 meses), o que amplia a janela onde o erro composto se acumula. A recomendação prática do
+        artigo: só vale a pena granularidade mais fina quando o tamanho de amostra resultante cruza
+        o limiar necessário para o modelo conseguir estimar seus próprios parâmetros; do contrário,
+        um modelo mais simples na granularidade mais grossa generaliza melhor.</p>
         <div class="doc-nota">
-          <p><strong>A decisão do professor.</strong> Base trimestral, horizonte de 8 trimestres,
-          que cobre os mesmos 24 meses pedidos pelo parceiro, na granularidade que o dado permite
-          medir. Está registrada na seção 2.1 do <code>PLANO_DE_ENSINO.md</code>.</p>
-          <p>O que a ART.1 precisa conter não é a decisão pronta: é a <strong>negociação</strong>.
-          Dizer o que foi pedido, o que a fonte permite, o que se propõe no lugar e o que o parceiro
-          perde e ganha com a troca.</p>
+          <p><strong>Para quem programa</strong>, esse é o ponto mais concreto da aula: é a
+          demonstração de que <strong>R² de treino alto (ou qualquer ajuste dentro da amostra) pode
+          não significar nada sobre previsão real</strong>, o mesmo raciocínio de overfitting que se
+          aplica a features, aplicado ao eixo do tempo. A decisão trimestral deixa de ser
+          "não tínhamos dado mensal" e vira "desagregar teria piorado a previsão, e há evidência
+          empírica recente para isso".</p>
         </div>
+
         <h3>E a Sindirações?</h3>
-        <p>A segunda fonte do case, os boletins da Sindirações, é <strong>anual</strong>. Ou seja, o
-        Modelo 2 (produção de proteína virando demanda de ração) atravessa uma mudança de
-        granularidade de trimestral para anual. É o ponto que o exercício em papel desta aula pede
-        para marcar com um X, e é onde o projeto vai doer mais na Sprint 2.</p>
+        <p>A segunda fonte do case, os boletins da Sindirações, é <strong>anual</strong>. O Modelo 2
+        (produção de proteína virando demanda de ração) atravessa uma mudança de granularidade de
+        trimestral para anual. É o ponto que o exercício em papel desta aula pede para marcar com um
+        X, e é onde o projeto vai doer mais na Sprint 2.</p>
       </section>
 
       <section class="doc-secao" id="pilares">
-        <h2>5. Os seis pilares, nas cinco séries</h2>
-        <p>Os seis pilares abaixo seguem a formulação da DAMA UK (completude, unicidade,
-        atualidade, validade, acurácia, consistência). Cada linha da tabela é um risco
-        <strong>real</strong>, documentado em <code>dados/README.md</code>, não um exemplo genérico.</p>
+        <h2>7. Os seis pilares, nas cinco séries</h2>
+        <p>Os seis pilares seguem a formulação da DAMA UK Working Group, <em>The Six Primary
+        Dimensions for Data Quality Assessment</em> (2013), documento primário lido na íntegra para
+        esta aula. A definição literal de cada dimensão, com exemplo do próprio documento (um
+        cenário fictício de escola), e o risco correspondente nas cinco séries do case:</p>
         <div class="doc-tabela-rolagem">
           <table class="doc-tabela">
             <thead>
-              <tr><th>Pilar</th><th>O risco concreto</th><th>O que aconteceria se ninguém notasse</th></tr>
+              <tr><th>Pilar</th><th>Definição (DAMA UK)</th><th>O risco concreto no case</th></tr>
             </thead>
             <tbody>
               <tr>
                 <td><strong>Completude</strong></td>
+                <td>proporção do dado armazenado frente ao potencial de "100% completo"</td>
                 <td>ovos tem 157 registros desde 1987-T1; as outras quatro têm 117 desde 1997-T1</td>
-                <td>um <code>join</code> pelas cinco séries descartaria dez anos de ovos em
-                silêncio, ou geraria nulo em quatro colunas</td>
               </tr>
               <tr>
                 <td><strong>Unicidade</strong></td>
-                <td>as tabelas SIDRA têm dimensões extras (tipo de rebanho, tipo de inspeção, mês
-                dentro do trimestre)</td>
-                <td>sem filtrar por "Total", o mesmo trimestre apareceria várias vezes e a soma
-                ficaria inflada</td>
+                <td>nada é registrado mais de uma vez conforme a forma de identificar aquilo</td>
+                <td>as tabelas SIDRA têm dimensões extras (tipo de rebanho, tipo de inspeção); sem
+                filtrar por "Total", o mesmo trimestre apareceria várias vezes</td>
               </tr>
               <tr>
                 <td><strong>Atualidade</strong></td>
+                <td>o grau em que o dado representa a realidade a partir do ponto no tempo exigido</td>
                 <td>o dado mais recente é 2026-T1, um único trimestre de 2026</td>
-                <td>comparar o total de 2026 com um ano completo, ou treinar achando que a base vai
-                até o fim de 2026</td>
               </tr>
               <tr>
                 <td><strong>Validade</strong></td>
-                <td>o período vem como <code>202504</code> na API</td>
-                <td>o eixo de tempo do modelo viraria mensal e errado, com 2025-T4 lido como abril</td>
+                <td>o dado é válido se está conforme a sintaxe (formato, tipo, faixa) de sua
+                definição</td>
+                <td>o período vem como <code>202504</code> na API; o eixo de tempo do modelo
+                viraria mensal e errado se lido ao pé da letra</td>
               </tr>
               <tr>
                 <td><strong>Acurácia</strong></td>
+                <td>o grau em que o dado descreve corretamente o objeto ou evento do "mundo real"</td>
                 <td>pedir <code>v/all</code> ao SIDRA devolve peso, número de informantes e
-                percentuais na mesma tabela</td>
-                <td>a série de "abate" conteria contagem de informantes, valores na casa das
-                centenas misturados a bilhões</td>
+                percentuais na mesma tabela: a série de "abate" conteria número de informantes
+                misturado a valores em bilhões</td>
               </tr>
               <tr>
                 <td><strong>Consistência</strong></td>
+                <td>ausência de diferença ao comparar duas ou mais representações de uma coisa
+                contra uma definição</td>
                 <td>três unidades entre as cinco séries: quilogramas, mil litros, mil dúzias</td>
-                <td>somar as cinco para obter "proteína animal total" produziria um número sem
-                significado físico</td>
               </tr>
             </tbody>
           </table>
@@ -210,13 +371,33 @@ observacoes inventadas: 234  (67%)</code></pre>
         <code>tools/baixar_dados.py</code> e estão documentados. Os dois que continuam abertos
         (completude da série de ovos e as três unidades) são decisão de modelagem, não de carga, e
         voltam na Aula 04.</p>
+
+        <h3>As duas figuras da DAMA UK, e o ponto contraintuitivo</h3>
+        <p>O documento da DAMA UK tem <strong>duas figuras diferentes</strong>, frequentemente
+        confundidas. A oficial é o <strong>diagrama de flor</strong>: um círculo central rotulado
+        "Data Quality Dimensions", com seis pétalas ao redor, uma por dimensão, todas do
+        <strong>mesmo tamanho</strong>, sem hierarquia nem ordem implícita. A segunda figura é uma
+        <strong>escada de aplicação</strong> a um caso específico (Completeness → Consistency →
+        Uniqueness → Validity → Accuracy), que é um exemplo de uso, não a definição das seis
+        dimensões em si.</p>
+        <p>O documento afirma algo contraintuitivo, citado quase sempre errado ou de forma
+        incompleta: <strong>"It is possible to have consistency without validity or accuracy"</strong>
+        (é possível ter consistência sem validade ou acurácia). Um dado pode estar consistente entre
+        dois sistemas e mesmo assim estar errado nos dois, ao mesmo tempo, do mesmo jeito. O próprio
+        documento também define um sétimo grupo, fora das seis dimensões centrais, chamado
+        "usabilidade": um dado pode ser 100% completo, único, atual, válido, acurado e consistente,
+        e ainda assim inútil na prática (o exemplo do documento é um dado perfeito nas seis
+        dimensões, mas em um idioma que o usuário final não lê).</p>
       </section>
 
       <section class="doc-secao" id="escalas">
-        <h2>6. Escalas de medida: o que se pode calcular</h2>
-        <p>A taxonomia clássica de escalas de medida vem de Stevens (1946): nominal, ordinal,
-        intervalar e de razão. Ela não é curiosidade acadêmica: ela decide qual operação faz
-        sentido em cada coluna.</p>
+        <h2>8. Escalas de medida: o que se pode calcular</h2>
+        <p>A taxonomia clássica de escalas de medida vem de Stanley Smith Stevens, "On the Theory of
+        Scales of Measurement" (<em>Science</em>, 1946): nominal, ordinal, intervalar e de razão. O
+        artigo define cada escala pela <strong>transformação matemática que pode ser aplicada aos
+        números sem perder a informação que a escala representa</strong>. A forma canônica de
+        apresentar isso não é um diagrama, é uma tabela comparativa, porque a hierarquia é
+        cumulativa: cada nível herda todas as propriedades do anterior e acrescenta uma.</p>
         <div class="doc-tabela-rolagem">
           <table class="doc-tabela">
             <thead>
@@ -248,16 +429,28 @@ observacoes inventadas: 234  (67%)</code></pre>
         índice de tempo (1997-T1 vira 0, 1997-T2 vira 1, e assim por diante), ele passa a ser
         <strong>intervalar</strong>: a distância entre dois pontos vira uma quantidade, e é isso que
         permite calcular defasagem e janela móvel. Essa conversão é o primeiro passo da Aula 04.</p>
+        <h3>O exemplo clássico: Celsius não é razão</h3>
+        <p>Temperatura em Celsius é intervalar, não razão, porque o zero é arbitrário (ponto de
+        congelamento da água, não "ausência de temperatura"): dizer que "20°C é o dobro de 10°C" é
+        matematicamente inválido, embora a subtração ("20°C é 10 graus mais quente") seja válida.
+        Peso, distância e contagem têm zero absoluto e são escalas de razão, onde "dobrar" faz
+        sentido. O mesmo raciocínio vale para <code>valor</code> nas cinco séries: peso de abate em
+        quilogramas tem zero absoluto (ausência real de abate), então a razão entre dois trimestres
+        é uma comparação válida.</p>
         <div class="doc-nota">
           <p><strong>Por que isso é armadilha na prática.</strong> Nenhuma biblioteca impede o
           cálculo errado. O Pandas calcula a média de uma coluna de códigos numéricos de categoria
           sem reclamar. A escala mora no significado do dado, não no tipo da coluna, e é por isso
-          que ela é assunto de aula e não de validador.</p>
+          que ela é assunto de aula e não de validador: um aluno vindo de engenharia de software
+          tende a tratar toda coluna numérica do pandas como se fosse escala de razão só porque o
+          tipo Python é <code>int</code> ou <code>float</code>, quando o significado estatístico da
+          coluna pode ser nominal (um ID) ou ordinal (uma nota Likert de 1 a 5, onde a distância
+          entre "2" e "3" não é necessariamente igual à distância entre "4" e "5").</p>
         </div>
       </section>
 
       <section class="doc-secao" id="leite">
-        <h2>7. O risco que nenhum teste pega</h2>
+        <h2>9. O risco que nenhum teste pega</h2>
         <p>A série de leite vem da tabela 1086 do SIDRA, variável 282: "Quantidade de leite cru,
         resfriado ou não, <strong>adquirido</strong>". A palavra que importa é a última.</p>
         <p>A série não mede a produção de leite do Brasil. Mede o volume que os laticínios
@@ -273,8 +466,9 @@ observacoes inventadas: 234  (67%)</code></pre>
           <li>a ordem de grandeza é plausível.</li>
         </ul>
         <p><strong>Este risco é invisível para todos os seis testes.</strong> Ele não é um defeito
-        do arquivo: o arquivo está correto. É um defeito de interpretação, que só aparece lendo a
-        documentação da variável na fonte.</p>
+        do arquivo: o arquivo está correto. É exatamente o padrão que a DAMA UK descreve como
+        contraintuitivo: um dado pode ser consistente e válido, e ainda assim inacurado. Só a
+        leitura da documentação da variável na fonte pega isso.</p>
         <div class="doc-nota">
           <p>É o argumento mais forte a favor de existir uma fase de "entendimento dos dados"
           separada da carga: nenhum script sabe que "adquirido" não é "produzido". Para o Modelo 2
@@ -285,14 +479,17 @@ observacoes inventadas: 234  (67%)</code></pre>
       </section>
 
       <section class="doc-secao" id="art1">
-        <h2>8. O que levar para a ART.1</h2>
+        <h2>10. O que levar para a ART.1</h2>
         <p>A Sprint 1 fecha em 14/08 com a <strong>ART.1 Entendimento do negócio (peso 6)</strong> e
-        a ART.2 UX parte 1 (peso 3). Da Aula 01 e desta aula, cinco itens entram direto:</p>
+        a ART.2 UX parte 1 (peso 3). Da Aula 01 e desta aula, seis itens entram direto:</p>
         <ol>
           <li><strong>A granularidade real da fonte</strong>, medida e não suposta: 117 trimestres
           nas quatro séries de abate e leite, 157 em ovos.</li>
           <li><strong>A negociação de granularidade</strong>: o que foi pedido, o que existe, o que
           se propõe (8 trimestres) e o que o parceiro ganha e perde com a troca.</li>
+          <li><strong>A justificativa técnica dessa decisão</strong>: por que trimestral é decisão
+          de custo de coleta (Di Fonzo), não limitação técnica, e por que desagregar pioraria a
+          previsão fora da amostra (Granularity Paradox).</li>
           <li><strong>Os três modelos encadeados</strong>, com a fonte de cada um e o ponto em que a
           granularidade muda de trimestral para anual.</li>
           <li><strong>As seis frases do CRISP-DM</strong> aplicadas ao case, incluindo, com

@@ -6,8 +6,11 @@
   <title>Aula 02 &middot; Visão Geral de ML, IA e Ciência de Dados &middot; Módulo 03 IN</title>
 
   <!-- Aula 02, 07/08/2026, Sprint 1. Roteiro em PLANEJAMENTO_AULA_A_AULA.md.
-       Todo numero citado aqui vem dos cinco CSVs de dados/ e do contrato
-       documentado em dados/README.md. -->
+       Reescrita completa (ver .superpowers/sdd/2026-08-01-fundacao-e-aula01/
+       pesquisa-visual-aula02.md): mais profundidade tecnica e mais formas de
+       slide, para nao repetir side-by-side/concept-cards em quase todo
+       bloco. Todo numero de dados/ vem dos cinco CSVs; todo diagrama cita a
+       fonte de pesquisa correspondente no slide de referencias. -->
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
   <link rel="stylesheet" href="../assets/css/inteli-brand.css">
@@ -40,7 +43,7 @@
         <div class="concept-cards">
           <div class="concept-card">
             <h3>08h00 &middot; 10h00</h3>
-            <p>Autoestudo na Adalove: qualidade dos dados, taxonomia, o que é Machine Learning [5].</p>
+            <p>Autoestudo na Adalove: qualidade dos dados, taxonomia, o que é Machine Learning [16].</p>
           </div>
           <div class="concept-card">
             <h3>10h00 &middot; 10h15</h3>
@@ -48,7 +51,7 @@
           </div>
           <div class="concept-card">
             <h3>10h15 &middot; 12h00</h3>
-            <p>Sete blocos de 15 minutos. Hoje tem papel e caneta, não só teclado.</p>
+            <p>Sete blocos de 15 minutos, com bem mais figura do que texto. Papel e caneta também.</p>
           </div>
         </div>
         <div class="slide-footer">
@@ -90,74 +93,216 @@
       <section class="section-slide">
         <div class="accent-bar"></div>
         <h2>ML, IA e Ciência de Dados</h2>
-        <h3>10h30 &middot; 10h45 &middot; três nomes que não são sinônimos</h3>
+        <h3>10h30 &middot; 10h45 &middot; três campos, e uma disputa de taxonomia</h3>
       </section>
 
-      <!-- 5 - Os tres termos -->
+      <!-- 5 - Diagrama: quatro camadas, nao tres -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>Três nomes, três escopos</h2>
+          <h2>Quatro camadas aninhadas, não três</h2>
         </div>
-        <div class="concept-cards">
-          <div class="concept-card">
-            <h3>IA</h3>
-            <p>O campo guarda-chuva: sistemas que executam tarefas que exigiriam decisão humana.
-            Inclui coisas sem aprendizado nenhum.</p>
-          </div>
-          <div class="concept-card">
-            <h3>Machine Learning</h3>
-            <p>Subconjunto da IA: o comportamento é ajustado a partir de dados, não escrito em
-            regras. É onde os três modelos da LDC moram.</p>
-          </div>
-          <div class="concept-card">
-            <h3>Ciência de Dados</h3>
-            <p>A prática que atravessa tudo: entender o problema, o dado, medir e comunicar. Não é
-            subconjunto de IA.</p>
-          </div>
+        <div class="diagram-frame">
+          <svg viewBox="0 0 900 300" role="img" aria-label="Quatro circulos concentricos: Inteligencia Artificial contem Machine Learning, que contem Representation Learning, que contem Deep Learning">
+            <circle cx="190" cy="160" r="140" fill="none" stroke="var(--seg-primaria)" stroke-width="2.5"/>
+            <circle cx="190" cy="160" r="100" fill="none" stroke="var(--seg-primaria)" stroke-width="2.5"/>
+            <circle cx="190" cy="160" r="62" fill="none" stroke="var(--seg-primaria)" stroke-width="2.5"/>
+            <circle cx="190" cy="160" r="28" fill="var(--seg-secundaria)" fill-opacity="0.35" stroke="var(--seg-primaria)" stroke-width="2.5"/>
+
+            <line x1="190" y1="20" x2="556" y2="34" stroke="var(--seg-borda)" stroke-width="1.5"/>
+            <line x1="190" y1="60" x2="556" y2="104" stroke="var(--seg-borda)" stroke-width="1.5"/>
+            <line x1="190" y1="98" x2="556" y2="174" stroke="var(--seg-borda)" stroke-width="1.5"/>
+            <line x1="190" y1="132" x2="556" y2="244" stroke="var(--seg-borda)" stroke-width="1.5"/>
+
+            <circle cx="556" cy="34" r="4" fill="var(--seg-destaque)"/>
+            <text x="570" y="30" style="font-size:16px;font-weight:700;fill:var(--seg-primaria)">Inteligência Artificial</text>
+            <text x="570" y="48" style="font-size:12px;fill:var(--seg-texto)">sistemas baseados em regra, sem aprendizado</text>
+
+            <circle cx="556" cy="104" r="4" fill="var(--seg-destaque)"/>
+            <text x="570" y="100" style="font-size:16px;font-weight:700;fill:var(--seg-primaria)">Machine Learning</text>
+            <text x="570" y="118" style="font-size:12px;fill:var(--seg-texto)">regressão logística, árvore de decisão</text>
+
+            <circle cx="556" cy="174" r="4" fill="var(--seg-destaque)"/>
+            <text x="570" y="170" style="font-size:16px;font-weight:700;fill:var(--seg-primaria)">Representation Learning</text>
+            <text x="570" y="188" style="font-size:12px;fill:var(--seg-texto)">aprende os próprios atributos (ex.: autoencoder raso)</text>
+
+            <circle cx="556" cy="244" r="4" fill="var(--seg-destaque)"/>
+            <text x="570" y="240" style="font-size:16px;font-weight:700;fill:var(--seg-primaria)">Deep Learning</text>
+            <text x="570" y="258" style="font-size:12px;fill:var(--seg-texto)">redes neurais profundas (ex.: MLP)</text>
+          </svg>
+          <p class="diagram-caption">Goodfellow, Bengio e Courville, <em>Deep Learning</em> (2016), Fig. 1.4 [3].
+          NVIDIA [4] e IBM [5] confirmam o aninhamento de três camadas; o livro-texto acrescenta a
+          quarta. A camada que quase toda reprodução popular apaga, <strong>Representation
+          Learning</strong>, é o que separa engenharia manual de atributo de aprendizado do próprio
+          atributo, e é exatamente o motivo de a Aula 04 (Feature Engineering) existir.</p>
         </div>
-        <p>O que a LDC usa hoje (coeficientes fixos de conversão de proteína em ração) é um sistema
-        de regras: não é Machine Learning, e funciona. O trabalho do módulo é mostrar, com RMSE e
-        MAPE, se um modelo aprendido bate essa referência.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
           <p class="footer-page">5</p>
         </div>
       </section>
 
-      <!-- 6 - Os quatro tipos de analise -->
+      <!-- 6 - Triptico: onde a Ciencia de Dados entra -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>Quatro tipos de análise, no mesmo dado</h2>
+          <h2>Onde entra a Ciência de Dados: três leituras</h2>
         </div>
-        <div class="side-by-side">
-          <div>
-            <p><strong>Olham para trás</strong></p>
-            <p><strong>Descritiva:</strong> quanto o Brasil abateu de frango no 4&ordm; trimestre
-            de 2025? Uma consulta ao CSV responde.</p>
-            <p><strong>Diagnóstica:</strong> por que o abate de bovinos caiu em 2021 em relação a
-            2020? O CSV mostra a queda; a causa está fora dele.</p>
-          </div>
-          <div>
-            <p><strong>Olham para frente</strong></p>
-            <p><strong>Preditiva:</strong> quanto de proteína animal o Brasil produz nos próximos
-            8 trimestres? É o Modelo 1 do TAPI.</p>
-            <p><strong>Prescritiva:</strong> quanto de milho a LDC deve comprar, e quando? É o
-            Modelo 3, e é o que o parceiro de fato quer.</p>
-          </div>
+        <div class="trio-diagrams">
+          <figure>
+            <svg viewBox="0 0 220 170" role="img" aria-label="Ciencia de Dados como circulo sobreposto, nao contido">
+              <circle cx="90" cy="95" r="55" fill="none" stroke="var(--seg-primaria)" stroke-width="1.6"/>
+              <circle cx="90" cy="95" r="36" fill="none" stroke="var(--seg-primaria)" stroke-width="1.6"/>
+              <circle cx="90" cy="95" r="18" fill="none" stroke="var(--seg-primaria)" stroke-width="1.6"/>
+              <circle cx="150" cy="52" r="34" fill="none" stroke="var(--seg-destaque)" stroke-width="1.8" stroke-dasharray="4 3"/>
+              <text x="150" y="56" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--seg-destaque)">CD</text>
+              <text x="90" y="20" text-anchor="middle" style="font-size:10px;fill:var(--seg-texto)">IA / ML / DL</text>
+            </svg>
+            <figcaption><strong>1. Sobreposta, não contida.</strong> padme.ai [6]: IA/ML/DL usa a CD
+            como ferramenta, mas limpeza e storytelling extrapolam IA.</figcaption>
+          </figure>
+          <figure>
+            <svg viewBox="0 0 220 170" role="img" aria-label="Ciencia de Dados e IA como disciplinas separadas que se cruzam">
+              <circle cx="78" cy="90" r="50" fill="none" stroke="var(--seg-primaria)" stroke-width="1.6"/>
+              <circle cx="142" cy="90" r="50" fill="none" stroke="var(--seg-destaque)" stroke-width="1.6"/>
+              <text x="55" y="94" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--seg-primaria)">IA</text>
+              <text x="165" y="94" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--seg-destaque)">CD</text>
+              <text x="110" y="94" text-anchor="middle" style="font-size:9px;fill:var(--seg-texto)">ML</text>
+            </svg>
+            <figcaption><strong>2. Disciplinas distintas que se cruzam.</strong> arXiv:2301.13761 [7]:
+            fora da interseção, CD cobre qualidade, governança e ética de dado.</figcaption>
+          </figure>
+          <figure>
+            <svg viewBox="0 0 220 170" role="img" aria-label="Ciencia de Dados como circulo externo, contendo IA">
+              <circle cx="100" cy="95" r="65" fill="none" stroke="var(--seg-destaque)" stroke-width="1.8" stroke-dasharray="4 3"/>
+              <circle cx="100" cy="100" r="42" fill="none" stroke="var(--seg-primaria)" stroke-width="1.6"/>
+              <circle cx="100" cy="105" r="20" fill="none" stroke="var(--seg-primaria)" stroke-width="1.6"/>
+              <text x="100" y="28" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--seg-destaque)">CD</text>
+              <text x="100" y="64" text-anchor="middle" style="font-size:9px;fill:var(--seg-texto)">IA / ML</text>
+            </svg>
+            <figcaption><strong>3. CD como círculo mais externo.</strong> Leitura minoritária: menos
+            lastro em fonte primária (Google, IBM e DeepLearning.AI não a adotam).</figcaption>
+          </figure>
         </div>
+        <p>As três aparecem em fontes com peso técnico, e discordam entre si. A lição não é decorar
+        qual está certa: é que <strong>taxonomia de campo técnico é convenção sob disputa</strong>,
+        e a próxima figura bonita de um pitch merece a mesma pergunta.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
           <p class="footer-page">6</p>
         </div>
       </section>
 
-      <!-- 7 - Exercicio dos quatro tipos -->
+      <!-- 7 - Chollet: regra contra dado -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que inverte: regra contra dado aprendido</h2>
+        </div>
+        <div class="side-by-side">
+          <div class="diagram-frame">
+            <svg viewBox="0 0 460 380" role="img" aria-label="Dois diagramas: programacao tradicional recebe regras e dados e produz respostas; machine learning recebe dados e respostas e produz regras">
+              <defs>
+                <marker id="seta-roxa-d7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0,0 L10,5 L0,10 z" fill="var(--seg-primaria)"/>
+                </marker>
+                <marker id="seta-coral-d7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0,0 L10,5 L0,10 z" fill="var(--seg-destaque)"/>
+                </marker>
+              </defs>
+
+              <text x="230" y="18" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--seg-primaria)">Programação tradicional</text>
+              <rect x="150" y="30" width="160" height="66" rx="8" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <text x="230" y="68" text-anchor="middle" style="font-size:12px;fill:var(--seg-primaria)">programa</text>
+              <line x1="20" y1="46" x2="146" y2="46" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-roxa-d7)"/>
+              <text x="22" y="40" style="font-size:12px;fill:var(--seg-texto)">Regras</text>
+              <line x1="20" y1="82" x2="146" y2="82" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-roxa-d7)"/>
+              <text x="22" y="98" style="font-size:12px;fill:var(--seg-texto)">Dado</text>
+              <line x1="314" y1="63" x2="430" y2="63" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-roxa-d7)"/>
+              <text x="340" y="57" style="font-size:12px;fill:var(--seg-texto)">Respostas</text>
+
+              <text x="230" y="260" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--seg-destaque)">Machine Learning</text>
+              <rect x="150" y="272" width="160" height="66" rx="8" fill="var(--seg-superficie)" stroke="var(--seg-destaque)" stroke-width="3"/>
+              <text x="230" y="310" text-anchor="middle" style="font-size:12px;fill:var(--seg-destaque)">treino</text>
+              <line x1="20" y1="288" x2="146" y2="288" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-roxa-d7)"/>
+              <text x="22" y="282" style="font-size:12px;fill:var(--seg-texto)">Dado</text>
+              <line x1="20" y1="324" x2="146" y2="324" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-roxa-d7)"/>
+              <text x="22" y="340" style="font-size:12px;fill:var(--seg-texto)">Respostas</text>
+              <line x1="314" y1="305" x2="430" y2="305" stroke="var(--seg-destaque)" stroke-width="2.4" marker-end="url(#seta-coral-d7)"/>
+              <text x="340" y="299" style="font-size:12px;font-weight:700;fill:var(--seg-destaque)">Regras</text>
+            </svg>
+          </div>
+          <div>
+            <p>Chollet [11]: um sistema de ML é <strong>treinado, não programado</strong> à mão. As
+            regras aprendidas continuam sendo aplicadas por um programa comum: o que muda é a
+            <strong>origem</strong> da regra, não a necessidade de código.</p>
+            <p>O coeficiente fixo que a LDC usa hoje para converter proteína em ração é a caixa de
+            cima: programação tradicional, e funciona. Não é atraso, é a Regra 1 do guia de
+            engenharia do Google [12]: não tenha medo de lançar sem ML.</p>
+            <p>A Regra 3 do mesmo guia [12] dá o critério objetivo para trocar de caixa: quando a
+            heurística cresce a ponto de virar uma lista de regras manuais frágil demais para
+            manter (o documento cita o limiar prático de cerca de 195 regras), o custo de manter a
+            heurística passa a ser maior que o de treinar um modelo.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">7</p>
+        </div>
+      </section>
+
+      <!-- 8 - Gartner: quatro tipos de analise -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Quatro tipos de análise: a escada de valor</h2>
+        </div>
+        <div class="diagram-frame">
+          <svg viewBox="0 0 760 240" role="img" aria-label="Grafico de dois eixos, dificuldade e valor, com quatro degraus ascendentes: descritiva, diagnostica, preditiva, prescritiva">
+            <line x1="60" y1="200" x2="720" y2="200" stroke="var(--seg-texto)" stroke-width="1.5"/>
+            <line x1="60" y1="200" x2="60" y2="16" stroke="var(--seg-texto)" stroke-width="1.5"/>
+            <text x="690" y="218" style="font-size:11px;fill:var(--seg-texto)">dificuldade</text>
+            <text x="18" y="20" style="font-size:11px;fill:var(--seg-texto)">valor</text>
+
+            <rect x="90" y="160" width="130" height="40" fill="var(--seg-secundaria)" fill-opacity="0.20" stroke="var(--seg-primaria)" stroke-width="2"/>
+            <text x="155" y="150" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--seg-primaria)">Descritiva</text>
+            <text x="155" y="182" text-anchor="middle" style="font-size:10px;fill:var(--seg-texto)">o que aconteceu?</text>
+
+            <rect x="250" y="124" width="130" height="76" fill="var(--seg-secundaria)" fill-opacity="0.32" stroke="var(--seg-primaria)" stroke-width="2"/>
+            <text x="315" y="114" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--seg-primaria)">Diagnóstica</text>
+            <text x="315" y="146" text-anchor="middle" style="font-size:10px;fill:var(--seg-texto)">por que aconteceu?</text>
+
+            <rect x="410" y="90" width="130" height="110" fill="var(--seg-secundaria)" fill-opacity="0.46" stroke="var(--seg-primaria)" stroke-width="2"/>
+            <text x="475" y="80" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--seg-primaria)">Preditiva</text>
+            <text x="475" y="112" text-anchor="middle" style="font-size:10px;fill:var(--seg-texto)">o que vai acontecer?</text>
+
+            <rect x="570" y="50" width="130" height="150" fill="var(--seg-secundaria)" fill-opacity="0.60" stroke="var(--seg-primaria)" stroke-width="2"/>
+            <text x="635" y="40" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--seg-primaria)">Prescritiva</text>
+            <text x="635" y="72" text-anchor="middle" style="font-size:10px;fill:var(--seg-texto)">o que fazer?</text>
+
+            <text x="235" y="228" text-anchor="middle" style="font-size:10px;fill:var(--seg-texto)">retrovisão (hindsight)</text>
+            <text x="555" y="228" text-anchor="middle" style="font-size:10px;fill:var(--seg-texto)">visão de futuro (foresight)</text>
+          </svg>
+          <p class="diagram-caption">Gartner, Analytic Value Escalator [8]. No case: descritiva é
+          consultar o abate de frango do trimestre; diagnóstica é a queda de bovinos em 2021; a
+          preditiva de 8 trimestres é o Modelo 1; a prescritiva (quanto comprar, e quando) é o
+          Modelo 3, e é o que a LDC de fato quer.</p>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">8</p>
+        </div>
+      </section>
+
+      <!-- 9 - Exercicio dos quatro tipos -->
       <section class="exercise-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -175,89 +320,212 @@
         </ol>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
-          <p class="footer-page">7</p>
-        </div>
-      </section>
-
-      <!-- 8 - Divisor -->
-      <section class="section-slide">
-        <div class="accent-bar"></div>
-        <h2>CRISP-DM</h2>
-        <h3>10h45 &middot; 11h00 &middot; seis fases sobre o problema da LDC</h3>
-      </section>
-
-      <!-- 9 - As seis fases -->
-      <section class="content-slide">
-        <div class="top-bar"></div>
-        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
-        <div class="slide-title-area">
-          <div class="accent-bar"></div>
-          <h2>As seis fases, aplicadas ao case</h2>
-        </div>
-        <div class="concept-cards">
-          <div class="concept-card">
-            <h3>1. Negócio</h3>
-            <p>A LDC compra macroingredientes com coeficiente fixo. O que ela ganha se acertar mais?</p>
-          </div>
-          <div class="concept-card">
-            <h3>2. Dados</h3>
-            <p>Cinco séries do SIDRA, trimestrais, em três unidades diferentes.</p>
-          </div>
-          <div class="concept-card">
-            <h3>3. Preparação</h3>
-            <p>Unir SIDRA e Sindirações, criar defasagem e sazonalidade. É a Aula 04.</p>
-          </div>
-          <div class="concept-card">
-            <h3>4. Modelagem</h3>
-            <p>Regressão tabular, sem série temporal: o TAPI proíbe. Aulas 05 a 11.</p>
-          </div>
-          <div class="concept-card">
-            <h3>5. Avaliação</h3>
-            <p>RMSE e MAPE contra o coeficiente fixo de hoje. Nunca contra zero.</p>
-          </div>
-          <div class="concept-card">
-            <h3>6. Implantação</h3>
-            <p>Pipeline e app de cenários. Aulas 12 e 13.</p>
-          </div>
-        </div>
-        <div class="slide-footer">
-          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
           <p class="footer-page">9</p>
         </div>
       </section>
 
-      <!-- 10 - Por que a fase 1 existe -->
+      <!-- 10 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>CRISP-DM</h2>
+        <h3>10h45 &middot; 11h00 &middot; seis fases, e as setas que quase todo blog corta</h3>
+      </section>
+
+      <!-- 11 - CRISP-DM cycle diagram, com setas corretas -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>Por que o CRISP-DM começa fora do dado</h2>
+          <h2>O diagrama que circula por aí está incompleto</h2>
         </div>
         <div class="side-by-side">
-          <div>
-            <p>O CRISP-DM não é uma lista de tarefas em ordem: as setas voltam [2]. A fase 2
-            (Entendimento dos dados) devolve o projeto para a fase 1 sempre que o dado contradiz o
-            pedido.</p>
-            <p>É exatamente o que aconteceu aqui, na fundação deste acervo, antes de qualquer
-            modelo existir.</p>
+          <div class="diagram-frame">
+            <svg viewBox="0 0 600 480" role="img" aria-label="Hexagono com as seis fases do CRISP-DM, setas duplas entre Entendimento do Negocio e Entendimento dos Dados, e entre Preparacao dos Dados e Modelagem, seta simples nas demais, e um arco tracejado retornando de Implantacao a Entendimento do Negocio">
+              <defs>
+                <marker id="seta-s11" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+                  <path d="M0,0 L10,5 L0,10 z" fill="var(--seg-primaria)"/>
+                </marker>
+                <marker id="seta-loop11" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0,0 L10,5 L0,10 z" fill="var(--seg-destaque)"/>
+                </marker>
+              </defs>
+
+              <!-- arco externo (loop de projeto): implantacao (6) volta a negocio (1) -->
+              <path d="M 120,150 C 20,90 60,10 300,45" fill="none" stroke="var(--seg-destaque)"
+                    stroke-width="2.4" stroke-dasharray="6 4" marker-end="url(#seta-loop11)"/>
+
+              <!-- 1-2 dupla: Negocio <-> Dados -->
+              <line x1="316" y1="80" x2="440" y2="150" stroke="var(--seg-primaria)" stroke-width="2.4"
+                    marker-start="url(#seta-s11)" marker-end="url(#seta-s11)"/>
+              <!-- 2-3 simples -->
+              <line x1="450" y1="185" x2="450" y2="325" stroke="var(--seg-primaria)" stroke-width="2"
+                    marker-end="url(#seta-s11)"/>
+              <!-- 3-4 dupla: Preparacao <-> Modelagem -->
+              <line x1="436" y1="360" x2="316" y2="430" stroke="var(--seg-primaria)" stroke-width="2.4"
+                    marker-start="url(#seta-s11)" marker-end="url(#seta-s11)"/>
+              <!-- 4-5 simples -->
+              <line x1="278" y1="430" x2="158" y2="360" stroke="var(--seg-primaria)" stroke-width="2"
+                    marker-end="url(#seta-s11)"/>
+              <!-- 5-6 simples -->
+              <line x1="140" y1="325" x2="140" y2="185" stroke="var(--seg-primaria)" stroke-width="2"
+                    marker-end="url(#seta-s11)"/>
+
+              <!-- nos -->
+              <rect x="230" y="45" width="140" height="52" rx="8" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <text x="300" y="76" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--seg-primaria)">1. Negócio</text>
+
+              <rect x="394" y="150" width="140" height="52" rx="8" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <text x="464" y="181" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--seg-primaria)">2. Dados</text>
+
+              <rect x="394" y="325" width="140" height="52" rx="8" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <text x="464" y="356" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--seg-primaria)">3. Preparação</text>
+
+              <rect x="230" y="404" width="140" height="52" rx="8" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <text x="300" y="435" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--seg-primaria)">4. Modelagem</text>
+
+              <rect x="66" y="325" width="140" height="52" rx="8" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <text x="136" y="356" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--seg-primaria)">5. Avaliação</text>
+
+              <rect x="66" y="150" width="140" height="52" rx="8" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <text x="136" y="181" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--seg-primaria)">6. Implantação</text>
+            </svg>
           </div>
           <div>
-            <p><strong>O que a fase 2 descobriu:</strong> as cinco tabelas pertencem à Pesquisa
-            Trimestral do IBGE. Não existe versão mensal aberta.</p>
-            <p><strong>O que isso obrigou:</strong> voltar à fase 1 e renegociar a granularidade
-            com quem encomendou o modelo.</p>
-            <p>Um projeto que pula essa volta entrega um modelo no compasso errado, e descobre
-            isso na apresentação final.</p>
+            <p>O guia original [2] usa <strong>seta simples</strong> para dependência e
+            <strong>seta dupla</strong> só para relações reconhecidamente repetíveis. Duas voltas
+            documentadas: <strong>Preparação ↔ Modelagem</strong> (técnica de modelagem exige
+            reformatar dado já preparado) e <strong>Dados ↔ Negócio</strong> (ajustar objetivo à
+            luz do que o dado permite).</p>
+            <p>Quase toda reprodução de blog desenha só o círculo externo tracejado (aqui, em
+            coral) e apaga as duas voltas internas. A diferença importa: sem elas, "vamos voltar ao
+            entendimento do negócio" parece fracasso de projeto. Com elas, é uso previsto do
+            processo.</p>
+            <p>Foi exatamente a volta 1↔2 que aconteceu na fundação deste acervo, antes de existir
+            uma linha de modelo: o dado revelou base trimestral, e o pedido foi renegociado.</p>
           </div>
         </div>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
-          <p class="footer-page">10</p>
+          <p class="footer-page">11</p>
         </div>
       </section>
 
-      <!-- 11 - Exercicio CRISP-DM -->
+      <!-- 12 - Pipeline isometrico das seis fases aplicadas ao case -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>As seis fases, aplicadas ao case da LDC</h2>
+        </div>
+        <div class="diagram-frame">
+          <svg viewBox="0 0 1160 210" role="img" aria-label="Seis paineis em sequencia, um por fase do CRISP-DM, cada um com uma frase do case da Louis Dreyfus Company">
+            <defs>
+              <marker id="seta-s12" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="var(--seg-primaria)"/>
+              </marker>
+            </defs>
+            <!-- setas de fluxo -->
+            <line x1="170" y1="105" x2="198" y2="105" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-s12)"/>
+            <line x1="360" y1="105" x2="388" y2="105" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-s12)"/>
+            <line x1="550" y1="105" x2="578" y2="105" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-s12)"/>
+            <line x1="740" y1="105" x2="768" y2="105" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-s12)"/>
+            <line x1="930" y1="105" x2="958" y2="105" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-s12)"/>
+
+            <!-- painel 1 -->
+            <g>
+              <rect x="20" y="20" width="150" height="170" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <polygon points="20,20 46,20 46,46 20,46" fill="var(--seg-secundaria)"/>
+              <text x="32" y="66" style="font-size:12px;font-weight:700;fill:var(--seg-primaria)">1. Negócio</text>
+              <text x="32" y="98" style="font-size:10px;fill:var(--seg-texto)">LDC compra com</text>
+              <text x="32" y="112" style="font-size:10px;fill:var(--seg-texto)">coeficiente fixo.</text>
+              <text x="32" y="132" style="font-size:10px;fill:var(--seg-texto)">O que ela ganha se</text>
+              <text x="32" y="146" style="font-size:10px;fill:var(--seg-texto)">acertar mais?</text>
+            </g>
+            <!-- painel 2 -->
+            <g>
+              <rect x="210" y="20" width="150" height="170" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <polygon points="210,20 236,20 236,46 210,46" fill="var(--seg-secundaria)"/>
+              <text x="222" y="66" style="font-size:12px;font-weight:700;fill:var(--seg-primaria)">2. Dados</text>
+              <text x="222" y="98" style="font-size:10px;fill:var(--seg-texto)">Cinco séries do</text>
+              <text x="222" y="112" style="font-size:10px;fill:var(--seg-texto)">SIDRA, trimestrais,</text>
+              <text x="222" y="126" style="font-size:10px;fill:var(--seg-texto)">3 unidades diferentes.</text>
+            </g>
+            <!-- painel 3 -->
+            <g>
+              <rect x="400" y="20" width="150" height="170" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <polygon points="400,20 426,20 426,46 400,46" fill="var(--seg-secundaria)"/>
+              <text x="412" y="66" style="font-size:12px;font-weight:700;fill:var(--seg-primaria)">3. Preparação</text>
+              <text x="412" y="98" style="font-size:10px;fill:var(--seg-texto)">Unir SIDRA e</text>
+              <text x="412" y="112" style="font-size:10px;fill:var(--seg-texto)">Sindirações, criar</text>
+              <text x="412" y="126" style="font-size:10px;fill:var(--seg-texto)">defasagem (Aula 04).</text>
+            </g>
+            <!-- painel 4 -->
+            <g>
+              <rect x="590" y="20" width="150" height="170" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <polygon points="590,20 616,20 616,46 590,46" fill="var(--seg-secundaria)"/>
+              <text x="602" y="66" style="font-size:12px;font-weight:700;fill:var(--seg-primaria)">4. Modelagem</text>
+              <text x="602" y="98" style="font-size:10px;fill:var(--seg-texto)">Regressão tabular,</text>
+              <text x="602" y="112" style="font-size:10px;fill:var(--seg-texto)">sem série temporal</text>
+              <text x="602" y="126" style="font-size:10px;fill:var(--seg-texto)">(Aulas 05 a 11).</text>
+            </g>
+            <!-- painel 5 -->
+            <g>
+              <rect x="780" y="20" width="150" height="170" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <polygon points="780,20 806,20 806,46 780,46" fill="var(--seg-secundaria)"/>
+              <text x="792" y="66" style="font-size:12px;font-weight:700;fill:var(--seg-primaria)">5. Avaliação</text>
+              <text x="792" y="98" style="font-size:10px;fill:var(--seg-texto)">RMSE e MAPE</text>
+              <text x="792" y="112" style="font-size:10px;fill:var(--seg-texto)">contra o coeficiente</text>
+              <text x="792" y="126" style="font-size:10px;fill:var(--seg-texto)">fixo. Nunca contra zero.</text>
+            </g>
+            <!-- painel 6 -->
+            <g>
+              <rect x="970" y="20" width="150" height="170" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <polygon points="970,20 996,20 996,46 970,46" fill="var(--seg-secundaria)"/>
+              <text x="982" y="66" style="font-size:12px;font-weight:700;fill:var(--seg-primaria)">6. Implantação</text>
+              <text x="982" y="98" style="font-size:10px;fill:var(--seg-texto)">Pipeline e app de</text>
+              <text x="982" y="112" style="font-size:10px;fill:var(--seg-texto)">cenários</text>
+              <text x="982" y="126" style="font-size:10px;fill:var(--seg-texto)">(Aulas 12 e 13).</text>
+            </g>
+          </svg>
+          <p class="diagram-caption">A ordem de leitura da esquerda para a direita é a sequência
+          mais comum, não uma regra rígida: o diagrama anterior mostrou onde ela volta.</p>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">12</p>
+        </div>
+      </section>
+
+      <!-- 13 - Quote RAND -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Onde os projetos de dados realmente falham</h2>
+        </div>
+        <div class="pull-quote">
+          <p class="pull-quote-text">"Mais de 80% dos projetos de IA não chegam à produção com
+          valor real. Liderança e enquadramento do problema, não limitação de tecnologia, são a
+          causa-raiz mais citada."</p>
+          <p class="pull-quote-source">RAND Corporation, <em>The Root Causes of Failure for
+          Artificial Intelligence Projects</em>, 2024 [13]. Entrevistas estruturadas com 65
+          cientistas de dados e engenheiros.</p>
+        </div>
+        <p>O estudo cita um exemplo direto: liderança de negócio às vezes pede "um modelo que diga
+        o preço a definir", quando precisa de "o preço que dá a maior margem, não o que vende mais
+        unidades". A métrica errada entra antes da primeira linha de código, e nenhuma técnica de
+        modelagem corrige isso depois. É o mesmo achado, com número, do estudo qualitativo de
+        James Taylor sobre CRISP-DM: o fracasso nasce na fase 1, não na fase 4.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">13</p>
+        </div>
+      </section>
+
+      <!-- 14 - Exercicio CRISP-DM -->
       <section class="exercise-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -273,47 +541,95 @@
         </ol>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
-          <p class="footer-page">11</p>
+          <p class="footer-page">14</p>
         </div>
       </section>
 
-      <!-- 12 - Divisor -->
+      <!-- 15 - Divisor -->
       <section class="section-slide">
         <div class="accent-bar"></div>
         <h2>O descompasso</h2>
-        <h3>11h00 &middot; 11h15 &middot; o pedido, a fonte, e a decisão</h3>
+        <h3>11h00 &middot; 11h15 &middot; o pedido, a fonte, e por que a decisão tem evidência</h3>
       </section>
 
-      <!-- 13 - A evidencia -->
+      <!-- 16 - Evidencia real: grafico -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>O que foi pedido e o que existe</h2>
+          <h2>24 observações medidas, 72 pedidas</h2>
+        </div>
+        <img src="../assets/img/aula02-descompasso-granularidade.png"
+             alt="Serie de abate de bovinos dos ultimos 24 trimestres, com painel de cadencia mostrando 24 observacoes medidas pelo IBGE contra 72 que o TAPI pediria em base mensal, sendo 48 nunca medidas"
+             style="width: 100%; max-width: 980px; margin: 0 auto; display: block;">
+        <p>O painel de baixo não interpola nada: mostra a cadência real. O IBGE mede 1 ponto por
+        trimestre. O TAPI, lido ao pé da letra, pediria 3 por trimestre. Dois de cada três pontos
+        mensais <strong>nunca existiram</strong>, em nenhuma tabela do SIDRA [1].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">16</p>
+        </div>
+      </section>
+
+      <!-- 17 - Por que trimestral: justificativa tecnica -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Trimestral não é limitação, é decisão de custo</h2>
         </div>
         <div class="side-by-side">
           <div>
-            <p><strong>O pedido:</strong> abate mensal, projeções mensais, horizonte de 24 meses.</p>
-            <p><strong>A fonte:</strong> Pesquisa Trimestral do IBGE. O período vem da API como
-            <code>AAAATT</code>, então <code>202504</code> é o quarto trimestre, não abril [1].</p>
-            <p>Sindirações, a outra fonte do case, publica boletim <strong>anual</strong>.</p>
+            <p><strong>Por que o IBGE publica trimestral.</strong> Di Fonzo, para a Eurostat [14]:
+            institutos de estatística fazem levantamento amostral de qualidade suficiente com
+            periodicidade anual ou trimestral porque o <strong>custo de coleta</strong> não sustenta
+            frequência maior. O trimestre é o ponto de equilíbrio entre custo e utilidade, não uma
+            limitação técnica de quem constrói o modelo.</p>
           </div>
           <div>
-            <p><strong>Por que não interpolar</strong></p>
-            <p>Transformar 1 trimestre em 3 meses cria 2 observações que ninguém mediu, para cada
-            1 medida. Dois terços da base viram invenção.</p>
-            <p>E o erro do modelo passa a ser medido contra dado inventado, o que destrói o
-            sentido de RMSE e MAPE.</p>
+            <p><strong>O que existe para desagregar.</strong> Métodos como Chow-Lin e Denton [14]
+            produzem uma série mensal <strong>estimada</strong>, nunca observada: a distribuição
+            intra-trimestral é inferida, não medida. Toda desagregação acrescenta incerteza que a
+            série trimestral original não tinha.</p>
+            <p>É a mesma decisão que o Sindirações força mais adiante: o boletim do setor de
+            ração é <strong>anual</strong>, então o Modelo 2 atravessa outra mudança de
+            granularidade, de trimestral para anual.</p>
           </div>
         </div>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
-          <p class="footer-page">13</p>
+          <p class="footer-page">17</p>
         </div>
       </section>
 
-      <!-- 14 - A decisao -->
+      <!-- 18 - Granularity Paradox -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que desagregar custaria de verdade</h2>
+        </div>
+        <div class="pull-quote">
+          <p class="pull-quote-text">Desagregar uma série melhora o ajuste dentro da amostra, e
+          piora a acurácia da previsão fora da amostra, por composição recursiva de erro.</p>
+          <p class="pull-quote-source">"The Granularity Paradox", arXiv:2607.05450, julho de 2026 [15]</p>
+        </div>
+        <p>De trimestral para mensal, o horizonte de passos necessário <strong>triplica</strong>: 8
+        trimestres viram 24 meses. Um modelo autorregressivo alimenta a própria previsão como
+        entrada do passo seguinte, e o erro se amplia a cada passo extra. Para quem programa: é a
+        prova concreta de que <strong>R² de treino alto pode não significar nada</strong> sobre
+        previsão real, o mesmo raciocínio de overfitting aplicado ao eixo do tempo em vez de ao
+        eixo das features.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">18</p>
+        </div>
+      </section>
+
+      <!-- 19 - A decisao -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -324,7 +640,7 @@
         <div class="concept-cards">
           <div class="concept-card">
             <h3>O que muda</h3>
-            <p>O módulo trabalha em base trimestral, com horizonte de 8 trimestres [6].</p>
+            <p>O módulo trabalha em base trimestral, com horizonte de 8 trimestres [17].</p>
           </div>
           <div class="concept-card">
             <h3>O que não muda</h3>
@@ -332,18 +648,19 @@
           </div>
           <div class="concept-card">
             <h3>O que se ganha</h3>
-            <p>Toda observação da base foi medida por alguém. Nenhuma foi inventada.</p>
+            <p>Toda observação da base foi medida por alguém, e há evidência de que desagregar
+            pioraria a previsão, não só que faltava dado mensal.</p>
           </div>
         </div>
         <p><strong>Votação, levantando a mão:</strong> vocês teriam aceitado o pedido do parceiro
         sem checar a fonte de dados primeiro? Contar os dois lados antes de seguir.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
-          <p class="footer-page">14</p>
+          <p class="footer-page">19</p>
         </div>
       </section>
 
-      <!-- 15 - Pratica em papel -->
+      <!-- 20 - Pratica em papel -->
       <section class="exercise-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -361,50 +678,39 @@
         </ol>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
-          <p class="footer-page">15</p>
+          <p class="footer-page">20</p>
         </div>
       </section>
 
-      <!-- 16 - Quiz -->
-      <section class="quiz-slide">
+      <!-- 21 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Qualidade e taxonomia do dado</h2>
+        <h3>11h30 &middot; 11h45 &middot; os seis pilares e as quatro escalas de Stevens</h3>
+      </section>
+
+      <!-- 22 - Cinco series, evidencia real -->
+      <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>Verificação rápida</h2>
+          <h2>As cinco séries, cada uma na sua unidade</h2>
         </div>
-        <div class="quiz-container">
-          <p class="quiz-question">A fase 2 do CRISP-DM revela que o dado não tem a granularidade
-          que o cliente pediu. Qual é a atitude correta?</p>
-          <ul class="quiz-options">
-            <li data-correct="false"
-                data-correct-msg="Correto."
-                data-incorrect-msg="Não: interpolar cria observação que ninguém mediu, e o erro do modelo passa a ser medido contra dado inventado.">Interpolar para chegar na granularidade pedida</li>
-            <li data-correct="true"
-                data-correct-msg="Certo: as setas do CRISP-DM voltam. O dado contradisse o pedido, então o pedido é renegociado antes de modelar."
-                data-incorrect-msg="Não.">Voltar à fase 1 e renegociar o pedido</li>
-            <li data-correct="false"
-                data-correct-msg="Correto."
-                data-incorrect-msg="Não: entregar e avisar depois transforma um problema de escopo em retrabalho na apresentação final.">Seguir para a modelagem e avisar na entrega</li>
-            <li data-correct="false"
-                data-correct-msg="Correto."
-                data-incorrect-msg="Não: procurar outra fonte é legítimo, mas aqui já foi verificado que não existe versão mensal aberta dessas séries.">Descartar a fonte e procurar outra</li>
-          </ul>
-        </div>
+        <img src="../assets/img/aula02-cinco-series.png"
+             alt="Painel com as cinco series do case, frangos, bovinos, suinos, ovos e leite, cada uma na sua propria unidade e escala, base trimestral do IBGE"
+             style="width: 100%; max-width: 1150px; margin: 0 auto; display: block;">
+        <p>Cinco painéis, cinco escalas diferentes: bilhões de quilogramas de carcaça nas três
+        proteínas de abate, bilhões de dúzias em ovos, bilhões de litros em leite. É a mesma
+        consistência que a tabela a seguir cobra: somar as cinco não produz um número com
+        significado físico, porque nenhuma unidade é igual à outra [1].</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
-          <p class="footer-page">16</p>
+          <p class="footer-page">22</p>
         </div>
       </section>
 
-      <!-- 17 - Divisor -->
-      <section class="section-slide">
-        <div class="accent-bar"></div>
-        <h2>Qualidade e taxonomia do dado</h2>
-        <h3>11h30 &middot; 11h45 &middot; os seis pilares nas cinco séries</h3>
-      </section>
-
-      <!-- 18 - Os seis pilares -->
+      <!-- 23 - Tabela seis pilares -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -412,51 +718,127 @@
           <div class="accent-bar"></div>
           <h2>Seis pilares, seis riscos reais</h2>
         </div>
-        <div class="concept-cards">
-          <div class="concept-card">
-            <h3>Completude</h3>
-            <p>Ovos tem 157 registros desde 1987-T1. As outras quatro, 117 desde 1997-T1.</p>
-          </div>
-          <div class="concept-card">
-            <h3>Unicidade</h3>
-            <p>Sem filtrar as dimensões extras por "Total", o mesmo trimestre repetiria por tipo
-            de inspeção.</p>
-          </div>
-          <div class="concept-card">
-            <h3>Atualidade</h3>
-            <p>O dado mais recente é 2026-T1, e o parceiro quer 8 trimestres à frente.</p>
-          </div>
-          <div class="concept-card">
-            <h3>Validade</h3>
-            <p><code>202504</code> é o quarto trimestre. Lido como mês, viraria abril.</p>
-          </div>
-          <div class="concept-card">
-            <h3>Acurácia</h3>
-            <p>Pedir <code>v/all</code> ao SIDRA traria número de informantes junto com peso.</p>
-          </div>
-          <div class="concept-card">
-            <h3>Consistência</h3>
-            <p>Três unidades entre as cinco séries: quilogramas, mil litros e mil dúzias.</p>
-          </div>
-        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Pilar (DAMA UK [10])</th><th>Risco real, nas cinco séries</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Completude</td><td>Ovos tem 157 registros desde 1987-T1; as outras quatro têm 117 desde 1997-T1.</td></tr>
+            <tr><td>Unicidade</td><td>Sem filtrar as dimensões extras por "Total", o mesmo trimestre repetiria por tipo de rebanho.</td></tr>
+            <tr><td>Atualidade</td><td>O dado mais recente é 2026-T1; o parceiro quer 8 trimestres à frente.</td></tr>
+            <tr><td>Validade</td><td><code>202504</code> é o quarto trimestre. Lido como mês, viraria abril.</td></tr>
+            <tr><td>Acurácia</td><td>Pedir <code>v/all</code> ao SIDRA traria número de informantes junto com peso.</td></tr>
+            <tr><td>Consistência</td><td>Três unidades entre as cinco séries: quilogramas, mil litros, mil dúzias.</td></tr>
+          </tbody>
+        </table>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
-          <p class="footer-page">18</p>
+          <p class="footer-page">23</p>
         </div>
       </section>
 
-      <!-- 19 - Taxonomia -->
+      <!-- 24 - DAMA flower -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>As três colunas, três escalas diferentes</h2>
+          <h2>Seis pétalas, sem hierarquia entre elas</h2>
+        </div>
+        <div class="side-by-side">
+          <div class="diagram-frame">
+            <svg viewBox="20 45 380 300" role="img" aria-label="Diagrama de flor: um circulo central Qualidade dos Dados, com seis petalas ao redor, uma por dimensao, do mesmo tamanho">
+              <circle cx="283.6" cy="147.5" r="48" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="1.8"/>
+              <circle cx="283.6" cy="232.5" r="48" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="1.8"/>
+              <circle cx="210" cy="275" r="48" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="1.8"/>
+              <circle cx="136.4" cy="232.5" r="48" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="1.8"/>
+              <circle cx="136.4" cy="147.5" r="48" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="1.8"/>
+              <circle cx="210" cy="105" r="48" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="1.8"/>
+              <circle cx="210" cy="190" r="55" fill="var(--seg-primaria)"/>
+              <text x="210" y="184" text-anchor="middle" style="font-size:10.5px;fill:var(--inteli-branco);font-weight:700">Qualidade</text>
+              <text x="210" y="198" text-anchor="middle" style="font-size:10.5px;fill:var(--inteli-branco)">dos dados</text>
+              <text x="210" y="108" text-anchor="middle" style="font-size:11px;fill:var(--seg-primaria)">Completude</text>
+              <text x="283.6" y="150" text-anchor="middle" style="font-size:11px;fill:var(--seg-primaria)">Unicidade</text>
+              <text x="283.6" y="235" text-anchor="middle" style="font-size:11px;fill:var(--seg-primaria)">Atualidade</text>
+              <text x="210" y="278" text-anchor="middle" style="font-size:11px;fill:var(--seg-primaria)">Validade</text>
+              <text x="136.4" y="235" text-anchor="middle" style="font-size:11px;fill:var(--seg-primaria)">Acurácia</text>
+              <text x="136.4" y="150" text-anchor="middle" style="font-size:10px;fill:var(--seg-primaria)">Consistência</text>
+            </svg>
+          </div>
+          <div>
+            <p>A figura oficial da DAMA UK [10] é a flor: seis pétalas do <strong>mesmo
+            tamanho</strong>, sem ordem implícita. O documento tem uma segunda figura, uma escada
+            de aplicação a um caso específico, que costuma ser confundida com esta: não são a mesma
+            coisa.</p>
+            <p>E o documento afirma algo contraintuitivo, citado quase sempre errado:
+            <strong>"é possível ter consistência sem validade ou acurácia"</strong>. Um dado pode
+            estar consistente entre dois sistemas e mesmo assim estar errado nos dois, do mesmo
+            jeito. Um CSV do SIDRA pode ser 100% completo e válido e ainda assim estar defasado
+            (timeliness) ou divergir de outra tabela do IBGE em unidade.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">24</p>
+        </div>
+      </section>
+
+      <!-- 25 - Escalas de Stevens: escada + tabela -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Escalas de Stevens: cada degrau herda o anterior</h2>
+        </div>
+        <div class="diagram-frame">
+          <svg viewBox="0 0 900 200" role="img" aria-label="Quatro degraus ascendentes: nominal, ordinal, intervalar, razao, cada um mais alto que o anterior">
+            <polygon points="40,150 220,150 238,134 58,134" fill="var(--seg-secundaria)" fill-opacity="0.55" stroke="var(--seg-primaria)" stroke-width="1.4"/>
+            <rect x="40" y="150" width="180" height="40" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+            <text x="130" y="175" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--seg-primaria)">Nominal</text>
+
+            <polygon points="250,120 430,120 448,104 268,104" fill="var(--seg-secundaria)" fill-opacity="0.55" stroke="var(--seg-primaria)" stroke-width="1.4"/>
+            <rect x="250" y="120" width="180" height="70" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+            <text x="340" y="145" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--seg-primaria)">Ordinal</text>
+
+            <polygon points="460,90 640,90 658,74 478,74" fill="var(--seg-secundaria)" fill-opacity="0.55" stroke="var(--seg-primaria)" stroke-width="1.4"/>
+            <rect x="460" y="90" width="180" height="100" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+            <text x="550" y="115" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--seg-primaria)">Intervalar</text>
+
+            <polygon points="670,54 850,54 868,38 688,38" fill="var(--seg-secundaria)" fill-opacity="0.55" stroke="var(--seg-primaria)" stroke-width="1.4"/>
+            <rect x="670" y="54" width="180" height="136" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+            <text x="760" y="79" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--seg-primaria)">Razão</text>
+          </svg>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Escala</th><th>Adiciona</th><th>Não vale</th><th>Exemplo</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Nominal</td><td>contagem por categoria</td><td>ordenar, somar, média</td><td><code>unidade</code></td></tr>
+            <tr><td>Ordinal</td><td>ordem, mediana</td><td>média aritmética</td><td>nota de satisfação</td></tr>
+            <tr><td>Intervalar</td><td>soma, subtração, média</td><td>razão ("o dobro de")</td><td>Celsius, <code>periodo</code> como índice</td></tr>
+            <tr><td>Razão</td><td>razão, média geométrica</td><td>&mdash;</td><td><code>valor</code></td></tr>
+          </tbody>
+        </table>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">25</p>
+        </div>
+      </section>
+
+      <!-- 26 - Taxonomia nas tres colunas -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>As três colunas do CSV, três escalas diferentes</h2>
         </div>
         <div class="side-by-side">
           <div>
             <p><code>unidade</code> é <strong>nominal</strong>: categoria sem ordem. Não faz
-            sentido dizer que Quilogramas é maior que Mil litros [4].</p>
+            sentido dizer que Quilogramas é maior que Mil litros [9].</p>
             <p><code>periodo</code> é <strong>ordinal</strong> como rótulo: 2025-T4 vem depois de
             2025-T3. Vira <strong>intervalar</strong> quando convertido em índice de tempo, o que
             a Aula 04 vai fazer para criar defasagem.</p>
@@ -464,18 +846,19 @@
           <div>
             <p><code>valor</code> é de <strong>razão</strong>: tem zero absoluto e razões fazem
             sentido. "O abate de 2025 foi 3,33 vezes o de 1997" é uma frase válida.</p>
-            <p><strong>Por que isso importa agora:</strong> a escala decide o que se pode calcular.
-            Média de <code>unidade</code> não existe. Média de <code>periodo</code> como rótulo
-            não existe. E é erro comum tratar tudo como número porque o Pandas aceita.</p>
+            <p><strong>Por que isso importa agora:</strong> Nenhuma biblioteca de dado impede o
+            cálculo errado. O Pandas calcula a média de um código de categoria sem reclamar. A
+            escala mora no significado do dado, não no tipo <code>int</code> ou <code>float</code>
+            da coluna.</p>
           </div>
         </div>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
-          <p class="footer-page">19</p>
+          <p class="footer-page">26</p>
         </div>
       </section>
 
-      <!-- 20 - O caso do leite -->
+      <!-- 27 - O caso do leite -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -498,18 +881,19 @@
             <strong>compraram</strong>. Leite não comercializado formalmente não entra.</p>
             <p>Os cinco arquivos passam em todos os testes de
             <code>tools/tests/test_dados.py</code>: colunas certas, período válido, unidade única,
-            ordem de grandeza plausível. Este risco é invisível para todos eles.</p>
+            ordem de grandeza plausível. Este risco é invisível para todos eles: é o mesmo padrão
+            da flor da DAMA, consistência sem acurácia.</p>
             <p><strong>Só a leitura da documentação da variável pega isso.</strong> É por isso que
             o CRISP-DM tem uma fase de entendimento dos dados, e não só um script de carga.</p>
           </div>
         </div>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
-          <p class="footer-page">20</p>
+          <p class="footer-page">27</p>
         </div>
       </section>
 
-      <!-- 21 - Exercicio de qualidade -->
+      <!-- 28 - Exercicio de qualidade -->
       <section class="exercise-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -519,7 +903,7 @@
         </div>
         <ol class="exercise-steps">
           <li>Abram <code>dados/README.md</code> e escolham <strong>um</strong> risco de qualidade
-          documentado ali que ainda não apareceu neste slide.</li>
+          documentado ali que ainda não apareceu neste bloco.</li>
           <li>Digam a qual dos seis pilares ele pertence.</li>
           <li>Digam o que aconteceria com o Modelo 1 se ninguém tivesse notado esse risco.</li>
         </ol>
@@ -527,11 +911,43 @@
         outro.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
-          <p class="footer-page">21</p>
+          <p class="footer-page">28</p>
         </div>
       </section>
 
-      <!-- 22 - Amarracao com a sprint -->
+      <!-- 29 - Quiz -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Verificação rápida</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">A fase 2 do CRISP-DM revela que o dado não tem a granularidade
+          que o cliente pediu. Qual é a atitude correta?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: desagregar cria observação estimada, nunca medida, e a literatura recente (Granularity Paradox) mostra que isso piora a previsão fora da amostra.">Desagregar para chegar na granularidade pedida</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: as setas duplas do CRISP-DM ligam justamente Dados e Negócio. O dado contradisse o pedido, então o pedido é renegociado antes de modelar."
+                data-incorrect-msg="Não.">Voltar à fase 1 e renegociar o pedido</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: entregar e avisar depois transforma um problema de escopo em retrabalho na apresentação final, exatamente o padrão que o estudo da RAND descreve.">Seguir para a modelagem e avisar na entrega</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: procurar outra fonte é legítimo, mas aqui já foi verificado que não existe versão mensal aberta dessas séries.">Descartar a fonte e procurar outra</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
+          <p class="footer-page">29</p>
+        </div>
+      </section>
+
+      <!-- 30 - Amarracao com a sprint -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -543,12 +959,12 @@
           <div class="concept-card">
             <h3>ART.1, peso 6</h3>
             <p>Entendimento do negócio. Hoje ele fica formalizado, com a negociação de
-            granularidade escrita, não subentendida.</p>
+            granularidade escrita e com evidência técnica, não subentendida.</p>
           </div>
           <div class="concept-card">
             <h3>Fecha o ciclo</h3>
             <p>A Aula 01 achou o descompasso no dado. A Aula 02 transformou o achado em decisão de
-            projeto.</p>
+            projeto, com fonte primária citada.</p>
           </div>
           <div class="concept-card">
             <h3>Sprint 1</h3>
@@ -556,15 +972,15 @@
           </div>
         </div>
         <p>Levem para a ART.1 os quatro artefatos de hoje: os três modelos desenhados com as
-        fontes, as seis frases do CRISP-DM, a decisão dos 8 trimestres e o risco de qualidade que a
-        sua dupla apontou.</p>
+        fontes, as seis frases do CRISP-DM, a decisão dos 8 trimestres com sua justificativa
+        técnica, e o risco de qualidade que a sua dupla apontou.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
-          <p class="footer-page">22</p>
+          <p class="footer-page">30</p>
         </div>
       </section>
 
-      <!-- 23 - Referencias -->
+      <!-- 31 - Referencias -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -572,24 +988,34 @@
           <div class="accent-bar"></div>
           <h2>Referências</h2>
         </div>
-        <ol class="exercise-steps">
-          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite, tabelas
-          1092, 1093, 1094, 7524 e 1086 do SIDRA. Contrato e riscos em
-          <code>dados/README.md</code>.</li>
-          <li>Chapman, P. et al. <em>CRISP-DM 1.0: step-by-step data mining guide</em>, 2000.</li>
-          <li>DAMA UK. <em>The six primary dimensions for data quality assessment</em>, 2013.</li>
-          <li>Stevens, S. S. <em>On the theory of scales of measurement</em>. Science, 1946.</li>
-          <li>Autoestudos da Semana 01 na Adalove, listados em
+        <ol class="ref-columns">
+          <li>[1] IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite,
+          tabelas 1092, 1093, 1094, 7524 e 1086 do SIDRA. <code>dados/README.md</code>.</li>
+          <li>[2] Chapman, P. et al. <em>CRISP-DM 1.0: step-by-step data mining guide</em>, 2000.</li>
+          <li>[3] Goodfellow, I.; Bengio, Y.; Courville, A. <em>Deep Learning</em>. MIT Press, 2016, Fig. 1.4.</li>
+          <li>[4] NVIDIA. "Deep Learning Fundamentals, Explained", 2023.</li>
+          <li>[5] IBM Think. "AI vs. Machine Learning vs. Deep Learning vs. Neural Networks".</li>
+          <li>[6] padme.ai. "Clarifying AI, ML, DL, Data Science with Venn Diagrams".</li>
+          <li>[7] arXiv:2301.13761. "Foundations and Scoping of Data Science".</li>
+          <li>[8] Digital.ai. "Gartner's Analytics Maturity Model" (Analytic Value Escalator).</li>
+          <li>[9] Stevens, S. S. "On the theory of scales of measurement". Science, 1946.</li>
+          <li>[10] DAMA UK Working Group. "The six primary dimensions for data quality assessment", 2013.</li>
+          <li>[11] Chollet, F. <em>Deep Learning with Python</em>. Manning, 2018, Fig. 1.2.</li>
+          <li>[12] Zinkevich, M. (Google). <em>Rules of Machine Learning: Best Practices for ML Engineering</em>.</li>
+          <li>[13] RAND Corporation. <em>The Root Causes of Failure for Artificial Intelligence Projects</em>, 2024.</li>
+          <li>[14] Di Fonzo, T. <em>Temporal disaggregation of economic time series</em>. Eurostat, 2003.</li>
+          <li>[15] "The Granularity Paradox". arXiv:2607.05450, 2026.</li>
+          <li>[16] Autoestudos da Semana 01 na Adalove, listados em
           <a href="../referencias/aula02.html">referencias/aula02.html</a>.</li>
-          <li><code>PLANO_DE_ENSINO.md</code>, seção 2.1: o registro da decisão de granularidade.</li>
+          <li>[17] <code>PLANO_DE_ENSINO.md</code>, seção 2.1: o registro da decisão de granularidade.</li>
         </ol>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 02 &middot; Sprint 1</p>
-          <p class="footer-page">23</p>
+          <p class="footer-page">31</p>
         </div>
       </section>
 
-      <!-- 24 - Encerramento -->
+      <!-- 32 - Encerramento -->
       <section class="end-slide">
         <h1>Até 11/08</h1>
         <h3>Aula 03: as cinco séries de verdade, com Pandas</h3>

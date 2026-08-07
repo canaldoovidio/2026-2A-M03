@@ -92,10 +92,12 @@
       <section class="doc-secao" id="complementar">
         <h2>2. Leitura complementar do professor</h2>
         <p>A curadoria definitiva desta seção ainda será fechada pelo professor. Até lá, ficam aqui
-        as fontes efetivamente citadas no deck e no material de apoio, na mesma numeração usada no
-        slide de referências.</p>
+        as dezessete fontes efetivamente citadas no deck e no material de apoio, na mesma numeração
+        usada no slide de referências (<code>[N]</code>). A pesquisa completa, com o texto exato de
+        cada citação, está em
+        <code>.superpowers/sdd/2026-08-01-fundacao-e-aula01/pesquisa-visual-aula02.md</code>.</p>
         <ol class="doc-referencias">
-          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite:
+          <li>[1] IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite:
             <a href="https://sidra.ibge.gov.br/tabela/1092">tabela 1092</a> (bovinos),
             <a href="https://sidra.ibge.gov.br/tabela/1093">1093</a> (suínos),
             <a href="https://sidra.ibge.gov.br/tabela/1094">1094</a> (frangos),
@@ -105,32 +107,88 @@
             mais valioso desta lista: é onde se descobre que a série mede leite
             <em>adquirido</em>, não produzido. O contrato das colunas e a lista completa de riscos
             estão em <code>dados/README.md</code>.</span></li>
-          <li>Chapman, P.; Clinton, J.; Kerber, R.; Khabaza, T.; Reinartz, T.; Shearer, C.; Wirth, R.
-            <em>CRISP-DM 1.0: step-by-step data mining guide</em>. SPSS Inc., 2000.
+          <li>[2] Chapman, P.; Clinton, J.; Kerber, R.; Khabaza, T.; Reinartz, T.; Shearer, C.;
+            Wirth, R. <em>CRISP-DM 1.0: step-by-step data mining guide</em>. SPSS Inc., 2000.
             <span class="doc-porque">O documento original. Ler o diagrama das seis fases prestando
-            atenção nas <strong>setas de volta</strong>, que é o que quase todo resumo de CRISP-DM
-            omite e é justamente o que este case exerceu.</span></li>
-          <li>DAMA UK Working Group. <em>The six primary dimensions for data quality assessment</em>.
-            DAMA UK, 2013.
-            <span class="doc-porque">A formulação dos seis pilares usada no slide 18 e na tabela do
-            material. Útil para conferir que os nomes dos pilares no seu relatório de ART.1 batem
-            com uma referência publicada, em vez de serem lembrados de memória.</span></li>
-          <li>Stevens, S. S. <em>On the theory of scales of measurement</em>. Science, v. 103,
+            atenção nas <strong>setas de volta</strong> (dupla entre Preparação e Modelagem, e entre
+            Dados e Negócio): é o que quase todo resumo de CRISP-DM omite, e é justamente o que este
+            case exerceu.</span></li>
+          <li>[3] Goodfellow, I.; Bengio, Y.; Courville, A. <em>Deep Learning</em>. MIT Press, 2016,
+            Fig. 1.4. Edição em HTML gratuita:
+            <a href="https://www.deeplearningbook.org/">deeplearningbook.org</a>.
+            <span class="doc-porque">A figura de quatro camadas (IA, ML, Representation Learning,
+            Deep Learning) que quase toda reprodução popular colapsa em três, apagando a camada que
+            justifica a Aula 04.</span></li>
+          <li>[4] NVIDIA. "Deep Learning Fundamentals, Explained", 2023.
+            <a href="https://blogs.nvidia.com/deep-learning-fundamentals-explained/">blogs.nvidia.com</a>.
+            <span class="doc-porque">Confirmação de indústria do aninhamento IA/ML/DL em círculos
+            concêntricos.</span></li>
+          <li>[5] IBM Think. "AI vs. Machine Learning vs. Deep Learning vs. Neural Networks".
+            <a href="https://www.ibm.com/think/topics/ai-vs-machine-learning-vs-deep-learning-vs-neural-networks">ibm.com/think</a>.
+            <span class="doc-porque">Segunda confirmação de indústria, independente da NVIDIA.</span></li>
+          <li>[6] padme.ai. "Clarifying AI, Machine Learning, Deep Learning, Data Science with Venn
+            Diagrams".
+            <a href="https://www.padme.ai/post/clarifying-ai-machine-learning-deep-learning-data-science-with-venn-diagrams">padme.ai</a>.
+            <span class="doc-porque">A primeira das três leituras divergentes de onde a Ciência de
+            Dados entra: círculo sobreposto, não contido.</span></li>
+          <li>[7] arXiv:2301.13761. "Foundations and Scoping of Data Science".
+            <a href="https://arxiv.org/abs/2301.13761">arxiv.org/abs/2301.13761</a>.
+            <span class="doc-porque">A segunda leitura: Ciência de Dados e IA como disciplinas
+            distintas que se cruzam, não uma contida na outra.</span></li>
+          <li>[8] Digital.ai. "IT Decision-Making Through the Lens of Gartner's Analytics Maturity
+            Model" (Analytic Value Escalator).
+            <a href="https://digital.ai/catalyst-blog/it-decision-making-through-the-lens-of-gartners-analytics-maturity-model/">digital.ai</a>.
+            <span class="doc-porque">A escada de valor por trás dos quatro tipos de análise
+            (descritiva, diagnóstica, preditiva, prescritiva).</span></li>
+          <li>[9] Stevens, S. S. "On the theory of scales of measurement". Science, v. 103,
             n. 2684, p. 677-680, 1946.
+            <a href="https://www.science.org/doi/10.1126/science.103.2684.677">science.org</a>
+            (acesso pago; cópia acadêmica via biblioteca institucional).
             <span class="doc-porque">A origem da taxonomia nominal, ordinal, intervalar e de razão.
-            São quatro páginas, e elas explicam por que a média de um código de categoria é um
-            número sem significado, mesmo quando a biblioteca calcula sem reclamar.</span></li>
-          <li>Autoestudos da Semana 01 na Adalove, listados na seção 1 desta página.
-            <span class="doc-porque">Referência cruzada usada como citação [5] no deck.</span></li>
-          <li><code>PLANO_DE_ENSINO.md</code>, seção 2.1, e
+            Quatro páginas que explicam por que a média de um código de categoria é um número sem
+            significado, mesmo quando a biblioteca calcula sem reclamar.</span></li>
+          <li>[10] DAMA UK Working Group. <em>The six primary dimensions for data quality
+            assessment</em>. DAMA UK, 2013.
+            <a href="https://www.dqglobal.com/wp-content/uploads/2013/11/DAMA-UK-DQ-Dimensions-White-Paper-R37.pdf">dqglobal.com (PDF)</a>.
+            <span class="doc-porque">A formulação dos seis pilares, com a definição literal de cada
+            um e o ponto contraintuitivo: é possível ter consistência sem validade ou acurácia.</span></li>
+          <li>[11] Chollet, F. <em>Deep Learning with Python</em>. Manning, 2018, Fig. 1.2.
+            <span class="doc-porque">O diagrama de duas caixas (Regras+Dado→Respostas versus
+            Dado+Respostas→Regras) que inverte a lógica de programação tradicional em Machine
+            Learning.</span></li>
+          <li>[12] Zinkevich, M. (Google). <em>Rules of Machine Learning: Best Practices for ML
+            Engineering</em>.
+            <a href="https://developers.google.com/machine-learning/guides/rules-of-ml">developers.google.com</a>.
+            <span class="doc-porque">O critério objetivo, de engenharia, para escolher entre
+            heurística e modelo aprendido: custo de manutenção, não sofisticação.</span></li>
+          <li>[13] RAND Corporation. <em>The Root Causes of Failure for Artificial Intelligence
+            Projects and How They Can Succeed</em>, 2024.
+            <a href="https://www.rand.org/pubs/research_reports/RRA2680-1.html">rand.org</a>.
+            <span class="doc-porque">Entrevistas estruturadas com 65 profissionais: mais de 80% dos
+            projetos de IA não chegam à produção com valor real, e a causa mais citada é liderança e
+            enquadramento do problema, não tecnologia.</span></li>
+          <li>[14] Di Fonzo, T. <em>Temporal disaggregation of economic time series: towards a
+            dynamic extension</em>. Eurostat, Working Papers and Studies, 2003.
+            <span class="doc-porque">A justificativa técnica de por que institutos de estatística
+            oficial publicam trimestral: custo de coleta, não limitação de quem constrói o modelo
+            depois.</span></li>
+          <li>[15] "The Granularity Paradox: How Temporal Disaggregation Inflates In-Sample Fit and
+            Compounds Out-of-Sample Error". arXiv:2607.05450, 2026.
+            <a href="https://arxiv.org/abs/2607.05450">arxiv.org/abs/2607.05450</a>.
+            <span class="doc-porque">A evidência empírica de que desagregar trimestral para mensal
+            pioraria a previsão fora da amostra, por composição recursiva de erro. O argumento
+            técnico mais forte da aula para a decisão de granularidade.</span></li>
+          <li>[16] Autoestudos da Semana 01 na Adalove, listados na seção 1 desta página.</li>
+          <li>[17] <code>PLANO_DE_ENSINO.md</code>, seção 2.1, e
             <a href="../docs/adrs/ADR-003-regressao-tabular-em-vez-de-series-temporais.md">ADR-003</a>.
             <span class="doc-porque">O registro escrito da decisão de granularidade discutida em
             sala: o que foi pedido, o que a fonte permite, o que se decidiu e quais riscos foram
             aceitos. É o modelo do que a ART.1 precisa produzir.</span></li>
         </ol>
         <div class="doc-nota">
-          <p>Os itens 2, 3 e 4 vão sem link de propósito: são publicações cuja cópia canônica não
-          tem endereço estável na web aberta, e apontar para um espelho que sai do ar depois é pior
+          <p>Os itens 2, 11 e 14 vão sem link de propósito: são publicações cuja cópia canônica não
+          tem endereço estável na web aberta (o guia CRISP-DM circula quase só em scan de terceiros
+          com camada de texto degradada), e apontar para um espelho que sai do ar depois é pior
           que não apontar. A citação bibliográfica completa basta para localizá-las na biblioteca do
           Inteli ou em base acadêmica.</p>
         </div>

@@ -176,6 +176,21 @@ body {
   line-height: 1.45;
 }
 
+/* Citacao literal de fonte primaria (Chapman, Di Fonzo, Chollet, DAMA UK).
+   Distinta do .doc-nota (nossa observacao) por usar a borda primaria em vez
+   da de destaque, e por manter o elemento semantico <blockquote>. */
+blockquote {
+  margin: 0 0 14px;
+  padding: 10px 18px;
+  border-left: 4px solid var(--seg-primaria);
+  background: var(--seg-superficie);
+  border-radius: 10px;
+  font-size: var(--escala-texto);
+  line-height: 1.6;
+  max-width: 78ch;
+  font-style: italic;
+}
+
 /* Caixa de destaque: a armadilha, o reparo, o "por que isso importa". */
 .doc-nota {
   background: var(--seg-superficie);
