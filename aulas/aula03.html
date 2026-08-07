@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 03 &middot; Pandas, Numpy e bibliotecas gráficas &middot; Módulo 03 IN</title>
+
+  <!-- Aula 03, 11/08/2026, Sprint 1. Roteiro em PLANEJAMENTO_AULA_A_AULA.md.
+       Todo numero e grafico citados aqui vem dos cinco CSVs de dados/,
+       conferidos com pandas/numpy antes de escrever qualquer slide. -->
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-theme.css">
+  <link rel="stylesheet" href="../assets/css/inteli-print.css" media="print">
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- 1 - Capa -->
+      <section class="cover-slide">
+        <div class="cover-panel">
+          <div class="cover-content">
+            <p class="cover-eyebrow">Módulo 03 IN &middot; Aula 03 &middot; 11/08/2026</p>
+            <h1>Pandas, Numpy e bibliotecas gráficas</h1>
+            <h3>Exploração de dados: as cinco séries do case, de verdade</h3>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 - Agenda -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Agenda do encontro</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>08h00 &middot; 10h00</h3>
+            <p>Autoestudo na Adalove: Pandas, Numpy, Matplotlib e Seaborn [5].</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h00 &middot; 10h15</h3>
+            <p>Daily. Cada dupla escolhe qual das cinco séries vai explorar primeiro.</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h15 &middot; 12h00</h3>
+            <p>Seis blocos de 15 minutos. O notebook fica aberto o encontro inteiro.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">2</p>
+        </div>
+      </section>
+
+      <!-- 3 - Resgate -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que a Aula 02 deixou pronto</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <p>Duas coisas, e a segunda é a que a aula de hoje usa o tempo inteiro:</p>
+            <p><strong>1.</strong> os três modelos do TAPI mapeados, com a fonte de cada um
+            (SIDRA ou Sindirações);</p>
+            <p><strong>2.</strong> a decisão fechada: base <strong>trimestral</strong>, horizonte
+            de <strong>8 trimestres</strong>.</p>
+            <p>Hoje: explorar de fato as cinco séries com Pandas, em vez de falar sobre elas.</p>
+          </div>
+          <div>
+            <p><strong>Pergunta disparada:</strong></p>
+            <p>qual das cinco categorias (bovinos, suínos, frangos, ovos, leite) vocês acham que
+            tem a série histórica <strong>mais longa</strong>?</p>
+            <p>Anotem o palpite. A resposta sai da primeira célula do notebook, não deste slide.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">3</p>
+        </div>
+      </section>
+
+      <!-- 4 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Pandas: DataFrame</h2>
+        <h3>10h30 &middot; 10h45 &middot; de dicionário para tabela</h3>
+      </section>
+
+      <!-- 5 - read_csv e DataFrame -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que muda em relação à Aula 01 e à Aula 02</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <p>A Aula 01 leu <code>abate_bovinos.csv</code> com <code>csv.reader</code>, linha por
+            linha, em uma lista de tuplas. A Aula 02 repetiu isso para as cinco séries, em um
+            dicionário de listas [2].</p>
+            <p>Hoje o <code>pandas.read_csv</code> substitui as duas: uma chamada devolve um
+            <strong><code>DataFrame</code></strong>, com as três colunas do contrato
+            (<code>periodo</code>, <code>valor</code>, <code>unidade</code>) já tipadas.</p>
+          </div>
+          <pre class="code-compact"><code>import pandas as pd
+
+df = pd.read_csv(
+    "dados/abate_bovinos.csv"
+)
+
+df.dtypes
+# periodo     object
+# valor      float64
+# unidade     object
+
+df.describe()</code></pre>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">5</p>
+        </div>
+      </section>
+
+      <!-- 6 - Pratica describe -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática imediata, em duplas</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Cada dupla carrega <strong>um</strong> dos cinco CSVs: <code>abate_bovinos</code>,
+          <code>abate_suinos</code>, <code>abate_frangos</code>, <code>producao_ovos</code> ou
+          <code>producao_leite</code>.</li>
+          <li>Rodem <code>df.describe()</code> e leiam as sete linhas: <code>count</code>,
+          <code>mean</code>, <code>std</code>, <code>min</code>, <code>25%</code>, <code>50%</code>,
+          <code>75%</code>, <code>max</code>.</li>
+          <li>Antes de seguir: o que significa <code>count</code> ser diferente de 117 nas outras
+          quatro séries?</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">6</p>
+        </div>
+      </section>
+
+      <!-- 7 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Estatística descritiva</h2>
+        <h3>10h45 &middot; 11h00 &middot; conferindo contra a sanidade documentada</h3>
+      </section>
+
+      <!-- 8 - As cinco series lado a lado -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Média, mediana e desvio, nas cinco séries</h2>
+        </div>
+        <pre class="code-compact"><code>serie             media   mediana   desvio    unidade
+abate_bovinos     1,71bi   1,79bi   488mi     kg
+abate_suinos      784mi    786mi    343mi     kg
+abate_frangos     2,30bi   2,41bi   810mi     kg
+producao_ovos     606mil   527mil   272mil    mil duzias
+producao_leite    4,98mi   5,34mi   1,37mi    mil litros</code></pre>
+        <p>As cinco médias caem exatamente nas faixas que <code>dados/README.md</code> já
+        documentava como plausíveis [1]. É a mesma checagem de sanidade da fundação do acervo,
+        agora reproduzida por vocês em uma linha de código.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">8</p>
+        </div>
+      </section>
+
+      <!-- 9 - Pratica de sanidade -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática, em duplas</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Calculem <code>df["valor"].mean()</code>, <code>.median()</code> e <code>.std()</code>
+          da série que a sua dupla carregou.</li>
+          <li>Abram a seção "Checagem de sanidade dos valores" de <code>dados/README.md</code> e
+          confiram se a sua faixa (mínimo e máximo) bate com o que está documentado.</li>
+          <li>Se não bater, o problema não é do arquivo: é do código de vocês. Voltem uma célula.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">9</p>
+        </div>
+      </section>
+
+      <!-- 10 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Numpy</h2>
+        <h3>11h00 &middot; 11h15 &middot; variação percentual, vetorizada</h3>
+      </section>
+
+      <!-- 11 - np.diff -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Uma linha em vez de um laço</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>import numpy as np
+
+valores = df["valor"].to_numpy()
+
+variacao = (
+    np.diff(valores) / valores[:-1]
+) * 100
+
+idx = np.argmax(np.abs(variacao))
+periodos = df["periodo"].to_numpy()
+print(periodos[idx], "->", periodos[idx + 1])
+print("%.2f%%" % variacao[idx])</code></pre>
+          <div>
+            <p><code>np.diff</code> [3] devolve a diferença entre cada trimestre e o anterior, de
+            uma vez, sem laço em Python. Dividindo pelo valor anterior, vira variação percentual.</p>
+            <p>Rodado sobre <code>abate_bovinos</code>: o maior salto da série inteira é
+            <strong>+14,65%</strong>, de <strong>2005-T1 para 2005-T2</strong>.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">11</p>
+        </div>
+      </section>
+
+      <!-- 12 - Pratica numpy -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Exercício, em duplas</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Calculem a variação percentual trimestre a trimestre da série da sua dupla, com
+          <code>np.diff</code>.</li>
+          <li>Encontrem o <strong>maior salto</strong> (positivo ou negativo) e o trimestre em que
+          ele acontece.</li>
+          <li>Comparem com as outras duplas: qual série tem o salto mais violento? A resposta
+          real está no notebook, e leite ganha por larga margem.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">12</p>
+        </div>
+      </section>
+
+      <!-- 13 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Matplotlib e Seaborn</h2>
+        <h3>11h15 &middot; 11h30 &middot; sazonalidade e outliers a olho</h3>
+      </section>
+
+      <!-- 14 - Grafico real 1 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O salto de 2005 fica visível no gráfico</h2>
+        </div>
+        <img src="../assets/img/aula03-serie-bovinos.png" alt="Série de abate de bovinos de 1997-T1 a 2026-T1, com o salto de +14,65% entre 2005-T1 e 2005-T2 marcado em vermelho" style="width: 100%; max-width: 1100px; margin: 0 auto; display: block;">
+        <p>Com <code>periodo</code> no eixo x [4], a tendência de crescimento aparece de imediato,
+        e o ponto que o <code>np.diff</code> encontrou no bloco anterior vira um ponto fora da
+        curva suave, fácil de apontar a olho.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">14</p>
+        </div>
+      </section>
+
+      <!-- 15 - Grafico real 2 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Sazonalidade: nem toda série é igual</h2>
+        </div>
+        <div class="side-by-side">
+          <img src="../assets/img/aula03-sazonalidade-leite.png" alt="Gráfico de barras da produção de leite adquirido, média por trimestre do ano: T1 alto, T2 o mais baixo, T3 intermediário, T4 o mais alto" style="width: 100%; max-width: 460px; display: block;">
+          <div>
+            <p>Agrupando <code>producao_leite</code> por trimestre do ano (T1 a T4) e tirando a
+            média de cada grupo, aparece um padrão real: <strong>T2 é sempre o mais baixo</strong>,
+            <strong>T4 o mais alto</strong>.</p>
+            <p>É um padrão, não uma causa. O gráfico mostra <em>que</em> existe sazonalidade; ele
+            não diz <em>por que</em> (o material de apoio traz uma hipótese, sem confirmá-la com
+            este dado).</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">15</p>
+        </div>
+      </section>
+
+      <!-- 16 - Pratica de plotagem -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática, em duplas</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Plotem a série da sua dupla, com <code>periodo</code> no eixo x e <code>valor</code>
+          no eixo y (Matplotlib ou <code>seaborn.lineplot</code>, à escolha da dupla).</li>
+          <li>Procurem: existe sazonalidade visual (um trimestre do ano sempre mais alto ou mais
+          baixo)? Existe algum ponto fora da curva que <code>np.diff</code> não tinha destacado?</li>
+          <li>Marquem no notebook, em uma frase, o que a dupla encontrou.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">16</p>
+        </div>
+      </section>
+
+      <!-- 17 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Dados faltantes</h2>
+        <h3>11h30 &middot; 11h45 &middot; o que o IBGE marca como ausente</h3>
+      </section>
+
+      <!-- 18 - isna -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O resultado que ninguém espera: zero</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>for nome, df in series.items():
+    n = df["valor"].isna().sum()
+    print(nome, n, "vazios")
+
+# abate_bovinos    0 vazios
+# abate_suinos     0 vazios
+# abate_frangos    0 vazios
+# producao_ovos    0 vazios
+# producao_leite   0 vazios</code></pre>
+          <div>
+            <p>As cinco séries têm <strong>zero</strong> valores ausentes. Não é porque o IBGE
+            nunca suprime dado: é porque <code>tools/baixar_dados.py</code> já filtrou os
+            marcadores de ausência (<code>"..."</code>, <code>"-"</code>, <code>"X"</code>,
+            <code>"*"</code>) antes de gravar o CSV.</p>
+            <p><code>isna()</code> continua sendo o primeiro passo em qualquer projeto novo: aqui
+            ele confirma um filtro que já existe, mas nem toda base chega pronta assim.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">18</p>
+        </div>
+      </section>
+
+      <!-- 19 - Pratica isna -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Exercício, em duplas</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Rodem <code>df["valor"].isna().sum()</code> na série da sua dupla e confirmem o
+          resultado.</li>
+          <li>Zero vazios não significa zero risco de qualidade: qual dos seis pilares da Aula 02
+          continua em aberto mesmo com <code>isna()</code> zerado? (Dica: é o mesmo risco do caso
+          do leite.)</li>
+          <li>Escrevam a resposta em uma frase.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">19</p>
+        </div>
+      </section>
+
+      <!-- 20 - Quiz -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Verificação rápida</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question"><code>df["valor"].isna().sum()</code> devolve 0 nas cinco
+          séries. O que essa informação garante?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: a série de leite passa em isna() e em todos os testes de dados/tests, e ainda assim mede o volume adquirido, não o produzido.">Que os dados estão completamente corretos</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: isna() só enxerga célula vazia. Erro de interpretação, como leite medir compra em vez de produção, passa por ela sem deixar rastro."
+                data-incorrect-msg="Não.">Que não há célula vazia na coluna, nada além disso</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: a unidade é consistente dentro de cada arquivo, mas isna() não mede isso, mede ausência de valor.">Que a unidade é a mesma em todas as linhas</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: outlier é valor presente e extremo, o oposto de valor ausente. isna() não detecta um nem outro.">Que não existe outlier na série</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">20</p>
+        </div>
+      </section>
+
+      <!-- 21 - Hands-on -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Notebook da aula</h2>
+        </div>
+        <p><code>notebooks/aula03.ipynb</code> reúne os seis blocos de hoje em sequência: as cinco
+        séries carregadas em <code>DataFrame</code>, <code>describe()</code> comparado com
+        <code>dados/README.md</code>, variação percentual com <code>np.diff</code>, os dois
+        gráficos deste deck reproduzidos em código, e a contagem de nulos.</p>
+        <ol class="exercise-steps">
+          <li>Abram pelo Colab (badge na primeira célula) ou localmente, com o repositório
+          clonado.</li>
+          <li>Rodem célula por célula: nenhuma depende de rede, todas leem <code>../dados/</code>.</li>
+          <li>O desafio no final pede o coeficiente de variação das cinco séries, o trimestre de
+          pico do leite e uma frase sobre a série que a sua dupla escolheu.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">21</p>
+        </div>
+      </section>
+
+      <!-- 22 - Amarracao com a sprint -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que hoje entrega para a Sprint 1</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>ART.2, peso 3</h3>
+            <p>UX parte 1 [6]. Os gráficos e a leitura estatística de hoje são a primeira versão
+            da comunicação visual do produto de dados.</p>
+          </div>
+          <div class="concept-card">
+            <h3>O que leva</h3>
+            <p><code>describe()</code> das cinco séries, o maior salto de cada uma, e ao menos um
+            gráfico por série com sazonalidade ou outlier apontado.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Sprint 1</h3>
+            <p>Fecha aqui: review em 14/08, com ART.1 (6) e ART.2 (3).</p>
+          </div>
+        </div>
+        <p>Esta é a última aula antes da entrega. O gráfico que a sua dupla escolheu no bloco de
+        Matplotlib e Seaborn é o candidato natural para abrir a seção de exploração de dados da
+        ART.2: mostrem o padrão, não só o número.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">22</p>
+        </div>
+      </section>
+
+      <!-- 23 - Referencias -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Referências</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite, tabelas
+          1092, 1093, 1094, 7524 e 1086 do SIDRA. Contrato e checagem de sanidade em
+          <code>dados/README.md</code>.</li>
+          <li>pandas development team. <em>pandas documentation</em>: <code>read_csv</code>,
+          <code>DataFrame</code>, <code>describe</code>.</li>
+          <li>NumPy developers. <em>NumPy documentation</em>: <code>numpy.diff</code>.</li>
+          <li>Matplotlib e Seaborn, documentação oficial dos dois pacotes de visualização.</li>
+          <li>Autoestudos da Semana 02 na Adalove, listados em
+          <a href="../referencias/aula03.html">referencias/aula03.html</a>.</li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seção 4: ART.2 UX parte 1, peso 3.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 03 &middot; Sprint 1</p>
+          <p class="footer-page">23</p>
+        </div>
+      </section>
+
+      <!-- 24 - Encerramento -->
+      <section class="end-slide">
+        <h1>Até 19/08</h1>
+        <h3>Aula 04: Pré-processamento e Feature Engineering, Sprint 2</h3>
+        <p>Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot; 2026-2A</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      width: 1280, height: 720, center: false, margin: 0,
+      hash: true, slideNumber: false, transition: 'fade'
+    });
+  </script>
+  <script src="../assets/js/inteli-quiz.js"></script>
+  <script src="../assets/js/inteli-zoom.js"></script>
+  <script src="../assets/js/inteli-print.js"></script>
+</body>
+</html>

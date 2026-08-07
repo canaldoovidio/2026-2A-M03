@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referências &middot; Aula 03 &middot; Pandas, Numpy e bibliotecas gráficas</title>
+  <meta name="description" content="Autoestudos da Semana 02 na Adalove e leitura complementar da Aula 03 do Módulo 03 IN.">
+
+  <!-- Duas secoes fixas, nesta ordem, em TODAS as 14 aulas:
+       1. Autoestudos da semana (Adalove), copiados de
+          docs/autoestudos-por-semana.md, titulo por titulo, sem inventar
+          nenhum e sem alterar caractere.
+       2. Leitura complementar do professor.
+       A segunda secao nunca e omitida, mesmo sem curadoria fechada. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 03 &middot; 11/08/2026 &middot; Semana 02</p>
+      <h1>Referências: Pandas, Numpy e bibliotecas gráficas</h1>
+      <p class="doc-subtitulo">A Semana 02 tem um único Encontro de Instrução, com seis
+      autoestudos: os quatro pacotes usados hoje (Pandas, Numpy, Matplotlib e Seaborn), o ambiente
+      de trabalho (Colab) e a base estatística que sustenta <code>describe()</code>.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#autoestudos">Autoestudos da semana (Adalove)</a></li>
+        <li><a href="#complementar">Leitura complementar do professor</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="autoestudos">
+        <h2>1. Autoestudos da semana (Adalove)</h2>
+        <p>Semana 02, que cobre o encontro de 11/08 (Aula 03). Os seis autoestudos que o roteiro
+        desta aula pressupõe:</p>
+        <ol class="doc-referencias">
+          <li>Bibliotecas gráficas: Matplotlib e Seaborn
+            <span class="doc-porque">Base do bloco de 11h15 às 11h30: os dois gráficos reais
+            desta aula (a série de bovinos e a sazonalidade do leite) usam exatamente essas duas
+            bibliotecas.</span></li>
+          <li>Como usar o Google COLAB para ANALISAR DADOS?
+            <span class="doc-porque"><code>notebooks/aula03.ipynb</code> roda no Colab pelo badge
+            da primeira célula, com pandas, numpy, matplotlib e seaborn já instalados no
+            ambiente.</span></li>
+          <li>Guia rápido de Pandas em Jupyter Notebook
+            <span class="doc-porque">Complementa o bloco de 10h30 às 10h45: <code>read_csv</code>,
+            <code>DataFrame</code> e <code>describe()</code>, com exemplos fora do case.</span></li>
+          <li>Introdução ao Numpy
+            <span class="doc-porque">Base do bloco de 11h00 às 11h15, sobre <code>np.diff</code> e
+            operação vetorizada sem laço explícito.</span></li>
+          <li>Introdução ao Pandas
+            <span class="doc-porque">Define <code>DataFrame</code>, <code>Series</code> e os tipos
+            de coluna que o slide 5 usa para explicar o que muda em relação às Aulas 01 e
+            02.</span></li>
+          <li>Visão geral de conceitos básicos de estatística descritiva
+            <span class="doc-porque">Média, mediana e desvio padrão, exatamente as três medidas
+            que o bloco de 10h45 às 11h00 calcula sobre as cinco séries.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>Estes títulos são cópia literal de <code>docs/autoestudos-por-semana.md</code>, que é
+          gerado do <code>Turma.xlsx</code> oficial. Autoestudo que não está lá não entra aqui. O
+          acesso ao conteúdo é pela Adalove, com o login institucional.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="complementar">
+        <h2>2. Leitura complementar do professor</h2>
+        <p>A curadoria definitiva desta seção ainda será fechada pelo professor. Até lá, ficam aqui
+        as fontes efetivamente citadas no deck e no material de apoio, na mesma numeração usada no
+        slide de referências.</p>
+        <ol class="doc-referencias">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite, tabelas
+            1092, 1093, 1094, 7524 e 1086 do SIDRA.
+            <span class="doc-porque">Contrato de colunas e checagem de sanidade dos valores em
+            <code>dados/README.md</code>: é contra esse documento que o <code>describe()</code>
+            de hoje foi conferido.</span></li>
+          <li>pandas development team. <em>pandas user guide</em>:
+            <a href="https://pandas.pydata.org/docs/user_guide/io.html#csv-text-files">read_csv</a>,
+            <a href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html">DataFrame</a>,
+            <a href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.describe.html">describe</a>.
+            <span class="doc-porque">Documentação oficial dos três recursos usados no bloco de
+            10h30 às 10h45.</span></li>
+          <li>NumPy developers. <em>NumPy reference</em>:
+            <a href="https://numpy.org/doc/stable/reference/generated/numpy.diff.html">numpy.diff</a>.
+            <span class="doc-porque">A definição exata de como <code>np.diff</code> alinha os
+            índices, que é a base da seção 4 do material de apoio.</span></li>
+          <li>Matplotlib Development Team. <em>Matplotlib documentation</em>; Waskom, M. L.
+            <em>Seaborn: statistical data visualization</em>. Journal of Open Source Software,
+            2021.
+            <span class="doc-porque">Documentação oficial dos dois pacotes usados para gerar os
+            dois gráficos reais desta aula.</span></li>
+          <li>Autoestudos da Semana 02 na Adalove, listados na seção 1 desta página.
+            <span class="doc-porque">Referência cruzada usada como citação [5] no deck.</span></li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seção 4.
+            <span class="doc-porque">O peso oficial da ART.2 UX parte 1 (3), citado no slide de
+            amarração com a sprint.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>O item 1 vai sem link de propósito: a URL de consulta da API do SIDRA, para cada
+          tabela, está documentada em <code>dados/README.md</code>, e apontar direto para ela aqui
+          duplicaria a mesma informação em dois lugares que podem divergir com o tempo.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula03.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../materiais/aula03.html"><span class="material-symbols-outlined" aria-hidden="true">menu_book</span>Material</a>
+  </nav>
+</body>
+</html>

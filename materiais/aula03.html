@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material de apoio &middot; Aula 03 &middot; Pandas, Numpy e bibliotecas gráficas</title>
+  <meta name="description" content="Material de apoio da Aula 03 do Módulo 03 IN: Pandas, Numpy e visualização aplicados à exploração de dados das cinco séries de proteína animal do case da LDC.">
+
+  <!-- Este material NAO e o roteiro do deck em prosa. Ele aprofunda o que o
+       slide so pode apontar. Todo numero e grafico citados vem dos cinco
+       CSVs de dados/, conferidos com pandas/numpy antes de escrever
+       qualquer paragrafo. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 03 &middot; 11/08/2026 &middot; Sprint 1</p>
+      <h1>Material de apoio: Pandas, Numpy e bibliotecas gráficas</h1>
+      <p class="doc-subtitulo">A Aula 01 leu um CSV na mão. A Aula 02 repetiu isso para cinco
+      arquivos, ainda na mão. Hoje o Pandas substitui as duas, e a exploração das cinco séries do
+      case vira número, tabela e gráfico de verdade, em vez de dicionário aninhado.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#por-que-pandas">Por que Pandas agora</a></li>
+        <li><a href="#dataframe">DataFrame, tipos de coluna e describe()</a></li>
+        <li><a href="#estatistica">Estatística descritiva nas cinco séries</a></li>
+        <li><a href="#numpy">Numpy: variação percentual e o maior salto</a></li>
+        <li><a href="#visualizacao">Visualização: sazonalidade e outliers</a></li>
+        <li><a href="#faltantes">Dados faltantes: por que zero aqui</a></li>
+        <li><a href="#art2">O que levar para a ART.2</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="por-que-pandas">
+        <h2>1. Por que Pandas agora</h2>
+        <p>A Aula 01 leu <code>abate_bovinos.csv</code> com <code>csv.reader</code>, de propósito:
+        uma lista de tuplas, sem biblioteca de dados, para o contrato de colunas
+        (<code>periodo</code>, <code>valor</code>, <code>unidade</code>) ficar visível linha por
+        linha. A Aula 02 repetiu essa leitura cinco vezes, guardando o resultado em um dicionário
+        de listas, para medir os seis pilares de qualidade sem Pandas.</p>
+        <p>As duas aulas fizeram isso <strong>de propósito</strong>, não por falta da biblioteca.
+        Cada operação que hoje vira uma chamada de método (<code>describe()</code>,
+        <code>.mean()</code>, <code>.isna()</code>) já foi escrita à mão em Python puro nas duas
+        aulas anteriores. Quem não entendeu o que <code>describe()</code> está calculando por
+        dentro não vai notar quando ele calcular a coisa errada.</p>
+        <div class="doc-nota">
+          <p><strong>O que muda de verdade.</strong> Não é o resultado (os números batem, célula a
+          célula, com o que a Aula 02 calculou na mão). O que muda é que uma operação vetorizada
+          sobre 117 ou 157 linhas roda de uma vez, sem laço explícito em Python, e isso é o que vai
+          permitir, a partir da Aula 04, trabalhar com features de defasagem sobre as cinco séries
+          ao mesmo tempo.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="dataframe">
+        <h2>2. DataFrame, tipos de coluna e describe()</h2>
+        <p><code>pandas.read_csv("dados/abate_bovinos.csv")</code> devolve um
+        <strong><code>DataFrame</code></strong>: uma tabela com índice de linha e colunas tipadas.
+        <code>df.dtypes</code> mostra o que o Pandas inferiu de cada coluna do contrato:</p>
+        <pre class="doc-codigo"><code>periodo     object    # string, "2025-T4"
+valor      float64    # numero
+unidade     object    # string, categoria</code></pre>
+        <p><code>periodo</code> e <code>unidade</code> chegam como <code>object</code> (texto),
+        não como categoria nem como data. Isso é o comportamento correto aqui: o Pandas tem um tipo
+        de data (<code>datetime64</code>), mas <code>"2025-T4"</code> não é uma data de calendário,
+        é um rótulo de trimestre. Converter isso à força para <code>datetime64</code> obrigaria a
+        escolher um mês arbitrário dentro do trimestre para representar o período inteiro, o que
+        reintroduziria exatamente o erro de granularidade que a Aula 02 evitou.</p>
+        <p><code>df.describe()</code> resume a coluna numérica em sete estatísticas:
+        <code>count</code>, <code>mean</code>, <code>std</code>, <code>min</code>,
+        <code>25%</code>, <code>50%</code> (a mediana), <code>75%</code> e <code>max</code>. Rodado
+        sobre <code>producao_ovos</code>, <code>count</code> aparece como <strong>157</strong>,
+        não 117: é a primeira confirmação, agora em código, de que a série de ovos é dez anos mais
+        longa que as outras quatro, o mesmo achado que a Aula 02 mediu na mão.</p>
+      </section>
+
+      <section class="doc-secao" id="estatistica">
+        <h2>3. Estatística descritiva nas cinco séries</h2>
+        <p>Média, mediana e desvio padrão das cinco séries, calculados com
+        <code>df["valor"].mean()</code>, <code>.median()</code> e <code>.std()</code>:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>série</th><th>média</th><th>mediana</th><th>desvio padrão</th><th>coef. de variação</th><th>unidade</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>abate_bovinos</code></td><td>1,71 bi</td><td>1,79 bi</td><td>488 mi</td><td>28,5%</td><td>kg</td></tr>
+              <tr><td><code>abate_suinos</code></td><td>784 mi</td><td>786 mi</td><td>343 mi</td><td>43,8%</td><td>kg</td></tr>
+              <tr><td><code>abate_frangos</code></td><td>2,30 bi</td><td>2,41 bi</td><td>810 mi</td><td>35,3%</td><td>kg</td></tr>
+              <tr><td><code>producao_ovos</code></td><td>606 mil</td><td>527 mil</td><td>272 mil</td><td>44,9%</td><td>mil dúzias</td></tr>
+              <tr><td><code>producao_leite</code></td><td>4,98 mi</td><td>5,34 mi</td><td>1,37 mi</td><td>27,5%</td><td>mil litros</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>As cinco faixas (mínimo e máximo, que o <code>describe()</code> também devolve) batem
+        com a seção "Checagem de sanidade dos valores" de <code>dados/README.md</code> [1]: por
+        exemplo, o mínimo e o máximo de <code>abate_bovinos</code> ficam entre 782 milhões e quase
+        3 bilhões de quilogramas, exatamente a faixa documentada.</p>
+        <h3>O coeficiente de variação mistura tendência com oscilação</h3>
+        <p>A última coluna, <strong>coeficiente de variação</strong> (desvio padrão dividido pela
+        média), mede dispersão relativa. Repare que <code>producao_ovos</code> e
+        <code>abate_suinos</code> têm os dois maiores coeficientes (44,9% e 43,8%), acima até de
+        séries com saltos trimestrais visivelmente mais violentos, como <code>producao_leite</code>
+        (27,5%, apesar de ter o maior salto trimestral das cinco, na seção 4).</p>
+        <div class="doc-nota">
+          <p>Isso não é contradição: o coeficiente de variação calculado sobre 29 ou 39 anos de
+          série mistura duas coisas diferentes, <strong>crescimento de longo prazo</strong> (o
+          rebanho suíno e a produção de ovos cresceram muito entre 1987/1997 e 2026) e
+          <strong>oscilação trimestre a trimestre</strong>. Uma série que cresce de forma
+          constante, sem nenhum salto abrupto, ainda assim tem desvio padrão alto, porque o valor
+          de 2026 está muito longe do valor de 1997. Separar essas duas coisas (tendência e
+          ruído) é o que a Aula 04 começa a fazer com features de defasagem.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="numpy">
+        <h2>4. Numpy: variação percentual e o maior salto</h2>
+        <p>A variação percentual trimestre a trimestre vem de uma linha:</p>
+        <pre class="doc-codigo"><code>valores = df["valor"].to_numpy()
+variacao = (np.diff(valores) / valores[:-1]) * 100</code></pre>
+        <p><code>np.diff(valores)</code> [3] devolve um array com um elemento a menos que
+        <code>valores</code>: a posição <code>0</code> do resultado é
+        <code>valores[1] - valores[0]</code>, e assim por diante. Por isso a divisão usa
+        <code>valores[:-1]</code> (todo mundo, menos o último) como denominador: cada diferença é
+        comparada com o valor <strong>anterior</strong> a ela, não com o valor seguinte. Errar essa
+        fatia é o bug mais comum desta célula, e ele não levanta exceção: só desalinha qual
+        trimestre está sendo comparado com qual.</p>
+        <p>O maior salto (positivo ou negativo) de cada série, medido em módulo:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>série</th><th>maior salto</th><th>trimestres</th><th>variação média (módulo)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>abate_bovinos</code></td><td>+14,65%</td><td>2005-T1 &rarr; 2005-T2</td><td>4,81%</td></tr>
+              <tr><td><code>abate_suinos</code></td><td>&minus;13,97%</td><td>2011-T4 &rarr; 2012-T1</td><td>3,83%</td></tr>
+              <tr><td><code>abate_frangos</code></td><td>+10,89%</td><td>2006-T2 &rarr; 2006-T3</td><td>3,13%</td></tr>
+              <tr><td><code>producao_ovos</code></td><td>&minus;6,78%</td><td>1995-T4 &rarr; 1996-T1</td><td>1,91%</td></tr>
+              <tr><td><code>producao_leite</code></td><td>+18,87%</td><td>2000-T3 &rarr; 2000-T4</td><td>7,04%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Leite tem o salto mais violento das cinco (+18,87%) e também a maior variação média em
+        módulo (7,04%): é a série mais instável trimestre a trimestre, o oposto do que o
+        coeficiente de variação da seção 3 sugeria isoladamente. As duas métricas respondem
+        perguntas diferentes, e um projeto real usa as duas, não uma no lugar da outra.</p>
+      </section>
+
+      <section class="doc-secao" id="visualizacao">
+        <h2>5. Visualização: sazonalidade e outliers</h2>
+        <p>O gráfico de <code>abate_bovinos</code> no tempo, com o salto de 2005 marcado:</p>
+        <img src="../assets/img/aula03-serie-bovinos.png" alt="Série de abate de bovinos de 1997-T1 a 2026-T1, com o salto de +14,65% entre 2005-T1 e 2005-T2 marcado" style="width:100%; max-width: 900px; border: 1px solid var(--seg-borda); border-radius: 10px; display:block; margin: 0 auto 14px;">
+        <p>Uma tendência de crescimento não some no meio do gráfico: ela é visível de ponta a
+        ponta. O ponto de 2005 que o <code>np.diff</code> encontrou (seção 4) aparece como um
+        degrau na curva, mas repare que <strong>não é o ponto mais alto nem o mais baixo</strong>
+        da série: é o maior salto <em>relativo</em> de um trimestre para o seguinte, não o maior
+        valor absoluto. Confundir "maior salto" com "maior valor" é um erro comum de leitura de
+        gráfico.</p>
+        <h3>Sazonalidade real: o caso do leite</h3>
+        <img src="../assets/img/aula03-sazonalidade-leite.png" alt="Gráfico de barras da produção de leite adquirido, média por trimestre do ano" style="width:100%; max-width: 460px; border: 1px solid var(--seg-borda); border-radius: 10px; display:block; margin: 0 auto 14px;">
+        <p>Agrupando <code>producao_leite</code> por trimestre do ano
+        (<code>periodo.str.split("-T").str[1]</code>) e tirando a média de cada grupo, aparece um
+        padrão consistente ao longo de quase trinta anos: <strong>T2 é sempre o mais baixo</strong>
+        (4,60 milhões de mil litros, em média) e <strong>T4 o mais alto</strong> (5,33 milhões).</p>
+        <div class="doc-nota">
+          <p><strong>O que o gráfico prova, e o que ele não prova.</strong> Ele prova que existe um
+          padrão sazonal estável: a diferença entre T2 e T4 se repete ano após ano, não é ruído de
+          um ano isolado. Ele não prova a <strong>causa</strong>. Uma hipótese plausível, e comum
+          na literatura de pecuária leiteira brasileira, é que a maior parte do rebanho leiteiro
+          nacional é criada a pasto, e T2 (abril a junho) cai no período de transição para a seca
+          em boa parte do país, quando a pastagem produz menos forragem, reduzindo a lactação;
+          T4 (outubro a dezembro) coincide com o início do período de chuvas, com mais pasto
+          disponível.</p>
+          <p>Esta é uma hipótese, não uma conclusão: os cinco CSVs não têm nenhuma coluna de clima,
+          de estação do ano ou de sistema de criação. Confirmá-la exigiria cruzar com outra fonte,
+          exatamente o tipo de armadilha que a Aula 02 discutiu na seção sobre análise diagnóstica
+          (o dado mostra o padrão, a causa está fora dele).</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="faltantes">
+        <h2>6. Dados faltantes: por que zero aqui</h2>
+        <p><code>df["valor"].isna().sum()</code> devolve <strong>zero</strong> nas cinco séries.
+        Não é acaso, e não é porque o IBGE nunca suprime dado: <code>tools/baixar_dados.py</code>
+        já filtra, na carga, um conjunto de marcadores que o SIDRA usa para dado ausente ou
+        suprimido:</p>
+        <pre class="doc-codigo"><code>AUSENTES = {"...", "..", "-", "X", "*", ""}</code></pre>
+        <p>Qualquer célula que chegasse da API com um desses marcadores já teria sido removida
+        antes de o CSV ser gravado em <code>dados/</code>. O que <code>isna()</code> confirma aqui
+        não é "esta base não tem problema de completude": é "o filtro que já existe está
+        funcionando". A distinção importa porque, em uma base sem esse filtro prévio (a maioria
+        dos projetos reais chega assim), o mesmo <code>isna()</code> devolveria uma contagem maior
+        que zero, e aí a decisão seguinte (remover a linha com <code>dropna()</code>, ou preencher
+        com <code>fillna()</code>) passa a ser uma escolha de modelagem, não um detalhe de leitura.
+        Essa escolha é assunto da Aula 04.</p>
+        <div class="doc-nota">
+          <p><strong>Zero vazios não é zero risco.</strong> A Aula 02 mostrou que
+          <code>producao_leite</code> passa em <code>isna()</code> e em todos os seis testes de
+          <code>tools/tests/test_dados.py</code>, e mesmo assim mede o volume que os laticínios
+          <em>adquiriram</em>, não o que o Brasil <em>produziu</em>. <code>isna()</code> enxerga
+          célula vazia; não enxerga célula preenchida com o conceito errado. É o mesmo argumento
+          central da Aula 02, agora confirmado com uma linha de Pandas em vez de um laço.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="art2">
+        <h2>7. O que levar para a ART.2</h2>
+        <p>A Sprint 1 fecha em <strong>14/08</strong> com a <strong>ART.2 UX parte 1 (peso
+        3)</strong> [6], e a Aula 03 é o último encontro antes da entrega. Quatro itens desta aula
+        entram direto na seção de exploração de dados da ART.2:</p>
+        <ol>
+          <li><strong>O <code>describe()</code> das cinco séries</strong>, com a diferença de
+          completude entre ovos (157 registros) e as outras quatro (117) já explicada, não só
+          citada.</li>
+          <li><strong>O maior salto de cada série</strong>, calculado com <code>np.diff</code>,
+          com o trimestre exato em que ele acontece.</li>
+          <li><strong>Ao menos um gráfico por série</strong>, com <code>periodo</code> no eixo x,
+          apontando sazonalidade ou outlier, como os dois exemplos desta página.</li>
+          <li><strong>A confirmação de <code>isna()</code></strong>, com a ressalva de que zero
+          vazios não é o mesmo que zero risco de qualidade.</li>
+        </ol>
+        <p>Os autoestudos da semana e a leitura complementar estão em
+        <a href="../referencias/aula03.html">referencias/aula03.html</a>. O laboratório executável
+        é <code>notebooks/aula03.ipynb</code>, que produz cada tabela e cada gráfico desta página
+        em código, sobre os cinco CSVs reais.</p>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula03.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../referencias/aula03.html"><span class="material-symbols-outlined" aria-hidden="true">link</span>Referências</a>
+  </nav>
+</body>
+</html>
