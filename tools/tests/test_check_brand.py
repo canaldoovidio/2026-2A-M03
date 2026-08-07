@@ -79,3 +79,19 @@ def test_seta_tipografica_nao_e_emoji(tmp_path):
     _brand_valido(tmp_path)
     _escrever(tmp_path, "index.html", "<p>Sprint 1 → Sprint 2</p>")
     assert varrer(str(tmp_path)) == []
+
+
+def test_copia_do_brand_dentro_de_worktree_nao_e_acusada(tmp_path):
+    """Worktree de agente e uma copia inteira do repositorio.
+
+    A copia do arquivo de tokens que vive em .claude/worktrees/NOME/ nao casa
+    com o caminho canonico do brand, entao o validador acusava cada cor e cada
+    font-family dela: 12 falsos positivos por worktree. Aconteceu de verdade em
+    06/08/2026, disparado pelo hook a cada edicao de deck. Ruido treina quem le
+    a ignorar o validador, que e a forma mais silenciosa de perde-lo.
+    """
+    _brand_valido(tmp_path)
+    copia = ":root { --inteli-roxo: #2e2640; }\nbody { font-family: X; }"
+    _escrever(tmp_path, ".claude/worktrees/algum-agente/assets/css/inteli-brand.css", copia)
+    _escrever(tmp_path, ".claude/worktrees/algum-agente/index.html", '<p style="color: #ff4545">x</p>')
+    assert varrer(str(tmp_path)) == []

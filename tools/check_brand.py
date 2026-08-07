@@ -28,7 +28,12 @@ PALETA = {
 OUTRO_SEGMENTO = {"#90a5e5", "#066d73"}
 
 EXTENSOES = (".html", ".css", ".js")
-IGNORAR = {".git", "node_modules", "__pycache__", ".ipynb_checkpoints"}
+# .claude guarda worktrees de agente (.claude/worktrees/NOME/), que sao copias
+# inteiras do repositorio. Sem ignorar, a copia do inteli-brand.css que vive la
+# dentro nao casa com o caminho canonico do arquivo de tokens, e o validador
+# acusa cada cor e cada font-family dela como violacao. Sao 12 falsos positivos
+# por worktree, e ruido treina quem le a ignorar o validador.
+IGNORAR = {".git", ".claude", "node_modules", "__pycache__", ".ipynb_checkpoints"}
 
 # Valor de declaracao CSS: tudo entre o ":" e o ";" ou o fim do bloco.
 # Escanear hex solto daria falso positivo em href="#dados", cujas letras sao
