@@ -59,29 +59,13 @@ saída, abaixo.
   aconteceu. Os validadores passam, mas o que o professor aprovar na capa, na densidade dos
   slides e no tom do material é o que vira contrato para as 13 aulas seguintes. Ver "Achados
   abertos" abaixo: são justamente as decisões que dependem dele.
-- **O site está no ar, mas parado no estado da Aula 01.** `https://canaldoovidio.github.io/2026-2A-M03/`
-  responde 200 e a Aula 01 está publicada; `aulas/aula02.html` responde 404.
+- **O site está no ar e atualizado.** `https://canaldoovidio.github.io/2026-2A-M03/` publica
+  as Aulas 01, 02 e 03 com os quatro artefatos cada. A política de branch do ambiente
+  `github-pages` foi corrigida pelo professor em 07/08/2026, e o `static.yml` passou a
+  publicar normalmente a cada push em `main` (run 31142595526, 22s).
 
-  **Causa exata:** o ambiente `github-pages` tem política de branch customizada
-  (`custom_branch_policies: true`) e a única branch autorizada a publicar é
-  **`fundacao-e-aula01`**. O `static.yml` dispara em `main`, então o deploy é recusado pela regra de
-  ambiente e o job falha em 3 segundos, sem nenhum passo executado. O único deploy bem-sucedido foi
-  um `workflow_dispatch` manual em `fundacao-e-aula01`, feito antes do commit da Aula 02.
-
-  **Correção (exige admin no repositório, como `canaldoovidio`):** em
-  *Settings > Environments > github-pages > Deployment branches and tags*, adicionar `main` (ou
-  trocar para "All branches"). Em *Settings > Pages*, deixar a origem em "GitHub Actions". E em
-  *Settings > General*, trocar a branch padrão de `fundacao-e-aula01` para `main`.
-
-  **Alternativa sem tocar em configuração:** trocar o gatilho de `static.yml` de `main` para
-  `fundacao-e-aula01`. Funciona, mas deixa `main` sem publicar, o que é o inverso da convenção.
-
-  Nota de ambiente: o `gh` desta máquina está autenticado como `josercf`, que não tem admin neste
-  repositório (o `git push` funciona porque vai por SSH com a chave de `canaldoovidio`, ver o
-  mapeamento de hosts em `~/.ssh/config`). Qualquer chamada de administração do repositório pelo
-  `gh` responde 403 ou 404 até trocar a autenticação.
-- **Aulas 03 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
-  `aria-disabled="true"`. A Aula 03 é em **11/08** e é a primeira da fila. O agente
+- **Aulas 04 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
+  `aria-disabled="true"`. A Aula 03 ja existe e esta publicada. A Aula 04 e em **19/08** e e a primeira da fila. O agente
   `construtor-aulas` existe para esse fan-out, mas as aulas 01 e 02 foram escritas sem ele, à mão,
   seguindo as mesmas skills.
 
@@ -160,3 +144,20 @@ inteiro no GitHub Pages, então qualquer arquivo commitado fica público.
 - `python3 tools/check_slides.py` sem argumento agora encontra `aulas/aula01.html` e passa. O
   fixture do tema (`aulas/_fixture-tema.html`) continua fora da descoberta automática de
   propósito, porque começa com `_`; para medi-lo, passar o caminho explicitamente.
+
+## Achados abertos da revisão da Aula 02 (07/08/2026)
+
+Dois achados que a revisão independente levantou e que são **decisão do professor**, não conserto
+mecânico. Nenhum bloqueou a publicação.
+
+1. **A legenda do ciclo CRISP-DM fala em "duas voltas documentadas", e a fonte primária tem três.**
+   A Figura 2 do guia CRISP-DM 1.0 confirma as duas setas duplas que o deck desenha (Negócio com
+   Dados, Preparação com Modelagem), mas traz também uma terceira conexão interna, de sentido
+   único, ligando Avaliação direto a Entendimento do Negócio, por dentro do círculo. O ponto
+   pedagógico do slide continua verdadeiro, mas a contagem é leitura incompleta da própria fonte
+   citada. Corrigir na próxima revisão do diagrama.
+2. **32 slides podem não caber nos sete blocos de 15 minutos.** O bloco de qualidade e taxonomia
+   passou de "seis pilares e taxonomia, com exercício" para seis unidades de conteúdo distintas,
+   cada uma com fonte primária própria, antes de qualquer interação. É factível se o professor
+   escolher quais diagramas narra em detalhe e quais só aponta. Decisão de condução, não de
+   arquivo.
