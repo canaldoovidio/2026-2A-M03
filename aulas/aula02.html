@@ -245,10 +245,10 @@
             <p>O coeficiente fixo que a LDC usa hoje para converter proteína em ração é a caixa de
             cima: programação tradicional, e funciona. Não é atraso, é a Regra 1 do guia de
             engenharia do Google [12]: não tenha medo de lançar sem ML.</p>
-            <p>A Regra 3 do mesmo guia [12] dá o critério objetivo para trocar de caixa: quando a
-            heurística cresce a ponto de virar uma lista de regras manuais frágil demais para
-            manter (o documento cita o limiar prático de cerca de 195 regras), o custo de manter a
-            heurística passa a ser maior que o de treinar um modelo.</p>
+            <p>A Regra 3 do mesmo guia [12] dá o critério objetivo para trocar de caixa: o guia
+            recomenda migrar de heurística para modelo assim que as regras viram uma lista difícil
+            de manter, porque o custo de manter a heurística passa a ser maior que o de treinar um
+            modelo.</p>
           </div>
         </div>
         <div class="slide-footer">
@@ -355,20 +355,21 @@
               <path d="M 120,150 C 20,90 60,10 300,45" fill="none" stroke="var(--seg-destaque)"
                     stroke-width="2.4" stroke-dasharray="6 4" marker-end="url(#seta-loop11)"/>
 
-              <!-- 1-2 dupla: Negocio <-> Dados -->
-              <line x1="316" y1="80" x2="440" y2="150" stroke="var(--seg-primaria)" stroke-width="2.4"
+              <!-- 1-2 dupla: Negocio <-> Dados. Pontos recalculados para pararem na borda dos
+                   retangulos (folga ~6px) para que as duas pontas de seta fiquem visiveis. -->
+              <line x1="346" y1="100" x2="418" y2="147" stroke="var(--seg-primaria)" stroke-width="2.4"
                     marker-start="url(#seta-s11)" marker-end="url(#seta-s11)"/>
               <!-- 2-3 simples -->
-              <line x1="450" y1="185" x2="450" y2="325" stroke="var(--seg-primaria)" stroke-width="2"
+              <line x1="464" y1="208" x2="464" y2="319" stroke="var(--seg-primaria)" stroke-width="2"
                     marker-end="url(#seta-s11)"/>
               <!-- 3-4 dupla: Preparacao <-> Modelagem -->
-              <line x1="436" y1="360" x2="316" y2="430" stroke="var(--seg-primaria)" stroke-width="2.4"
+              <line x1="405" y1="380" x2="359" y2="401" stroke="var(--seg-primaria)" stroke-width="2.4"
                     marker-start="url(#seta-s11)" marker-end="url(#seta-s11)"/>
               <!-- 4-5 simples -->
-              <line x1="278" y1="430" x2="158" y2="360" stroke="var(--seg-primaria)" stroke-width="2"
+              <line x1="241" y1="401" x2="195" y2="380" stroke="var(--seg-primaria)" stroke-width="2"
                     marker-end="url(#seta-s11)"/>
               <!-- 5-6 simples -->
-              <line x1="140" y1="325" x2="140" y2="185" stroke="var(--seg-primaria)" stroke-width="2"
+              <line x1="136" y1="319" x2="136" y2="208" stroke="var(--seg-primaria)" stroke-width="2"
                     marker-end="url(#seta-s11)"/>
 
               <!-- nos -->
@@ -420,73 +421,82 @@
           <h2>As seis fases, aplicadas ao case da LDC</h2>
         </div>
         <div class="diagram-frame">
-          <svg viewBox="0 0 1160 210" role="img" aria-label="Seis paineis em sequencia, um por fase do CRISP-DM, cada um com uma frase do case da Louis Dreyfus Company">
+          <svg viewBox="0 0 1160 260" role="img" aria-label="Seis paineis em sequencia, um por fase do CRISP-DM, cada um com uma frase do case da Louis Dreyfus Company">
             <defs>
               <marker id="seta-s12" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M0,0 L10,5 L0,10 z" fill="var(--seg-primaria)"/>
               </marker>
             </defs>
-            <!-- setas de fluxo -->
-            <line x1="170" y1="105" x2="198" y2="105" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-s12)"/>
-            <line x1="360" y1="105" x2="388" y2="105" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-s12)"/>
-            <line x1="550" y1="105" x2="578" y2="105" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-s12)"/>
-            <line x1="740" y1="105" x2="768" y2="105" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-s12)"/>
-            <line x1="930" y1="105" x2="958" y2="105" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-s12)"/>
+            <!-- setas de fluxo: centralizadas na nova altura dos paineis (y=20 a y=240) -->
+            <line x1="170" y1="130" x2="198" y2="130" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-s12)"/>
+            <line x1="360" y1="130" x2="388" y2="130" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-s12)"/>
+            <line x1="550" y1="130" x2="578" y2="130" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-s12)"/>
+            <line x1="740" y1="130" x2="768" y2="130" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-s12)"/>
+            <line x1="930" y1="130" x2="958" y2="130" stroke="var(--seg-primaria)" stroke-width="2" marker-end="url(#seta-s12)"/>
 
             <!-- painel 1 -->
             <g>
-              <rect x="20" y="20" width="150" height="170" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <rect x="20" y="20" width="150" height="220" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
               <polygon points="20,20 46,20 46,46 20,46" fill="var(--seg-secundaria)"/>
-              <text x="32" y="66" style="font-size:12px;font-weight:700;fill:var(--seg-primaria)">1. Negócio</text>
-              <text x="32" y="98" style="font-size:10px;fill:var(--seg-texto)">LDC compra com</text>
-              <text x="32" y="112" style="font-size:10px;fill:var(--seg-texto)">coeficiente fixo.</text>
-              <text x="32" y="132" style="font-size:10px;fill:var(--seg-texto)">O que ela ganha se</text>
-              <text x="32" y="146" style="font-size:10px;fill:var(--seg-texto)">acertar mais?</text>
+              <text x="32" y="74" style="font-size:15px;font-weight:700;fill:var(--seg-primaria)">1. Negócio</text>
+              <text x="32" y="108" style="font-size:18px;fill:var(--seg-texto)">LDC compra</text>
+              <text x="32" y="132" style="font-size:18px;fill:var(--seg-texto)">com coeficiente</text>
+              <text x="32" y="156" style="font-size:18px;fill:var(--seg-texto)">fixo. O que ela</text>
+              <text x="32" y="180" style="font-size:18px;fill:var(--seg-texto)">ganha se</text>
+              <text x="32" y="204" style="font-size:18px;fill:var(--seg-texto)">acertar mais?</text>
             </g>
             <!-- painel 2 -->
             <g>
-              <rect x="210" y="20" width="150" height="170" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <rect x="210" y="20" width="150" height="220" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
               <polygon points="210,20 236,20 236,46 210,46" fill="var(--seg-secundaria)"/>
-              <text x="222" y="66" style="font-size:12px;font-weight:700;fill:var(--seg-primaria)">2. Dados</text>
-              <text x="222" y="98" style="font-size:10px;fill:var(--seg-texto)">Cinco séries do</text>
-              <text x="222" y="112" style="font-size:10px;fill:var(--seg-texto)">SIDRA, trimestrais,</text>
-              <text x="222" y="126" style="font-size:10px;fill:var(--seg-texto)">3 unidades diferentes.</text>
+              <text x="222" y="74" style="font-size:15px;font-weight:700;fill:var(--seg-primaria)">2. Dados</text>
+              <text x="222" y="108" style="font-size:18px;fill:var(--seg-texto)">Cinco séries</text>
+              <text x="222" y="132" style="font-size:18px;fill:var(--seg-texto)">do SIDRA,</text>
+              <text x="222" y="156" style="font-size:18px;fill:var(--seg-texto)">trimestrais,</text>
+              <text x="222" y="180" style="font-size:18px;fill:var(--seg-texto)">3 unidades</text>
+              <text x="222" y="204" style="font-size:18px;fill:var(--seg-texto)">diferentes.</text>
             </g>
             <!-- painel 3 -->
             <g>
-              <rect x="400" y="20" width="150" height="170" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <rect x="400" y="20" width="150" height="220" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
               <polygon points="400,20 426,20 426,46 400,46" fill="var(--seg-secundaria)"/>
-              <text x="412" y="66" style="font-size:12px;font-weight:700;fill:var(--seg-primaria)">3. Preparação</text>
-              <text x="412" y="98" style="font-size:10px;fill:var(--seg-texto)">Unir SIDRA e</text>
-              <text x="412" y="112" style="font-size:10px;fill:var(--seg-texto)">Sindirações, criar</text>
-              <text x="412" y="126" style="font-size:10px;fill:var(--seg-texto)">defasagem (Aula 04).</text>
+              <text x="412" y="74" style="font-size:15px;font-weight:700;fill:var(--seg-primaria)">3. Preparação</text>
+              <text x="412" y="108" style="font-size:18px;fill:var(--seg-texto)">Unir SIDRA e</text>
+              <text x="412" y="132" style="font-size:18px;fill:var(--seg-texto)">Sindirações,</text>
+              <text x="412" y="156" style="font-size:18px;fill:var(--seg-texto)">criar defasagem</text>
+              <text x="412" y="180" style="font-size:18px;fill:var(--seg-texto)">(Aula 04).</text>
             </g>
             <!-- painel 4 -->
             <g>
-              <rect x="590" y="20" width="150" height="170" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <rect x="590" y="20" width="150" height="220" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
               <polygon points="590,20 616,20 616,46 590,46" fill="var(--seg-secundaria)"/>
-              <text x="602" y="66" style="font-size:12px;font-weight:700;fill:var(--seg-primaria)">4. Modelagem</text>
-              <text x="602" y="98" style="font-size:10px;fill:var(--seg-texto)">Regressão tabular,</text>
-              <text x="602" y="112" style="font-size:10px;fill:var(--seg-texto)">sem série temporal</text>
-              <text x="602" y="126" style="font-size:10px;fill:var(--seg-texto)">(Aulas 05 a 11).</text>
+              <text x="602" y="74" style="font-size:15px;font-weight:700;fill:var(--seg-primaria)">4. Modelagem</text>
+              <text x="602" y="108" style="font-size:18px;fill:var(--seg-texto)">Regressão</text>
+              <text x="602" y="132" style="font-size:18px;fill:var(--seg-texto)">tabular, sem</text>
+              <text x="602" y="156" style="font-size:18px;fill:var(--seg-texto)">série temporal</text>
+              <text x="602" y="180" style="font-size:18px;fill:var(--seg-texto)">(Aulas 05 a 11).</text>
             </g>
             <!-- painel 5 -->
             <g>
-              <rect x="780" y="20" width="150" height="170" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <rect x="780" y="20" width="150" height="220" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
               <polygon points="780,20 806,20 806,46 780,46" fill="var(--seg-secundaria)"/>
-              <text x="792" y="66" style="font-size:12px;font-weight:700;fill:var(--seg-primaria)">5. Avaliação</text>
-              <text x="792" y="98" style="font-size:10px;fill:var(--seg-texto)">RMSE e MAPE</text>
-              <text x="792" y="112" style="font-size:10px;fill:var(--seg-texto)">contra o coeficiente</text>
-              <text x="792" y="126" style="font-size:10px;fill:var(--seg-texto)">fixo. Nunca contra zero.</text>
+              <text x="792" y="74" style="font-size:15px;font-weight:700;fill:var(--seg-primaria)">5. Avaliação</text>
+              <text x="792" y="108" style="font-size:18px;fill:var(--seg-texto)">RMSE e MAPE</text>
+              <text x="792" y="132" style="font-size:18px;fill:var(--seg-texto)">contra o</text>
+              <text x="792" y="156" style="font-size:18px;fill:var(--seg-texto)">coeficiente fixo.</text>
+              <text x="792" y="180" style="font-size:18px;fill:var(--seg-texto)">Nunca contra</text>
+              <text x="792" y="204" style="font-size:18px;fill:var(--seg-texto)">zero.</text>
             </g>
             <!-- painel 6 -->
             <g>
-              <rect x="970" y="20" width="150" height="170" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
+              <rect x="970" y="20" width="150" height="220" rx="6" fill="var(--seg-superficie)" stroke="var(--seg-primaria)" stroke-width="2"/>
               <polygon points="970,20 996,20 996,46 970,46" fill="var(--seg-secundaria)"/>
-              <text x="982" y="66" style="font-size:12px;font-weight:700;fill:var(--seg-primaria)">6. Implantação</text>
-              <text x="982" y="98" style="font-size:10px;fill:var(--seg-texto)">Pipeline e app de</text>
-              <text x="982" y="112" style="font-size:10px;fill:var(--seg-texto)">cenários</text>
-              <text x="982" y="126" style="font-size:10px;fill:var(--seg-texto)">(Aulas 12 e 13).</text>
+              <text x="982" y="74" style="font-size:15px;font-weight:700;fill:var(--seg-primaria)">6. Implantação</text>
+              <text x="982" y="108" style="font-size:18px;fill:var(--seg-texto)">Pipeline e</text>
+              <text x="982" y="132" style="font-size:18px;fill:var(--seg-texto)">app de</text>
+              <text x="982" y="156" style="font-size:18px;fill:var(--seg-texto)">cenários</text>
+              <text x="982" y="180" style="font-size:18px;fill:var(--seg-texto)">(Aulas 12 e</text>
+              <text x="982" y="204" style="font-size:18px;fill:var(--seg-texto)">13).</text>
             </g>
           </svg>
           <p class="diagram-caption">A ordem de leitura da esquerda para a direita é a sequência
@@ -818,7 +828,7 @@
             <tr><td>Nominal</td><td>contagem por categoria</td><td>ordenar, somar, média</td><td><code>unidade</code></td></tr>
             <tr><td>Ordinal</td><td>ordem, mediana</td><td>média aritmética</td><td>nota de satisfação</td></tr>
             <tr><td>Intervalar</td><td>soma, subtração, média</td><td>razão ("o dobro de")</td><td>Celsius, <code>periodo</code> como índice</td></tr>
-            <tr><td>Razão</td><td>razão, média geométrica</td><td>&mdash;</td><td><code>valor</code></td></tr>
+            <tr><td>Razão</td><td>razão, média geométrica</td><td>nenhuma</td><td><code>valor</code></td></tr>
           </tbody>
         </table>
         <div class="slide-footer">
