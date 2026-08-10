@@ -17,6 +17,14 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IGNORAR = {".git", "node_modules", "__pycache__", ".ipynb_checkpoints"}
 EXTERNOS = ("http://", "https://", "mailto:", "tel:", "data:", "javascript:")
 
+# Link para o proprio repositorio no GitHub. O botao "Notebook" do portal aponta
+# para la, e nao para o caminho relativo, porque o GitHub Pages serve .ipynb como
+# JSON cru: o navegador baixa o arquivo em vez de mostrar o notebook. Mas isso
+# tirava o arquivo da checagem, porque link externo nao e verificado. Aqui a gente
+# traduz a URL de volta para o caminho local e confere que o arquivo existe, sem
+# depender de rede.
+REPO_BLOB = "https://github.com/canaldoovidio/2026-2A-M03/blob/main/"
+
 ATRIBUTO = re.compile(r"""(?:href|src)\s*=\s*["']([^"']+)["']""")
 
 
@@ -35,7 +43,9 @@ def coletar(raiz):
                         alvo = href.strip()
                         if not alvo or alvo.startswith("#"):
                             continue
-                        if alvo.lower().startswith(EXTERNOS):
+                        if alvo.startswith(REPO_BLOB):
+                            pass  # do proprio repo: verificavel sem rede
+                        elif alvo.lower().startswith(EXTERNOS):
                             continue
                         encontrados.append({
                             "arquivo": os.path.relpath(caminho, raiz),
@@ -54,7 +64,11 @@ def quebrados(raiz):
         alvo = link["href"].split("?")[0].split("#")[0]
         if not alvo:
             continue
-        destino = os.path.normpath(os.path.join(link["base"], alvo))
+        if alvo.startswith(REPO_BLOB):
+            # URL do proprio repo: confere contra o arquivo local correspondente
+            destino = os.path.join(raiz, alvo[len(REPO_BLOB):])
+        else:
+            destino = os.path.normpath(os.path.join(link["base"], alvo))
         if not os.path.exists(destino):
             mortos.append({k: link[k] for k in ("arquivo", "linha", "href")})
     return mortos

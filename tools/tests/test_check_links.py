@@ -45,3 +45,32 @@ def test_caminho_relativo_sobe_de_subpasta(tmp_path):
     _escrever(tmp_path, "aulas/aula01.html", '<a href="../index.html">voltar</a>')
     _escrever(tmp_path, "index.html", "<html></html>")
     assert quebrados(str(tmp_path)) == []
+
+
+def test_url_do_proprio_repo_e_verificada_contra_o_arquivo_local(tmp_path):
+    """O botao Notebook do portal aponta para o GitHub, nao para o caminho relativo.
+
+    O GitHub Pages serve .ipynb como JSON cru, entao o link relativo fazia o
+    navegador baixar o arquivo em vez de mostrar o notebook. Mas trocar por URL
+    externa tirava o arquivo da checagem, porque link externo nao e verificado.
+    Aqui a URL do proprio repositorio volta a ser conferida contra o disco, sem
+    depender de rede.
+    """
+    from check_links import REPO_BLOB
+
+    _escrever(tmp_path, "notebooks/aula01.ipynb", "{}")
+    _escrever(tmp_path, "index.html",
+              '<a href="%snotebooks/aula01.ipynb">nb</a>' % REPO_BLOB)
+    assert quebrados(str(tmp_path)) == []
+
+    _escrever(tmp_path, "index.html",
+              '<a href="%snotebooks/aula99.ipynb">nb</a>' % REPO_BLOB)
+    achados = quebrados(str(tmp_path))
+    assert len(achados) == 1
+    assert achados[0]["href"].endswith("notebooks/aula99.ipynb")
+
+
+def test_link_externo_de_terceiro_continua_ignorado(tmp_path):
+    _escrever(tmp_path, "index.html",
+              '<a href="https://sidra.ibge.gov.br/tabela/1092">IBGE</a>')
+    assert quebrados(str(tmp_path)) == []

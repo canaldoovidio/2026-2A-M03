@@ -46,6 +46,19 @@ ART), a lacuna é registrada no relatório final como pendência. Não é preenc
 | Material de apoio | `materiais/aulaNN.html` | aprofunda o que o slide só aponta, com TOC lateral |
 | Referências | `referencias/aulaNN.html` | autoestudos da semana + leitura complementar do professor |
 | Notebook | `notebooks/aulaNN.ipynb` | laboratório executável, ancorado nos CSVs de `dados/` |
+
+**O link do notebook no portal aponta para o GitHub, nunca para o caminho relativo.**
+O GitHub Pages serve `.ipynb` como JSON cru: com caminho relativo, o aluno clica em
+"Notebook" e o navegador baixa um arquivo ou mostra JSON na tela. Use
+`https://github.com/canaldoovidio/2026-2A-M03/blob/main/notebooks/aulaNN.ipynb`, com
+`target="_blank"` e `rel="noopener"`, porque o GitHub renderiza o notebook e exibe o badge
+do Colab que existe dentro dele. O `check_links.py` traduz essa URL de volta para o caminho
+local e confere que o arquivo existe, então o link continua protegido sem depender de rede.
+
+Dentro do notebook, a primeira célula traz o badge "Abrir no Colab" apontando para
+`https://colab.research.google.com/github/canaldoovidio/2026-2A-M03/blob/main/notebooks/aulaNN.ipynb`,
+e a célula de carga de dados cai para `raw.githubusercontent.com` quando o caminho local
+`../dados/` não existe, que é o caso no Colab.
 | Perguntas socráticas (interno) | `docs/perguntas-aulaNN.md` | condução da aula, não distribuído ao aluno |
 
 `NN` é o número da aula com dois dígitos (`01`, `02`, ...). As pastas `materiais/`,
