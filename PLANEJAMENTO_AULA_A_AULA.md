@@ -123,37 +123,56 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
   Introdução ao Pandas
   Visão geral de conceitos básicos de estatística descritiva
 
-10h00 - 10h15  Daily da equipe
-  O que fiz, o que vou fazer, impedimentos. Cada dupla escolhe qual das cinco séries vai explorar
-  primeiro hoje.
+10h00 - 10h15  Daily e ativação
+  Divide as cinco séries entre as duplas. Pergunta disparadora, sem revelar a resposta: qual das
+  cinco séries é a mais longa? Cada dupla anota o palpite no notebook.
 
-10h15 - 12h00  Instrução em metodologia ativa
+10h15 - 12h00  Instrução em metodologia ativa, em três blocos temáticos de 30 minutos (teoria,
+  prática em duplas e correção rápida embutidas em cada bloco, para dar tempo real de depurar erro
+  de sintaxe e de ambiente no Colab)
 
-  10h15 - 10h30  Resgate: os três modelos mapeados e a decisão trimestral fechada na Aula 02.
-    Hoje: explorar de fato as cinco séries com Pandas. Pergunta disparada: "qual das cinco
-    categorias vocês acham que tem a série histórica mais longa?"
+  10h15 - 10h45  Bloco 1, Pandas: carga, describe e validação de contrato
 
-  10h30 - 10h45  Teoria: `pandas.read_csv`, `DataFrame`, tipos de coluna, `describe()`. Prática
-    imediata: cada dupla carrega um dos cinco CSVs (`abate_bovinos`, `abate_suinos`,
-    `abate_frangos`, `producao_ovos`, `producao_leite`) e roda `describe()`.
+    10h15 - 10h27  Teoria: a transição de `csv.reader` (Aula 01) para `pandas.read_csv`.
+      `DataFrame`, tipos de coluna, e as sete linhas do `describe()`.
 
-  10h45 - 11h00  Prática: estatística descritiva da série carregada (média, mediana, desvio
-    padrão), comparando a ordem de grandeza encontrada com a checagem de sanidade documentada em
-    `dados/README.md`.
+    10h27 - 10h40  Prática em duplas: cada dupla carrega um dos cinco CSVs (`abate_bovinos`,
+      `abate_suinos`, `abate_frangos`, `producao_ovos`, `producao_leite`), roda `describe()` e
+      confere a faixa encontrada contra `dados/README.md`. Por que o `count` difere entre as
+      séries?
 
-  11h00 - 11h15  Teoria: Numpy para operações vetorizadas, calculando a variação percentual
-    trimestre a trimestre com `np.diff`. Exercício: cada dupla calcula a variação da própria
-    série e identifica o maior salto.
+    10h40 - 10h45  Correção rápida no quadro e dúvidas.
 
-  11h15 - 11h30  Prática: Matplotlib e Seaborn, plotando a série no tempo com `periodo` no eixo
-    x, procurando sazonalidade visual e outliers.
+  10h45 - 11h15  Bloco 2, Numpy: vetorização e localização de picos
 
-  11h30 - 11h45  Teoria: dados faltantes, quando o IBGE marca `valor` como ausente ou suprimido,
-    e `isna()`. Exercício: cada dupla conta quantos vazios a própria série tem e onde eles caem.
+    10h45 - 10h57  Teoria: `np.diff`, o alinhamento de índices no fatiamento `valores[:-1]`, e
+      por que vetorização em C bate laço `for` em Python puro.
 
-  11h45 - 12h00  Amarração com a sprint: os gráficos e a leitura estatística produzidos hoje são
-    a primeira versão da comunicação visual do produto de dados, alimentando **ART.2 UX parte 1**
-    (peso 3). Fecha a Sprint 1 (review em 14/08).
+    10h57 - 11h10  Prática em duplas: variação percentual trimestre a trimestre da própria série,
+      `np.argmax(np.abs(...))` para achar o trimestre do maior salto.
+
+    11h10 - 11h15  Correção rápida e dúvidas.
+
+  11h15 - 11h45  Bloco 3, Visualização: tendência, sazonalidade e faltantes
+
+    11h15 - 11h27  Teoria: `sns.lineplot` para a série no tempo, agregação por trimestre para
+      expor sazonalidade, e como anotar o pico no gráfico. Nota de 2 min sobre dados faltantes:
+      `isna()` checa, `fillna()` e `dropna()` agem.
+
+    11h27 - 11h40  Prática em duplas: gráfico temporal, gráfico de sazonalidade, e anotação do
+      maior pico encontrado no bloco 2.
+
+    11h40 - 11h45  Correção rápida e dúvidas.
+
+  11h45 - 12h00  Mapeamento cruzado e amarração com a sprint
+
+    11h45 - 11h55  Cada dupla tem 1 minuto para dizer o comportamento da própria série. O
+      professor monta no quadro o mapa comparativo das cinco (ex.: leite é sazonal, frango é
+      quase linear, bovinos tem salto em 2005). É aqui que aparece o insight que nenhuma dupla
+      via sozinha.
+
+    11h55 - 12h00  Amarração: os gráficos e a leitura estatística de hoje alimentam a **ART.2
+      UX parte 1** (peso 3), entregue em 14/08, e a **ART.1 Entendimento do negócio** (peso 6).
 
 ---
 

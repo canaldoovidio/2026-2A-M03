@@ -157,7 +157,23 @@ variacao = (np.diff(valores) / valores[:-1]) * 100</code></pre>
 
       <section class="doc-secao" id="visualizacao">
         <h2>5. Visualização: sazonalidade e outliers</h2>
-        <p>O gráfico de <code>abate_bovinos</code> no tempo, com o salto de 2005 marcado:</p>
+        <p>O gráfico de <code>abate_bovinos</code> no tempo, com o salto de 2005 marcado. O
+        código é o mesmo do deck, com <code>ROXO</code> e <code>CORAL</code> como as duas
+        constantes de cor do tema, definidas uma vez:</p>
+        <pre class="doc-codigo"><code>variacao = np.diff(df["valor"]) / df["valor"][:-1] * 100
+i = int(np.argmax(np.abs(variacao))) + 1  # +1: np.diff perde o primeiro ponto
+
+sns.lineplot(data=df, x="periodo", y="valor", color=ROXO, ax=ax)
+ax.annotate(
+    f"maior salto: {variacao[i-1]:+.1f}%",
+    xy=(i, df["valor"].iloc[i]),      # i e a POSICAO no eixo, nao o texto do periodo
+    xytext=(i - 18, df["valor"].iloc[i] * 1.06),
+    arrowprops=dict(arrowstyle="->", color=CORAL))</code></pre>
+        <p><strong>A armadilha de <code>xy</code>.</strong> O eixo x de <code>sns.lineplot</code>
+        é categórico (uma posição inteira por trimestre), não numérico nem textual. Anotar com
+        <code>xy=("2005-T2", valor)</code> não erra com exceção: o ponto simplesmente aparece fora
+        de lugar, porque o eixo espera a posição <code>i</code>, não o rótulo. É um bug silencioso,
+        e por isso o mais comum desta célula.</p>
         <img src="../assets/img/aula03-serie-bovinos.png" alt="Série de abate de bovinos de 1997-T1 a 2026-T1, com o salto de +14,65% entre 2005-T1 e 2005-T2 marcado" style="width:100%; max-width: 900px; border: 1px solid var(--seg-borda); border-radius: 10px; display:block; margin: 0 auto 14px;">
         <p>Uma tendência de crescimento não some no meio do gráfico: ela é visível de ponta a
         ponta. O ponto de 2005 que o <code>np.diff</code> encontrou (seção 4) aparece como um
@@ -166,7 +182,20 @@ variacao = (np.diff(valores) / valores[:-1]) * 100</code></pre>
         valor absoluto. Confundir "maior salto" com "maior valor" é um erro comum de leitura de
         gráfico.</p>
         <h3>Sazonalidade real: o caso do leite</h3>
+        <pre class="doc-codigo"><code>df["trimestre"] = df["periodo"].str[-2:]  # "1997-T1" vira "T1"
+sazonal = df.groupby("trimestre")["valor"].mean().reset_index()
+
+sns.barplot(data=sazonal, x="trimestre", y="valor",
+            hue="trimestre", palette=[ROXO] * 4, legend=False)</code></pre>
+        <p>Duas armadilhas menores nesta célula: <code>palette=</code> sem <code>hue=</code> está
+        descontinuado nas versões atuais do Seaborn (por isso <code>hue="trimestre"</code>
+        aparece mesmo repetindo a coluna do eixo x); e a cor precisa vir de uma constante
+        (<code>ROXO</code>), nunca de um hex solto no meio do código, para o gráfico não sair da
+        paleta da marca.</p>
         <img src="../assets/img/aula03-sazonalidade-leite.png" alt="Gráfico de barras da produção de leite adquirido, média por trimestre do ano" style="width:100%; max-width: 460px; border: 1px solid var(--seg-borda); border-radius: 10px; display:block; margin: 0 auto 14px;">
+        <p><em>Nesta figura, T2 e T4 aparecem em cores diferentes só para destacar o mínimo e o
+        máximo mais rápido; o código acima, mais simples e reprodutível, pinta as quatro barras da
+        mesma cor.</em></p>
         <p>Agrupando <code>producao_leite</code> por trimestre do ano
         (<code>periodo.str.split("-T").str[1]</code>) e tirando a média de cada grupo, aparece um
         padrão consistente ao longo de quase trinta anos: <strong>T2 é sempre o mais baixo</strong>
