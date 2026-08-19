@@ -46,8 +46,17 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
   `referencias/aula04.html`, `notebooks/aula04.ipynb`) mais as notas do professor
   (`docs/notas-do-professor/aula04.md`) e as duas figuras
   (`tools/graficos_aula04.py`). O notebook constrói a base analítica que a Aula 05 recebe: junção
-  das cinco séries, defasagens, sazonalidade codificada, padronização e o teste de Shapiro-Wilk. Os
-  quatro botões do card no portal estão habilitados.
+  das cinco séries, defasagens, sazonalidade codificada e padronização. Os quatro botões do card no
+  portal estão habilitados. O deck tem 30 slides, incluindo dois blocos pedidos pelo professor
+  depois da primeira versão: dez minutos de revisão das Semanas 01 a 03, para a Ponderada 1 de
+  Computação, e onze minutos de hipóteses declaradas para a ART.5.
+- **A estatística da Aula 04 fecha o ciclo completo** (hipótese declarada, teste escolhido,
+  decisão, consequência no projeto), com quatro testes sobre os CSVs reais: Shapiro-Wilk,
+  Pearson, Kruskal-Wallis e teste t pareado. O achado que sustenta o bloco: a sazonalidade do
+  leite **não** é detectada pelo teste sobre a série em nível (p = 0,0739) e aparece com p da
+  ordem de 1e-06 depois de remover a tendência, porque a variação entre anos infla a variação
+  dentro dos grupos. `tools/tests/test_hipoteses_aula04.py` trava as decisões, não só os números,
+  e se pula sozinho onde não houver scipy.
 - **ADRs** (`docs/adrs/ADR-001` a `ADR-007`): as sete decisões de arquitetura do acervo, para o
   fan-out não relitigar nenhuma. Motor Reveal.js, Platypi no lugar da Azurio, regressão tabular em
   base trimestral, case só com fonte aberta, os quatro artefatos por aula, as skills globais e a

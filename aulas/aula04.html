@@ -373,7 +373,7 @@ abate_bovinos    +0,9200</code></pre>
       <section class="section-slide">
         <div class="accent-bar"></div>
         <h2>Bloco 3 &middot; Codificação e seleção</h2>
-        <h3>11h13 &middot; 11h40 &middot; sazonalidade, escala e o que entra no modelo</h3>
+        <h3>11h13 &middot; 11h38 &middot; sazonalidade, escala e o que entra no modelo</h3>
       </section>
 
       <!-- 15 - Codificacao de sazonalidade -->
@@ -456,7 +456,7 @@ Z.std(axis=0)    # 1 nas cinco</code></pre>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>Prática em duplas (11h22 &middot; 11h35)</h2>
+          <h2>Prática em duplas (11h20 &middot; 11h33)</h2>
         </div>
         <ol class="exercise-steps">
           <li>Criem as três dummies de trimestre e o par seno/cosseno na base da dupla.</li>
@@ -482,9 +482,10 @@ Z.std(axis=0)    # 1 nas cinco</code></pre>
           <h2>Sem a tendência, a correlação do leite cai a -0,04</h2>
         </div>
         <img src="../assets/img/aula04-correlacao-nivel-vs-diferenca.png" alt="Gráfico de barras horizontais comparando a correlação de Pearson de quatro séries com abate_frangos: sobre o nível fica entre +0,93 e +0,97, sobre a primeira diferença cai para a faixa de -0,04 a +0,20" style="width: 100%; max-width: 900px; display: block; margin: 0 auto 10px;">
-        <p>As cinco séries crescem ao longo de 29 anos, e duas séries que sobem juntas
-        correlacionam alto mesmo sem relação entre elas. <code>.diff()</code> remove o nível e
-        deixa a variação trimestre a trimestre, que é onde está a informação nova.</p>
+        <p><strong>H0: a correlação com <code>abate_frangos</code> é zero.</strong> Para o leite,
+        Pearson devolve <code>p</code> = 1,7e-64 sobre o nível e rejeita H0; sobre a primeira
+        diferença, <code>p</code> = 0,667 e não rejeita. Mesma amostra, duas conclusões, e o que
+        muda é a tendência de 29 anos que o <code>.diff()</code> remove.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
           <p class="footer-page">18</p>
@@ -528,7 +529,7 @@ Z.std(axis=0)    # 1 nas cinco</code></pre>
       <section class="section-slide">
         <div class="accent-bar"></div>
         <h2>Revisão das Semanas 01 a 03</h2>
-        <h3>11h40 &middot; 11h50 &middot; os quatro temas do módulo até aqui</h3>
+        <h3>11h38 &middot; 11h46 &middot; os quatro temas do módulo até aqui</h3>
       </section>
 
       <!-- 21 - Revisao: mutabilidade e copia em Python -->
@@ -683,41 +684,100 @@ df.describe()        # count, mean, std, min,
         </div>
       </section>
 
-      <!-- 25 - ART.5, normalidade -->
+      <!-- 25 - ART.5, as tres hipoteses declaradas -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>Shapiro-Wilk rejeita normalidade nas cinco séries</h2>
+          <h2>As hipóteses de hoje, declaradas</h2>
         </div>
-        <img src="../assets/img/aula04-normalidade-frangos.png" alt="Dois painéis para abate_frangos: histograma com a curva normal de mesma média e desvio sobreposta, e gráfico quantil-quantil em que as pontas se afastam da reta. Shapiro-Wilk W igual a 0,9462 e p igual a 0,00014" style="width: 100%; max-width: 800px; display: block; margin: 0 auto 4px;">
-        <div class="side-by-side">
-          <table class="data-table">
-            <thead>
-              <tr><th>série</th><th>p (nível)</th><th>p (diferença)</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>abate_bovinos</td><td>0,00077</td><td><strong>0,21719</strong></td></tr>
-              <tr><td>abate_frangos</td><td>0,00014</td><td>0,04224</td></tr>
-              <tr><td>producao_leite</td><td>0,000003</td><td>0,00115</td></tr>
-            </tbody>
-          </table>
-          <div>
-            <p>Em nível, as cinco rejeitam a hipótese nula, com <code>p</code> abaixo de 0,001 [3]:
-            uma série com tendência de crescimento tem a média mudando ao longo da amostra. Depois
-            de <code>.diff()</code>, <strong>abate_bovinos</strong> passa a 0,217 e deixa de
-            rejeitar. As cinco linhas da tabela estão no material de apoio.
-            <strong>11h50 &middot; 11h57.</strong></p>
-          </div>
-        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>hipótese nula (H0)</th><th>teste [3]</th><th>estatística e valor-p</th><th>decisão a 5%</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>H1.</strong> <code>abate_frangos</code> vem de uma normal</td>
+              <td>Shapiro-Wilk</td><td>W = 0,9462 &middot; p = 0,00014</td>
+              <td><strong>rejeita</strong></td>
+            </tr>
+            <tr>
+              <td><strong>H2.</strong> a correlação entre leite e frango é zero, na primeira diferença</td>
+              <td>Pearson</td><td>r = &minus;0,0404 &middot; p = 0,667</td>
+              <td>não rejeita</td>
+            </tr>
+            <tr>
+              <td><strong>H3.</strong> as médias dos quatro trimestres do leite são iguais</td>
+              <td>Kruskal-Wallis, sobre o nível</td><td>p = 0,0739</td>
+              <td>não rejeita</td>
+            </tr>
+            <tr>
+              <td><strong>H3.</strong> a mesma hipótese, sobre o resíduo da tendência</td>
+              <td>Kruskal-Wallis</td><td>p = 0,0000016</td>
+              <td><strong>rejeita</strong></td>
+            </tr>
+            <tr>
+              <td><strong>H3b.</strong> a média de T4 do leite é igual à de T2</td>
+              <td>t de Student, pareado por ano</td><td>t = +16,18 &middot; p = 9,7e-16</td>
+              <td><strong>rejeita</strong></td>
+            </tr>
+          </tbody>
+        </table>
+        <p>Ter rejeitado H1 é o motivo de H3 usar Kruskal-Wallis, que dispensa normalidade, no
+        lugar da ANOVA. O pareamento por ano em H3b controla a tendência por construção: cada T4 é
+        comparado ao T2 do mesmo ano.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
           <p class="footer-page">25</p>
         </div>
       </section>
 
-      <!-- 26 - Hands-on -->
+      <!-- 26 - ART.5, da decisao para a consequencia -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que cada decisão muda no modelo</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>decisão</th><th>consequência prática no projeto</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>H1 rejeitada</strong></td>
+              <td>Os testes seguintes usam a versão não paramétrica. A suposição de normalidade da
+              regressão recai sobre os <strong>resíduos</strong> do modelo ajustado, e é testada na
+              Aula 05, depois de existir modelo.</td>
+            </tr>
+            <tr>
+              <td><strong>H2 não rejeitada</strong></td>
+              <td><code>producao_leite</code> fica <strong>fora</strong> das entradas do modelo de
+              frango, apesar do r = +0,96 em nível. Volta apenas se reduzir o erro em dados que o
+              modelo não viu.</td>
+            </tr>
+            <tr>
+              <td><strong>H3 rejeitada</strong> após remover a tendência</td>
+              <td>A codificação de sazonalidade <strong>entra</strong> na base do leite, e o ganho
+              já está medido: R² de 0,8896 para 0,9194.</td>
+            </tr>
+            <tr>
+              <td><strong>H3b também rejeitada no frango</strong><br>(t = +2,33, p = 0,027)</td>
+              <td>Aqui o valor-p decide pouco: o efeito é de +1,90% da média, contra +14,85% do
+              leite, e o R² do frango sobe 0,0004. A feature fica de fora por <strong>tamanho de
+              efeito</strong>, com o número na mão.</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">26</p>
+        </div>
+      </section>
+
+      <!-- 27 - Hands-on -->
       <section class="exercise-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -739,11 +799,11 @@ df.describe()        # count, mean, std, min,
         </ol>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
-          <p class="footer-page">26</p>
+          <p class="footer-page">27</p>
         </div>
       </section>
 
-      <!-- 27 - Amarracao com a sprint -->
+      <!-- 28 - Amarracao com a sprint -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -774,11 +834,11 @@ df.describe()        # count, mean, std, min,
         regressão.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
-          <p class="footer-page">27</p>
+          <p class="footer-page">28</p>
         </div>
       </section>
 
-      <!-- 28 - Referencias -->
+      <!-- 29 - Referencias -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -804,11 +864,11 @@ df.describe()        # count, mean, std, min,
         </ol>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
-          <p class="footer-page">28</p>
+          <p class="footer-page">29</p>
         </div>
       </section>
 
-      <!-- 29 - Encerramento -->
+      <!-- 30 - Encerramento -->
       <section class="end-slide">
         <h1>Até 24/08</h1>
         <h3>Aula 05: Aprendizado Supervisionado parte I, Sprint 2</h3>

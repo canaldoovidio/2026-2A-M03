@@ -22,7 +22,9 @@
       <h1>Material de apoio: Pré-processamento e Feature Engineering</h1>
       <p class="doc-subtitulo">A Aula 03 terminou com cinco arquivos explorados um a um. A Aula 05
       precisa de uma tabela só, em que cada linha carregue tudo que o modelo pode ver naquele
-      trimestre. Esta página é o caminho entre as duas, decisão por decisão.</p>
+      trimestre. Esta página é o caminho entre as duas, decisão por decisão, e a seção 9 fecha cada
+      uma delas no ciclo completo: hipótese declarada, teste aplicado, decisão tomada e efeito na
+      base que a Aula 05 recebe.</p>
     </header>
 
     <nav class="doc-toc" aria-label="Sumário">
@@ -36,7 +38,7 @@
         <li><a href="#sazonalidade">Codificar sazonalidade: dummies e seno/cosseno</a></li>
         <li><a href="#escala">Escalonamento das variáveis numéricas</a></li>
         <li><a href="#selecao">Seleção de característica e a armadilha da tendência</a></li>
-        <li><a href="#normalidade">Normalidade e o que a ART.5 pede</a></li>
+        <li><a href="#normalidade">Três hipóteses, os testes e o que muda no projeto</a></li>
         <li><a href="#art3">O que levar para a ART.3 e a ART.5</a></li>
       </ol>
     </nav>
@@ -352,18 +354,24 @@ Z.std(axis=0)    # 1 nas cinco colunas</code></pre>
       </section>
 
       <section class="doc-secao" id="normalidade">
-        <h2>9. Normalidade e o que a ART.5 pede</h2>
-        <p>A ART.5 (Distribuição normal e teste de hipótese, peso 4) pede um teste de hipótese
-        conduzido, com estatística e valor-p. O teste de Shapiro-Wilk formaliza isso: a hipótese nula é que a amostra vem de uma
-        distribuição normal, e um valor-p baixo rejeita essa hipótese.</p>
+        <h2>9. Três hipóteses, os testes que as decidem e o que muda no projeto</h2>
+        <p>A ART.5 (Distribuição normal e teste de hipótese, peso 4) pede um teste conduzido, com
+        estatística e valor-p. Um teste de hipótese, porém, só produz conhecimento quando três
+        coisas acontecem na ordem: a hipótese é escrita <strong>antes</strong> de olhar o
+        resultado, o teste escolhido é compatível com o que se sabe dos dados, e a decisão muda
+        alguma coisa no que vem depois. Esta seção percorre esse ciclo três vezes, sobre a base
+        montada hoje.</p>
+
+        <h3>H1. A série vem de uma distribuição normal</h3>
+        <p>Hipótese nula do teste de Shapiro-Wilk. Um valor-p baixo rejeita a normalidade.</p>
         <pre class="doc-codigo"><code>from scipy import stats
 
 W, p = stats.shapiro(base["abate_frangos"])
-# W = 0,9462   p = 0,00014   ->  rejeita a normalidade</code></pre>
+# W = 0,9462   p = 0,00014   ->  rejeita H1</code></pre>
         <div class="doc-tabela-rolagem">
           <table class="doc-tabela">
             <thead>
-              <tr><th>série</th><th>W (nível)</th><th>p (nível)</th><th>p (primeira diferença)</th><th>conclusão na diferença</th></tr>
+              <tr><th>série</th><th>W (nível)</th><th>p (nível)</th><th>p (primeira diferença)</th><th>decisão na diferença</th></tr>
             </thead>
             <tbody>
               <tr><td><code>abate_bovinos</code></td><td>0,9563</td><td>0,00077</td><td>0,21719</td><td>não rejeita a normalidade</td></tr>
@@ -374,18 +382,112 @@ W, p = stats.shapiro(base["abate_frangos"])
             </tbody>
           </table>
         </div>
-        <p>As cinco séries rejeitam normalidade em nível, e o motivo é estrutural: uma série com
-        tendência de crescimento não tem como ser normal, porque a média muda ao longo da amostra.
-        O gráfico quantil-quantil do deck mostra isso pelas pontas se afastando da reta. Depois de
-        <code>.diff()</code>, <code>abate_bovinos</code> deixa de rejeitar (p = 0,217) e as outras
-        quatro continuam rejeitando, uma delas por pouco (frango, p = 0,042).</p>
+        <p>As cinco rejeitam H1 em nível, por um motivo estrutural: uma série com tendência de
+        crescimento tem a média mudando ao longo da própria amostra. O gráfico quantil-quantil do
+        deck mostra isso pelas pontas se afastando da reta. Depois de <code>.diff()</code>,
+        <code>abate_bovinos</code> deixa de rejeitar (p = 0,217).</p>
         <div class="doc-nota">
-          <p><strong>Rejeitar normalidade não invalida a regressão.</strong> Mínimos quadrados não
-          exige que as variáveis de entrada sejam normais. A suposição de normalidade, quando
-          aparece em regressão linear, é sobre os <strong>resíduos</strong> do modelo ajustado, e
-          serve para os testes de significância dos coeficientes e para os intervalos de confiança.
-          O teste conduzido hoje é sobre as variáveis, e responde à ART.5; o teste sobre os
-          resíduos vem depois de existir um modelo, na Aula 05.</p>
+          <p><strong>Consequência prática de rejeitar H1.</strong> Duas, e a segunda é a que a
+          maioria confunde. A primeira: os testes das hipóteses seguintes usam versão que dispensa
+          normalidade (Kruskal-Wallis no lugar da ANOVA). A segunda: rejeitar normalidade das
+          <strong>variáveis</strong> não impede usar regressão linear. A suposição de normalidade
+          em mínimos quadrados recai sobre os <strong>resíduos</strong> do modelo ajustado, e serve
+          para os testes de significância dos coeficientes e para os intervalos de confiança. Esse
+          teste só pode ser feito depois de existir um modelo, na Aula 05.</p>
+        </div>
+
+        <h3>H2. A correlação entre duas séries é zero</h3>
+        <p><code>scipy.stats.pearsonr</code> devolve o coeficiente e o valor-p do teste que tem
+        essa hipótese como nula. A mesma H2, aplicada duas vezes sobre as mesmas 117 linhas:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>par com <code>abate_frangos</code></th><th>nível: r e p</th><th>primeira diferença: r e p</th><th>decisão na diferença</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>abate_suinos</code></td><td>+0,9727 &middot; 7,7e-75</td><td>+0,2041 &middot; 0,028</td><td>rejeita H2</td></tr>
+              <tr><td><code>producao_leite</code></td><td>+0,9585 &middot; 1,7e-64</td><td>&minus;0,0404 &middot; 0,667</td><td>não rejeita</td></tr>
+              <tr><td><code>producao_ovos</code></td><td>+0,9449 &middot; 1,4e-57</td><td>+0,1497 &middot; 0,109</td><td>não rejeita</td></tr>
+              <tr><td><code>abate_bovinos</code></td><td>+0,9287 &middot; 2,3e-51</td><td>+0,0538 &middot; 0,566</td><td>não rejeita</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Sobre o nível, H2 é rejeitada com folga nas quatro, com valores-p que beiram o zero da
+        precisão de máquina. Sobre a primeira diferença, apenas <code>abate_suinos</code> rejeita,
+        e por pouco.</p>
+        <div class="doc-nota">
+          <p><strong>Consequência prática.</strong> <code>producao_leite</code> fica fora das
+          entradas do modelo de frango, apesar do r = +0,96 em nível. Ela volta a entrar apenas se
+          reduzir o erro em dados que o modelo não viu, o que a Aula 05 permite medir com o corte
+          temporal entre treino e teste.</p>
+          <p><strong>Ressalva sobre esses valores-p.</strong> O teste de Pearson supõe observações
+          independentes, e série temporal viola essa suposição: cada trimestre se parece com o
+          anterior. Sob autocorrelação, o número de observações efetivamente independentes é menor
+          que 117, e o valor-p calculado sobre o nível é otimista. A ressalva reforça a leitura
+          feita sobre a primeira diferença, que é justamente a transformação que reduz a
+          autocorrelação.</p>
+        </div>
+
+        <h3>H3. As médias dos quatro trimestres são iguais</h3>
+        <p>É a hipótese que decide se a codificação de sazonalidade da seção 6 merece entrar na
+        base. Como H1 foi rejeitada, o teste usado é Kruskal-Wallis, que compara os quatro grupos
+        sem exigir normalidade. Aplicado duas vezes: sobre a série como ela é, e sobre o resíduo de
+        uma reta ajustada no tempo, que é a mesma série sem a tendência de longo prazo.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>série</th><th>p sobre o nível</th><th>p sobre o resíduo da tendência</th><th>decisão sem tendência</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>producao_leite</code></td><td>0,0739</td><td>0,0000016</td><td><strong>rejeita</strong></td></tr>
+              <tr><td><code>abate_suinos</code></td><td>0,9256</td><td>0,0305</td><td>rejeita</td></tr>
+              <tr><td><code>abate_bovinos</code></td><td>0,5328</td><td>0,0698</td><td>não rejeita</td></tr>
+              <tr><td><code>abate_frangos</code></td><td>0,9880</td><td>0,7686</td><td>não rejeita</td></tr>
+              <tr><td><code>producao_ovos</code></td><td>0,9907</td><td>0,8304</td><td>não rejeita</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Este é o resultado mais importante da seção. Sobre a série em nível, H3 <strong>não é
+        rejeitada para nenhuma das cinco</strong>, nem para <code>producao_leite</code>, que a Aula
+        03 já tinha identificado como a mais sazonal do acervo. Sobre o resíduo da tendência, o
+        leite rejeita com p da ordem de 1e-06.</p>
+        <p>A explicação está na estrutura do próprio teste. Kruskal-Wallis compara a variação
+        <em>entre</em> os quatro grupos com a variação <em>dentro</em> de cada grupo. Com 29 anos
+        de crescimento, dois valores de T2 distantes no tempo diferem muito mais entre si do que um
+        T2 difere de um T4 do mesmo ano. A tendência infla a variação dentro dos grupos, e o teste
+        lê o efeito sazonal como ruído. Testar sazonalidade sem remover a tendência esconde
+        justamente o efeito mais forte da base.</p>
+
+        <h3>H3b. A média de T4 é igual à de T2</h3>
+        <p>O mesmo problema, resolvido por outro caminho. Um teste t pareado compara T4 com T2
+        <strong>do mesmo ano</strong>, o que elimina a tendência por construção, sem ajustar reta
+        nenhuma: cada par carrega o nível daquele ano nos dois lados da diferença.</p>
+        <pre class="doc-codigo"><code>piv = base.pivot_table(index="ano", columns="trimestre", values="producao_leite")
+t, p = stats.ttest_rel(piv[4], piv[2])
+# t = +16,18   p = 9,7e-16   com 29 pares</code></pre>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>série</th><th>t</th><th>p</th><th>efeito médio (T4 &minus; T2)</th><th>ganho de R² com as dummies</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>producao_leite</code></td><td>+16,18</td><td>9,7e-16</td><td>+14,85% da média</td><td>+0,0298</td></tr>
+              <tr><td><code>producao_ovos</code></td><td>+4,91</td><td>3,6e-05</td><td>+2,32% da média</td><td>+0,0003</td></tr>
+              <tr><td><code>abate_bovinos</code></td><td>+3,13</td><td>0,0041</td><td>+3,68% da média</td><td>+0,0104</td></tr>
+              <tr><td><code>abate_frangos</code></td><td>+2,33</td><td>0,0273</td><td>+1,90% da média</td><td>+0,0004</td></tr>
+              <tr><td><code>abate_suinos</code></td><td>+1,95</td><td>0,0612</td><td>+1,00% da média</td><td>+0,0026</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="doc-nota">
+          <p><strong>Consequência prática, e a distinção que fecha a seção.</strong> O leite rejeita
+          H3b com t = +16,18 e efeito de +14,85% da média, então a codificação de sazonalidade entra
+          na base dele, e o ganho medido na seção 6 confirma: R² de 0,8896 para 0,9194.</p>
+          <p>O frango <strong>também</strong> rejeita H3b, com p = 0,027, e mesmo assim a feature
+          fica de fora. O efeito ali é de +1,90% da média, e o R² sobe 0,0004. Um valor-p abaixo de
+          0,05 responde que o efeito provavelmente existe. Se ele é grande o bastante para
+          valer uma coluna no modelo é outra pergunta, respondida por tamanho de efeito e por
+          desempenho preditivo, e é ela que decide o que entra na base da Aula 05.</p>
         </div>
       </section>
 

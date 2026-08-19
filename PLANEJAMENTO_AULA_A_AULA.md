@@ -193,13 +193,15 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 
 10h15 - 12h00  Instrução em metodologia ativa, em três blocos temáticos (teoria, prática em
   duplas e correção rápida embutidas em cada bloco, no mesmo formato adotado na Aula 03), mais
-  dez minutos de revisão das Semanas 01 a 03 antes do fechamento.
+  duas janelas no fim: oito minutos de revisão das Semanas 01 a 03 e onze minutos para as
+  hipóteses da ART.5.
 
-  Os três blocos foram comprimidos de 30 para 23, 28 e 27 minutos, para abrir a janela de
-  revisão: o corte sai da teoria de ETL e ELT (coberta por dois autoestudos desta semana), da
-  teoria de defasagem e da teoria de escalonamento (que só passa a ser obrigatória na Aula 07,
-  com KNN e SVM). As três práticas em duplas ficam intactas, com 13 minutos cada, porque são elas
-  que produzem o que a dupla leva para a ART.3.
+  Os três blocos foram comprimidos de 30 para 23, 28 e 25 minutos, para abrir duas janelas no
+  fim: oito minutos de revisão das Semanas 01 a 03 e onze minutos para as hipóteses da ART.5. O
+  corte sai da teoria de ETL e ELT (coberta por dois autoestudos desta semana), da teoria de
+  defasagem e da teoria de escalonamento (que só passa a ser obrigatória na Aula 07, com KNN e
+  SVM). As três práticas em duplas ficam intactas, com 13 minutos cada, porque são elas que
+  produzem o que a dupla leva para a ART.3.
 
   10h15 - 10h22  Resgate e abertura
 
@@ -235,22 +237,23 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
       única série em que `lag4` bate `lag1`. O desconforto a guardar: as outras quatro séries
       também correlacionam acima de +0,92.
 
-  11h13 - 11h40  Bloco 3, Codificação e seleção
+  11h13 - 11h38  Bloco 3, Codificação e seleção
 
-    11h13 - 11h22  Teoria: `trimestre` é categórica nominal, e as duas codificações possíveis
+    11h13 - 11h20  Teoria: `trimestre` é categórica nominal, e as duas codificações possíveis
       (três dummies com `drop_first`, ou par seno/cosseno). Escala das variáveis numéricas e
       padronização z-score, citada aqui e retomada na Aula 07. Votação rápida: qual codificação a
       turma prefere testar primeiro, feita antes de mostrar os R² medidos.
 
-    11h22 - 11h35  Prática em duplas: criar as dummies e o par seno/cosseno, padronizar as cinco
+    11h20 - 11h33  Prática em duplas: criar as dummies e o par seno/cosseno, padronizar as cinco
       colunas e medir a correlação da série da dupla com `abate_frangos` duas vezes, sobre o
       nível e sobre `.diff()`.
 
-    11h35 - 11h40  Correção rápida: a correlação cai da faixa de +0,93 a +0,97 para a faixa de
-      -0,04 a +0,20. Ranquear característica por correlação em nível selecionaria a tendência
-      comum cinco vezes.
+    11h33 - 11h38  Correção rápida: declarar a hipótese que a prática acabou de testar (H0: a
+      correlação é zero) e ler o valor-p nos dois casos. Sobre o nível, p = 1,7e-64 para o leite e
+      rejeita H0; sobre a primeira diferença, p = 0,667 e não rejeita. Mesma hipótese, mesma
+      amostra, duas conclusões.
 
-  11h40 - 11h50  Revisão das Semanas 01 a 03
+  11h38 - 11h46  Revisão das Semanas 01 a 03
 
     Bloco pedido pelo professor para preparar a turma para a **Ponderada 1 de Computação**, que
     consta dos autoestudos desta semana e é aplicada em sala. São quatro slides de revisão
@@ -263,15 +266,40 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
     gabarito da ponderada entra em artefato do acervo, porque o repositório inteiro é publicado
     no GitHub Pages. O arquivo da prova fica fora do git, junto com o `Turma.xlsx` e o TAPI.
 
-  11h50 - 12h00  ART.5 e amarração com a sprint
+  11h46 - 11h57  As hipóteses do dia, declaradas e decididas (ART.5)
 
-    11h50 - 11h57  Teste de normalidade com Shapiro-Wilk nas cinco séries, em nível e sobre a
-      primeira diferença. As cinco rejeitam em nível; `abate_bovinos` deixa de rejeitar depois da
-      diferenciação. É o resultado medido que a ART.5 pede.
+    Este é o bloco que dá à ART.5 o formato que a entrega pede: hipótese escrita antes do
+    resultado, teste compatível com o que se sabe dos dados, decisão, e efeito no projeto. Três
+    hipóteses, todas sobre a base montada hoje:
 
-    11h57 - 12h00  Amarração: a base analítica de hoje alimenta a **ART.3 Exploração,
-      Pré-processamento e Hipóteses** (peso 5) e a **ART.5 Distribuição normal e teste de
-      hipótese** (peso 4). A Sprint 2 fecha em 28/08.
+    **H1. `abate_frangos` vem de uma distribuição normal.** Shapiro-Wilk, W = 0,9462, p = 0,00014,
+    rejeita. As cinco séries rejeitam em nível; `abate_bovinos` deixa de rejeitar depois de
+    `.diff()` (p = 0,217). Consequência: os testes seguintes usam Kruskal-Wallis no lugar da
+    ANOVA, e a suposição de normalidade da regressão fica para os resíduos, na Aula 05.
+
+    **H2. A correlação entre `producao_leite` e `abate_frangos` é zero.** Pearson devolve
+    p = 1,7e-64 sobre o nível (rejeita) e p = 0,667 sobre a primeira diferença (não rejeita).
+    Consequência: o leite fica fora das entradas do modelo de frango até que reduza o erro em
+    dados que o modelo não viu.
+
+    **H3. As médias dos quatro trimestres do leite são iguais.** Kruskal-Wallis sobre o nível dá
+    p = 0,0739 e **não rejeita**; sobre o resíduo da tendência dá p = 1,6e-06 e rejeita. É o
+    achado central do bloco: testar sazonalidade sem remover a tendência esconde o efeito sazonal
+    mais forte da base, porque a variação entre anos infla a variação dentro dos grupos. O teste t
+    pareado por ano (T4 contra T2) resolve o mesmo problema por construção: t = +16,18,
+    p = 9,7e-16, efeito de +14,85% da média. Consequência: a codificação de sazonalidade entra na
+    base do leite, com ganho de R² de 0,8896 para 0,9194.
+
+    **Fecho do bloco, e a distinção que a turma leva para a ART.5:** o frango também rejeita o
+    teste t pareado (t = +2,33, p = 0,027) e mesmo assim a feature fica de fora, porque o efeito é
+    de +1,90% da média e o R² sobe 0,0004. Valor-p e tamanho de efeito respondem perguntas
+    diferentes.
+
+  11h57 - 12h00  Amarração com a sprint
+
+    A base analítica de hoje alimenta a **ART.3 Exploração, Pré-processamento e Hipóteses**
+    (peso 5) e a **ART.5 Distribuição normal e teste de hipótese** (peso 4). A Sprint 2 fecha em
+    28/08.
 
 ---
 

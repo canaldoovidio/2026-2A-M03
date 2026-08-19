@@ -43,7 +43,7 @@
         aula pressupõe:</p>
         <ol class="doc-referencias">
           <li>Adequação de variáveis numéricas e categóricas
-            <span class="doc-porque">Base do Bloco 3 (11h13 &middot; 11h40): <code>trimestre</code> é
+            <span class="doc-porque">Base do Bloco 3 (11h13 &middot; 11h38): <code>trimestre</code> é
             categórica nominal e vira dummy ou par seno/cosseno; as cinco colunas de série são
             numéricas em escalas diferentes e passam por padronização z-score.</span></li>
           <li>Diferenças entre Data Lakes e Data Warehouses
@@ -95,10 +95,19 @@
             <span class="doc-porque">Documentação oficial das quatro operações que constroem a base
             de hoje.</span></li>
           <li>Virtanen, P. et al. <em>SciPy 1.0: fundamental algorithms for scientific computing in
-            Python</em>. Nature Methods, v. 17, p. 261-272, 2020:
-            <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.shapiro.html">scipy.stats.shapiro</a>.
-            <span class="doc-porque">O teste de normalidade usado no fechamento, que produz o
-            resultado medido exigido pela ART.5.</span></li>
+            Python</em>. Nature Methods, v. 17, p. 261-272, 2020. Os quatro testes usados no bloco
+            de hipóteses:
+            <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.shapiro.html">shapiro</a>
+            (normalidade),
+            <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.pearsonr.html">pearsonr</a>
+            (correlação nula),
+            <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.kruskal.html">kruskal</a>
+            (medianas iguais entre grupos, sem exigir normalidade) e
+            <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_rel.html">ttest_rel</a>
+            (teste t pareado).
+            <span class="doc-porque">Cada um responde a uma das hipóteses declaradas na seção 9 do
+            material de apoio, e a escolha entre eles depende do que o teste anterior decidiu: o
+            Kruskal-Wallis entra no lugar da ANOVA porque Shapiro-Wilk rejeitou normalidade.</span></li>
           <li>Pedregosa, F. et al. <em>Scikit-learn: Machine Learning in Python</em>. Journal of
             Machine Learning Research, v. 12, p. 2825-2830, 2011:
             <a href="https://scikit-learn.org/stable/modules/preprocessing.html">pré-processamento</a>
