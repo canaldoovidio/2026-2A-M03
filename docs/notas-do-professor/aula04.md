@@ -213,6 +213,11 @@ O bloco mais denso do encontro, e o que a ART.5 cobra diretamente. A sequência 
 três vezes: escrever a hipótese, escolher o teste, ler a decisão, dizer o que muda no projeto.
 Conduza pelo quadro do slide 25 e feche pelo slide 26, que é a coluna de consequência.
 
+**Conduza o bloco começando pelo slide 25**, que traz o histograma e o gráfico quantil-quantil de
+`abate_frangos`. Pergunte à turma o que os dois painéis sugerem antes de mostrar o valor-p: a
+leitura visual levanta a suspeita, e o número no slide seguinte é o que fecha a decisão. Serve
+também para nomear o limite da inspeção visual, que na Aula 03 foi o único instrumento disponível.
+
 **P15. Por que H3 usa Kruskal-Wallis, e não ANOVA?**
 
 - *Resposta esperada:* porque H1 foi rejeitada logo antes. A ANOVA supõe normalidade dentro dos

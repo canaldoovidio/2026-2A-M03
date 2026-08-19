@@ -272,8 +272,9 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
     resultado, teste compatível com o que se sabe dos dados, decisão, e efeito no projeto. Três
     hipóteses, todas sobre a base montada hoje:
 
-    **H1. `abate_frangos` vem de uma distribuição normal.** Shapiro-Wilk, W = 0,9462, p = 0,00014,
-    rejeita. As cinco séries rejeitam em nível; `abate_bovinos` deixa de rejeitar depois de
+    **H1. `abate_frangos` vem de uma distribuição normal.** O bloco abre pelo gráfico (histograma
+    com a normal de mesma média sobreposta, e o quantil-quantil ao lado), que levanta a suspeita, e
+    fecha no teste, que decide: Shapiro-Wilk, W = 0,9462, p = 0,00014, rejeita. As cinco séries rejeitam em nível; `abate_bovinos` deixa de rejeitar depois de
     `.diff()` (p = 0,217). Consequência: os testes seguintes usam Kruskal-Wallis no lugar da
     ANOVA, e a suposição de normalidade da regressão fica para os resíduos, na Aula 05.
 
