@@ -11,3 +11,11 @@ __pycache__/
 # PLANEJAMENTO_AULA_A_AULA.md e docs/autoestudos-por-semana.md.
 Turma.xlsx
 TURMA-*-TAPI-*.pdf
+
+# Provas e gabaritos, nunca versionados. Mesmo motivo do Turma.xlsx acima: o
+# repositorio inteiro e publicado no GitHub Pages, e uma prova commitada fica
+# publica antes de ser aplicada. O que entra no acervo e a revisao dos topicos,
+# nos artefatos da aula, sem enunciado nem gabarito.
+Ponderada*.pdf
+ponderada*.pdf
+*-gabarito*.pdf

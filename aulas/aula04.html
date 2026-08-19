@@ -10,6 +10,11 @@
        sazonalidade, codificacao e selecao), cada um com teoria, pratica em
        duplas e correcao rapida embutidas, mais o fechamento com o teste de
        normalidade da ART.5.
+       Entre o quiz e o fechamento entra um bloco de 10 minutos de revisao das
+       Semanas 01 a 03, pedido pelo professor para preparar a turma para a
+       ponderada de Computacao da semana. O bloco revisa os TOPICOS, com
+       exemplos ancorados no case; nenhum enunciado e nenhum gabarito da prova
+       aparece aqui, porque este arquivo e publicado no GitHub Pages.
        A base analitica vem do merge das cinco series do SIDRA entre si, nao
        do Sindiracoes: ver docs/adrs/ADR-007.
        Todo numero e grafico citados aqui vem dos cinco CSVs de dados/,
@@ -56,9 +61,9 @@
           </div>
           <div class="concept-card">
             <h3>10h15 &middot; 12h00</h3>
-            <p>Três blocos de 30 minutos (integração, defasagem e sazonalidade, codificação e
-            seleção), cada um com teoria, prática em duplas e correção rápida. Fecha com o teste
-            de normalidade da ART.5.</p>
+            <p>Três blocos temáticos, cada um com teoria, prática em duplas e correção rápida.
+            Depois, dez minutos de revisão das Semanas 01 a 03, e o fecho com o teste de
+            normalidade da ART.5.</p>
           </div>
         </div>
         <div class="slide-footer">
@@ -104,7 +109,7 @@
       <section class="section-slide">
         <div class="accent-bar"></div>
         <h2>Bloco 1 &middot; Integração</h2>
-        <h3>10h15 &middot; 10h45 &middot; cinco arquivos viram uma base analítica</h3>
+        <h3>10h22 &middot; 10h45 &middot; cinco arquivos viram uma base analítica</h3>
       </section>
 
       <!-- 5 - ETL, ELT, lake e warehouse -->
@@ -239,7 +244,7 @@ producao_leite    40</code></pre>
       <section class="section-slide">
         <div class="accent-bar"></div>
         <h2>Bloco 2 &middot; Defasagem</h2>
-        <h3>10h45 &middot; 11h15 &middot; o passado da série vira coluna</h3>
+        <h3>10h45 &middot; 11h13 &middot; o passado da série vira coluna</h3>
       </section>
 
       <!-- 10 - Por que defasagem -->
@@ -320,7 +325,7 @@ len(base.dropna())   # 113</code></pre>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>Prática em duplas (10h57 &middot; 11h10)</h2>
+          <h2>Prática em duplas (10h55 &middot; 11h08)</h2>
         </div>
         <ol class="exercise-steps">
           <li>Criem <code>lag1</code> e <code>lag4</code> da série da sua dupla sobre a base
@@ -344,7 +349,7 @@ len(base.dropna())   # 113</code></pre>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>Correção rápida (11h10 &middot; 11h15)</h2>
+          <h2>Correção rápida (11h08 &middot; 11h13)</h2>
         </div>
         <pre class="code-compact"><code>correlacao com abate_frangos no trimestre corrente, 113 linhas
 
@@ -368,7 +373,7 @@ abate_bovinos    +0,9200</code></pre>
       <section class="section-slide">
         <div class="accent-bar"></div>
         <h2>Bloco 3 &middot; Codificação e seleção</h2>
-        <h3>11h15 &middot; 11h45 &middot; sazonalidade, escala e o que entra no modelo</h3>
+        <h3>11h13 &middot; 11h40 &middot; sazonalidade, escala e o que entra no modelo</h3>
       </section>
 
       <!-- 15 - Codificacao de sazonalidade -->
@@ -451,7 +456,7 @@ Z.std(axis=0)    # 1 nas cinco</code></pre>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>Prática em duplas (11h27 &middot; 11h40)</h2>
+          <h2>Prática em duplas (11h22 &middot; 11h35)</h2>
         </div>
         <ol class="exercise-steps">
           <li>Criem as três dummies de trimestre e o par seno/cosseno na base da dupla.</li>
@@ -519,7 +524,166 @@ Z.std(axis=0)    # 1 nas cinco</code></pre>
         </div>
       </section>
 
-      <!-- 20 - ART.5, normalidade -->
+      <!-- 20 - Divisor: revisao das Semanas 01 a 03 -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Revisão das Semanas 01 a 03</h2>
+        <h3>11h40 &middot; 11h50 &middot; os quatro temas do módulo até aqui</h3>
+      </section>
+
+      <!-- 21 - Revisao: mutabilidade e copia em Python -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Atribuição, cópia e o efeito de <code>append</code></h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>series = ["bovinos", "suinos", "frangos"]
+
+apelido = series           # mesmo objeto
+copia = series.copy()      # objeto novo
+
+series.append("ovos")
+
+series    # ['bovinos','suinos','frangos','ovos']
+apelido   # ['bovinos','suinos','frangos','ovos']
+copia     # ['bovinos','suinos','frangos']</code></pre>
+          <div>
+            <p>Lista é <strong>mutável</strong>. <code>apelido = series</code> cria um segundo nome
+            para o mesmo objeto na memória, sem duplicar nada. Quem alterar por um nome vê a
+            alteração pelo outro.</p>
+            <p><code>.copy()</code> cria um objeto novo, com os mesmos elementos. A partir daí as
+            duas listas seguem caminhos separados.</p>
+            <p><strong>Pergunta rápida:</strong> a mesma coisa acontece com
+            <code>numero_b = numero_a</code>, sendo <code>numero_a</code> um inteiro? Por quê?</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">21</p>
+        </div>
+      </section>
+
+      <!-- 22 - Revisao: taxonomia de dados -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Estruturado, semiestruturado e não estruturado</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>Estruturado</h3>
+            <p>Esquema fixo, definido antes do dado. Os cinco CSVs de <code>dados/</code>: três
+            colunas, tipo conhecido, toda linha igual.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Semiestruturado</h3>
+            <p>Marcadores que organizam os campos, sem esquema rígido de tabela. JSON e XML. A
+            resposta crua da API do SIDRA chega assim.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Não estruturado</h3>
+            <p>Sem campo nem marcador: texto livre, áudio, vídeo, imagem. É a maior parte do
+            volume de dados gerado hoje.</p>
+          </div>
+        </div>
+        <p>Duas confusões frequentes. A primeira: estrutura e natureza do valor são coisas
+        diferentes. A coluna <code>unidade</code> dos CSVs é qualitativa e estruturada ao mesmo
+        tempo. A segunda: cada taxonomia responde a uma pergunta própria, e as duas são independentes.
+        A da Semana 01 (nominal, ordinal, intervalar, razão) descreve o <strong>valor</strong> de
+        uma variável. Esta página trata de outro critério, o <strong>formato</strong> em que o dado
+        chega.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">22</p>
+        </div>
+      </section>
+
+      <!-- 23 - Revisao: CRISP-DM e paradigmas de aprendizado -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>CRISP-DM e os quatro paradigmas de aprendizado</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <p><strong>As seis fases, na ordem do ciclo.</strong> A Aula 02 usou os nomes em
+            português; a literatura e as ferramentas usam os originais em inglês, e vale
+            reconhecer os dois:</p>
+            <p><strong>1.</strong> Negócio (Business Understanding) &rarr;
+            <strong>2.</strong> Dados (Data Understanding) &rarr;
+            <strong>3.</strong> Preparação (Data Preparation) &rarr;
+            <strong>4.</strong> Modelagem (Modeling) &rarr;
+            <strong>5.</strong> Avaliação (Evaluation) &rarr;
+            <strong>6.</strong> Implantação (Deployment).</p>
+            <p>O negócio vem antes do dado, a preparação antes do modelo, e a avaliação antes de
+            colocar em produção. O ciclo volta ao início, e os pares Negócio/Dados e
+            Preparação/Modelagem têm ida e volta entre si. A aula de hoje é a fase 3.</p>
+          </div>
+          <div>
+            <p><strong>Onde o rótulo nasce, em cada paradigma:</strong></p>
+            <p><strong>Supervisionado:</strong> alguém rotulou cada exemplo. A rotulagem é o
+            principal custo.</p>
+            <p><strong>Não supervisionado:</strong> não existe rótulo. Agrupamento e redução de
+            dimensionalidade (PCA) moram aqui.</p>
+            <p><strong>Autossupervisionado:</strong> o rótulo sai da própria entrada, por exemplo
+            prever a próxima palavra. É a base da IA generativa.</p>
+            <p><strong>Por reforço:</strong> o sinal vem da recompensa da interação com o
+            ambiente.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">23</p>
+        </div>
+      </section>
+
+      <!-- 24 - Revisao: pandas essencial -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Carga, recorte e resumo em pandas</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>import pandas as pd
+
+df = pd.read_csv("abate_frangos.csv")
+
+df.head()            # as cinco primeiras linhas
+df.head(10)          # as dez primeiras
+
+df["valor"].mean()     # media da coluna
+df["valor"].median()   # mediana da coluna
+
+df.describe()        # count, mean, std, min,
+                     # 25%, 50%, 75%, max de
+                     # todas as colunas numericas</code></pre>
+          <div>
+            <p>Quatro operações resolvem a maior parte de uma exploração inicial, e as quatro
+            apareceram na Aula 03 sobre as cinco séries do case.</p>
+            <p><code>head()</code> devolve cinco linhas por padrão, e aceita o número como
+            argumento.</p>
+            <p><code>describe()</code> resume <strong>todas</strong> as colunas numéricas em um único
+            método, com as oito estatísticas de uma vez.</p>
+            <p><strong>Pergunta rápida:</strong> por que a coluna <code>periodo</code> fica de fora
+            do <code>describe()</code>?</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">24</p>
+        </div>
+      </section>
+
+      <!-- 25 - ART.5, normalidade -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -544,16 +708,16 @@ Z.std(axis=0)    # 1 nas cinco</code></pre>
             uma série com tendência de crescimento tem a média mudando ao longo da amostra. Depois
             de <code>.diff()</code>, <strong>abate_bovinos</strong> passa a 0,217 e deixa de
             rejeitar. As cinco linhas da tabela estão no material de apoio.
-            <strong>11h45 &middot; 11h55.</strong></p>
+            <strong>11h50 &middot; 11h57.</strong></p>
           </div>
         </div>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
-          <p class="footer-page">20</p>
+          <p class="footer-page">25</p>
         </div>
       </section>
 
-      <!-- 21 - Hands-on -->
+      <!-- 26 - Hands-on -->
       <section class="exercise-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -575,17 +739,17 @@ Z.std(axis=0)    # 1 nas cinco</code></pre>
         </ol>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
-          <p class="footer-page">21</p>
+          <p class="footer-page">26</p>
         </div>
       </section>
 
-      <!-- 22 - Amarracao com a sprint -->
+      <!-- 27 - Amarracao com a sprint -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>O que hoje entrega para a Sprint 2 (11h55 &middot; 12h00)</h2>
+          <h2>O que hoje entrega para a Sprint 2 (11h57 &middot; 12h00)</h2>
         </div>
         <div class="concept-cards">
           <div class="concept-card">
@@ -610,11 +774,11 @@ Z.std(axis=0)    # 1 nas cinco</code></pre>
         regressão.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
-          <p class="footer-page">22</p>
+          <p class="footer-page">27</p>
         </div>
       </section>
 
-      <!-- 23 - Referencias -->
+      <!-- 28 - Referencias -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -640,11 +804,11 @@ Z.std(axis=0)    # 1 nas cinco</code></pre>
         </ol>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
-          <p class="footer-page">23</p>
+          <p class="footer-page">28</p>
         </div>
       </section>
 
-      <!-- 24 - Encerramento -->
+      <!-- 29 - Encerramento -->
       <section class="end-slide">
         <h1>Até 24/08</h1>
         <h3>Aula 05: Aprendizado Supervisionado parte I, Sprint 2</h3>

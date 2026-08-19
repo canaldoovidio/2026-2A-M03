@@ -191,22 +191,29 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
   O que fiz, o que vou fazer, impedimentos. Abertura da Sprint 2 (planning em 17/08): cada dupla
   relata em que ponto ficou a EDA da própria série.
 
-10h15 - 12h00  Instrução em metodologia ativa, em três blocos temáticos de 30 minutos (teoria,
-  prática em duplas e correção rápida embutidas em cada bloco, no mesmo formato adotado na
-  Aula 03)
+10h15 - 12h00  Instrução em metodologia ativa, em três blocos temáticos (teoria, prática em
+  duplas e correção rápida embutidas em cada bloco, no mesmo formato adotado na Aula 03), mais
+  dez minutos de revisão das Semanas 01 a 03 antes do fechamento.
 
-  10h15 - 10h30  Resgate e abertura
+  Os três blocos foram comprimidos de 30 para 23, 28 e 27 minutos, para abrir a janela de
+  revisão: o corte sai da teoria de ETL e ELT (coberta por dois autoestudos desta semana), da
+  teoria de defasagem e da teoria de escalonamento (que só passa a ser obrigatória na Aula 07,
+  com KNN e SVM). As três práticas em duplas ficam intactas, com 13 minutos cada, porque são elas
+  que produzem o que a dupla leva para a ART.3.
+
+  10h15 - 10h22  Resgate e abertura
 
     A EDA da Aula 03 revelou sazonalidade e outliers nas cinco séries, e deixou registrada a
     escolha entre `fillna()` e `dropna()` como assunto de hoje. Pergunta disparada: "o que
     significa 'prever com defasagem' quando o dado é trimestral?"
 
-  10h15 - 10h45  Bloco 1, Integração: as cinco séries viram uma base analítica
+  10h22 - 10h45  Bloco 1, Integração: as cinco séries viram uma base analítica
 
-    10h15 - 10h27  Teoria: ETL e ELT como enquadramento, e onde `dados/` (data lake) e a base
-      analítica (data warehouse) se encaixam. A chave de junção é `periodo`, e a segunda fonte da
-      junção é o próprio SIDRA: não existe série aberta do Sindirações em `dados/`, e a ADR-004
-      proíbe fabricar uma. Motivo completo em `docs/adrs/ADR-007`.
+    10h22 - 10h27  Teoria (comprimida): ETL e ELT como enquadramento, e onde `dados/` (data lake)
+      e a base analítica (data warehouse) se encaixam. A chave de junção é `periodo`, e a segunda
+      fonte da junção é o próprio SIDRA: não existe série aberta do Sindirações em `dados/`, e a
+      ADR-004 proíbe fabricar uma. Motivo completo em `docs/adrs/ADR-007`. O tratamento integral
+      do tema fica na seção 1 do material de apoio.
 
     10h27 - 10h40  Prática em duplas: `pd.merge` unindo as cinco séries por trimestre, comparando
       `inner` (117 linhas) com `outer` (157 linhas, 40 ausentes em quatro colunas).
@@ -215,41 +222,54 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
       1987-T1, as outras quatro em 1997-T1) e o que cada opção de `fillna` afirmaria sobre o
       período sem medição.
 
-  10h45 - 11h15  Bloco 2, Defasagem: o passado da série vira coluna
+  10h45 - 11h13  Bloco 2, Defasagem: o passado da série vira coluna
 
-    10h45 - 10h57  Teoria: por que a proibição de modelos de série temporal do TAPI empurra o
+    10h45 - 10h55  Teoria: por que a proibição de modelos de série temporal do TAPI empurra o
       problema para regressão tabular. `shift(1)` e `shift(4)` como as duas defasagens do case, e
       a regra de nunca usar argumento negativo (vazamento temporal).
 
-    10h57 - 11h10  Prática em duplas: criar `lag1` e `lag4` na série da dupla, contar os `NaN`
+    10h55 - 11h08  Prática em duplas: criar `lag1` e `lag4` na série da dupla, contar os `NaN`
       gerados (1 e 4) e medir a correlação de cada defasagem com o valor corrente.
 
-    11h10 - 11h15  Correção rápida: as duas defasagens lideram o ranking, e `producao_leite` é a
+    11h08 - 11h13  Correção rápida: as duas defasagens lideram o ranking, e `producao_leite` é a
       única série em que `lag4` bate `lag1`. O desconforto a guardar: as outras quatro séries
       também correlacionam acima de +0,92.
 
-  11h15 - 11h45  Bloco 3, Codificação e seleção
+  11h13 - 11h40  Bloco 3, Codificação e seleção
 
-    11h15 - 11h27  Teoria: `trimestre` é categórica nominal, e as duas codificações possíveis
+    11h13 - 11h22  Teoria: `trimestre` é categórica nominal, e as duas codificações possíveis
       (três dummies com `drop_first`, ou par seno/cosseno). Escala das variáveis numéricas e
-      padronização z-score. Votação rápida: qual codificação a turma prefere testar primeiro,
-      feita antes de mostrar os R² medidos.
+      padronização z-score, citada aqui e retomada na Aula 07. Votação rápida: qual codificação a
+      turma prefere testar primeiro, feita antes de mostrar os R² medidos.
 
-    11h27 - 11h40  Prática em duplas: criar as dummies e o par seno/cosseno, padronizar as cinco
+    11h22 - 11h35  Prática em duplas: criar as dummies e o par seno/cosseno, padronizar as cinco
       colunas e medir a correlação da série da dupla com `abate_frangos` duas vezes, sobre o
       nível e sobre `.diff()`.
 
-    11h40 - 11h45  Correção rápida: a correlação cai da faixa de +0,93 a +0,97 para a faixa de
+    11h35 - 11h40  Correção rápida: a correlação cai da faixa de +0,93 a +0,97 para a faixa de
       -0,04 a +0,20. Ranquear característica por correlação em nível selecionaria a tendência
       comum cinco vezes.
 
-  11h45 - 12h00  ART.5 e amarração com a sprint
+  11h40 - 11h50  Revisão das Semanas 01 a 03
 
-    11h45 - 11h55  Teste de normalidade com Shapiro-Wilk nas cinco séries, em nível e sobre a
+    Bloco pedido pelo professor para preparar a turma para a **Ponderada 1 de Computação**, que
+    consta dos autoestudos desta semana e é aplicada em sala. São quatro slides de revisão
+    dirigida, um por tema: mutabilidade e cópia de lista em Python; dados estruturados,
+    semiestruturados e não estruturados; as seis fases do CRISP-DM na ordem e os quatro
+    paradigmas de aprendizado; e o conjunto mínimo de pandas (`read_csv`, `head`, `mean`,
+    `median`, `describe`).
+
+    O deck revisa os **temas**, com exemplos ancorados no case. Nenhum enunciado e nenhum
+    gabarito da ponderada entra em artefato do acervo, porque o repositório inteiro é publicado
+    no GitHub Pages. O arquivo da prova fica fora do git, junto com o `Turma.xlsx` e o TAPI.
+
+  11h50 - 12h00  ART.5 e amarração com a sprint
+
+    11h50 - 11h57  Teste de normalidade com Shapiro-Wilk nas cinco séries, em nível e sobre a
       primeira diferença. As cinco rejeitam em nível; `abate_bovinos` deixa de rejeitar depois da
       diferenciação. É o resultado medido que a ART.5 pede.
 
-    11h55 - 12h00  Amarração: a base analítica de hoje alimenta a **ART.3 Exploração,
+    11h57 - 12h00  Amarração: a base analítica de hoje alimenta a **ART.3 Exploração,
       Pré-processamento e Hipóteses** (peso 5) e a **ART.5 Distribuição normal e teste de
       hipótese** (peso 4). A Sprint 2 fecha em 28/08.
 

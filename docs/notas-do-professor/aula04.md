@@ -10,8 +10,12 @@ Ordem igual à do roteiro em `PLANEJAMENTO_AULA_A_AULA.md`.
 
 **Aviso de condução:** esta é a primeira aula da Sprint 2, aberta em 17/08. A turma sai daqui com a
 base que a Aula 05 usa para treinar o primeiro modelo, então a prática de hoje precisa terminar
-com a tabela montada em cada máquina. Se o tempo apertar, corte a discussão de ELT (slide 5) e
-preserve as três práticas em duplas.
+com a tabela montada em cada máquina.
+
+**Os três blocos já vêm comprimidos** (23, 28 e 27 minutos, contra os 30 originais) para abrir os
+dez minutos de revisão das Semanas 01 a 03 no fim. O corte saiu da teoria, e as três práticas em
+duplas seguem com 13 minutos cada. Se o tempo apertar mesmo assim, o próximo corte é a teoria de
+escalonamento (slide 16), que só passa a ser obrigatória na Aula 07.
 
 **Mudança em relação ao roteiro original:** o roteiro previa unir `abate_frangos.csv` com os
 boletins do Sindirações. Não existe série aberta do Sindirações em `dados/`, e fabricar uma
@@ -33,7 +37,7 @@ tempo de estudo.
 
 ---
 
-## 10h15 - 10h30 &middot; Resgate e abertura
+## 10h15 - 10h22 &middot; Resgate e abertura
 
 **P1. O que significa "prever com defasagem" quando o dado é trimestral?**
 
@@ -58,7 +62,7 @@ ausentes hoje?**
 
 ---
 
-## 10h15 - 10h45 &middot; Bloco 1, Integração
+## 10h22 - 10h45 &middot; Bloco 1, Integração
 
 **P3. Qual é a chave de junção, e por que ela funciona?**
 
@@ -92,7 +96,7 @@ sozinha.
 
 ---
 
-## 10h45 - 11h15 &middot; Bloco 2, Defasagem
+## 10h45 - 11h13 &middot; Bloco 2, Defasagem
 
 **P6. Por que `shift(4)` e não `shift(12)`?**
 
@@ -122,7 +126,7 @@ Se ninguém perguntar, faça você. É o conceito mais caro do dia.
 
 ---
 
-## 11h15 - 11h45 &middot; Bloco 3, Codificação e seleção
+## 11h13 - 11h40 &middot; Bloco 3, Codificação e seleção
 
 **P9. Por que descartar uma das quatro dummies?**
 
@@ -153,7 +157,52 @@ nível pelo mesmo motivo.
 
 ---
 
-## 11h45 - 12h00 &middot; ART.5 e amarração com a sprint
+## 11h40 - 11h50 &middot; Revisão das Semanas 01 a 03
+
+Bloco de preparação para a **Ponderada 1 de Computação**, aplicada em sala. São quatro slides, um
+por tema, e o tempo é curto: cerca de dois minutos e meio cada. Conduza como revisão dirigida, com
+a turma respondendo, e não como exposição.
+
+**Regra que vale para este bloco inteiro:** o deck revisa os temas com exemplos do case, e nenhum
+enunciado ou gabarito da prova aparece em artefato do acervo, porque tudo aqui é publicado no
+GitHub Pages. O arquivo da ponderada fica fora do git, junto com o `Turma.xlsx` e o TAPI. Se for
+resolver alguma questão específica com a turma, faça no quadro.
+
+**P12 (slide 21). A mesma coisa acontece com `numero_b = numero_a`, sendo `numero_a` um inteiro?**
+
+Pergunta que o slide deixa em aberto. É a que separa quem decorou de quem entendeu.
+
+- *Resposta esperada:* o comportamento observável é diferente, porque inteiro é imutável. Somar 1 a
+  `numero_a` cria um objeto novo e reaponta o nome, sem afetar `numero_b`. Com lista, `append`
+  altera o objeto que os dois nomes compartilham.
+- *O erro que revela:* achar que a diferença está no `=`. A atribuição faz a mesma coisa nos dois
+  casos (liga um nome a um objeto); o que muda é a mutabilidade do tipo.
+
+**P13 (slide 22). Um e-mail é dado estruturado, porque tem remetente e data?**
+
+- *Resposta esperada:* um e-mail reúne cabeçalho com campos fixos e corpo em texto livre, o que o
+  coloca no caso clássico de semiestruturado. Classificá-lo pelo cabeçalho ignora onde está a maior
+  parte do conteúdo.
+- *O erro que revela:* classificar o arquivo pelo campo mais fácil de ver.
+
+**P14 (slide 22). Uma coluna de texto é dado não estruturado?**
+
+- *Resposta esperada:* não necessariamente. A coluna `unidade` dos CSVs do case é texto, é
+  qualitativa, e está dentro de uma tabela com esquema fixo, portanto é estruturada. Formato e
+  natureza do valor são classificações independentes.
+- *O erro que revela:* colar "texto" em "não estruturado" e "número" em "estruturado".
+
+**P15 (slide 24). Por que `periodo` fica de fora do `describe()`?**
+
+- *Resposta esperada:* porque `describe()` resume, por padrão, apenas colunas numéricas, e
+  `periodo` chega como `object` (texto). Média de `"1997-T1"` não existe.
+- *O erro que revela:* supor que `describe()` descreve o `DataFrame` inteiro. Vale citar que
+  `describe(include="all")` traz as colunas de texto, com outras estatísticas (contagem, valores
+  únicos, mais frequente).
+
+---
+
+## 11h50 - 12h00 &middot; ART.5 e amarração com a sprint
 
 **P11. As cinco séries rejeitam normalidade. Isso invalida a regressão da Aula 05?**
 
@@ -164,7 +213,7 @@ nível pelo mesmo motivo.
 - *O erro que revela:* a regra decorada de que "os dados precisam ser normais para usar regressão".
   Vale nomear onde a suposição realmente mora, porque essa confusão volta na Aula 05.
 
-**Fechamento (11h55 - 12h00).** Peso citado da fonte oficial (`PLANO_DE_ENSINO.md`, seção 4):
+**Fechamento (11h57 - 12h00).** Peso citado da fonte oficial (`PLANO_DE_ENSINO.md`, seção 4):
 **ART.3 Exploração, Pré-processamento e Hipóteses, peso 5**, e **ART.5 Distribuição normal e teste
 de hipótese, peso 4**. A Sprint 2 fecha em **28/08**. Deixe explícito o que cada dupla leva pronto:
 base larga, defasagens, sazonalidade codificada, colunas padronizadas e o valor-p do teste de
@@ -180,3 +229,6 @@ normalidade da própria série.
 - [ ] O quadro dividido em cinco colunas, uma por série, para a comparação do Bloco 2.
 - [ ] O PDF do deck **não** distribuído antes da aula: o botão de exportação revela o gabarito do
       quiz, conforme documentado em `inteli-deck-design` seção 8.6.
+- [ ] O arquivo da ponderada **fora** de qualquer pasta do repositório. O `.gitignore` já cobre os
+      padrões `Ponderada*.pdf` e `*-gabarito*.pdf`, mas um arquivo com outro nome commitado por
+      engano vai ao ar no push seguinte.
