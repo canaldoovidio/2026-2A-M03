@@ -22,18 +22,15 @@ jobs:
         with:
           python-version: '3.11'
 
-      # openpyxl: tools/extrair_autoestudos.py (o teste dele se pula sozinho
-      #   aqui, porque o Turma.xlsx nao e versionado, ver ADR-004).
-      # playwright: tools/check_slides.py.
-      # nbconvert, jupyter e ipykernel: execucao dos notebooks.
-      # pandas: os notebooks a partir da Aula 03 usam. Quando a lista de
-      #   dependencia de notebook crescer (numpy, matplotlib, seaborn,
-      #   scikit-learn, pycaret), trocar esta linha por um requirements-ci.txt
-      #   em vez de continuar acumulando pacote aqui.
+      # A lista vive em requirements-ci.txt, com o motivo de cada pacote ao
+      # lado. Ela cresceu ate a Aula 04 e vai continuar crescendo (pycaret na
+      # Aula 11), entao acumular pacote na linha de comando aqui ja tinha
+      # deixado o CI vermelho uma vez: a Aula 03 passou a usar matplotlib e
+      # seaborn sem que esta lista fosse atualizada junto.
       - name: Instalar dependencias
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install playwright pytest openpyxl pandas nbconvert jupyter ipykernel
+          python3 -m pip install -r requirements-ci.txt
 
       - name: Instalar o Chromium do Playwright
         run: python3 -m playwright install --with-deps chromium

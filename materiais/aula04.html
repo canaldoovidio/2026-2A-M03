@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material de apoio &middot; Aula 04 &middot; Pré-processamento e Feature Engineering</title>
+  <meta name="description" content="Material de apoio da Aula 04 do Módulo 03 IN: junção das cinco séries do SIDRA, features de defasagem, codificação de sazonalidade, escalonamento e seleção de característica no case da LDC.">
+
+  <!-- Este material NAO e o roteiro do deck em prosa. Ele aprofunda o que o
+       slide so pode apontar. Todo numero e grafico citados vem dos cinco
+       CSVs de dados/, conferidos com pandas/numpy/scipy antes de escrever
+       qualquer paragrafo. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 04 &middot; 19/08/2026 &middot; Sprint 2</p>
+      <h1>Material de apoio: Pré-processamento e Feature Engineering</h1>
+      <p class="doc-subtitulo">A Aula 03 terminou com cinco arquivos explorados um a um. A Aula 05
+      precisa de uma tabela só, em que cada linha carregue tudo que o modelo pode ver naquele
+      trimestre. Esta página é o caminho entre as duas, decisão por decisão.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#elt">ELT, data lake e data warehouse neste acervo</a></li>
+        <li><a href="#juncao">A junção das cinco séries e os 40 ausentes</a></li>
+        <li><a href="#ausentes">Escolher entre dropna e fillna</a></li>
+        <li><a href="#defasagem">Features de defasagem: o passado como coluna</a></li>
+        <li><a href="#vazamento">Vazamento temporal, o erro que não aparece no teste</a></li>
+        <li><a href="#sazonalidade">Codificar sazonalidade: dummies e seno/cosseno</a></li>
+        <li><a href="#escala">Escalonamento das variáveis numéricas</a></li>
+        <li><a href="#selecao">Seleção de característica e a armadilha da tendência</a></li>
+        <li><a href="#normalidade">Normalidade e o que a ART.5 pede</a></li>
+        <li><a href="#art3">O que levar para a ART.3 e a ART.5</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="elt">
+        <h2>1. ELT, data lake e data warehouse neste acervo</h2>
+        <p>Dois dos autoestudos da semana (ETL contra ELT, e data lake contra data warehouse)
+        descrevem arquiteturas de dados de empresa. O acervo deste módulo é pequeno o bastante
+        para caber num repositório de texto, e ainda assim tem as três etapas nomeadas, o que
+        permite olhar para elas em vez de aceitá-las como diagrama abstrato.</p>
+        <ul>
+          <li><strong>Extract.</strong> <code>tools/baixar_dados.py</code> consulta a API do SIDRA,
+          pede a variável específica de cada série e filtra os marcadores de ausência do IBGE
+          (<code>"..."</code>, <code>"-"</code>, <code>"X"</code>, <code>"*"</code>). É a única
+          etapa do acervo que depende de rede.</li>
+          <li><strong>Load.</strong> Os cinco CSVs de <code>dados/</code>, uma série por arquivo,
+          três colunas cada, versionados no git. É o dado cru, guardado como chegou.</li>
+          <li><strong>Transform.</strong> Tudo que esta aula faz: junção, defasagem, codificação,
+          escalonamento. O resultado existe em memória e é reconstruído a cada execução do
+          notebook.</li>
+        </ul>
+        <p>A ordem é carregar antes de transformar, então o acervo segue <strong>ELT</strong>. A
+        alternativa (ETL) transformaria o dado antes de gravá-lo, e o repositório guardaria apenas a
+        base já pronta. A consequência prática da escolha aparece hoje: ao decidir que a
+        codificação de sazonalidade será seno/cosseno em vez de dummies, basta reexecutar o
+        notebook, sem consultar o IBGE de novo, porque o dado cru continua no repositório.</p>
+        <div class="doc-nota">
+          <p><strong>Onde estão o lake e o warehouse.</strong> <code>dados/</code> faz o papel de
+          <em>data lake</em>: dado cru, por fonte, sem modelagem de uso. A base analítica montada
+          hoje faz o de <em>data warehouse</em>: uma tabela modelada para a pergunta específica do
+          case, com granularidade fixa (trimestre) e uma coluna por variável de interesse. A
+          diferença entre os dois está na finalidade, e independe de tamanho ou de tecnologia.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="juncao">
+        <h2>2. A junção das cinco séries e os 40 ausentes</h2>
+        <p>As cinco séries compartilham a coluna <code>periodo</code>, no mesmo formato
+        (<code>"1997-T1"</code>), o que a torna a chave natural da junção. O que elas não
+        compartilham é a cobertura temporal, e isso a Aula 03 já tinha medido com
+        <code>count</code>:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>série</th><th>primeiro trimestre</th><th>último trimestre</th><th>registros</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>abate_bovinos</code></td><td>1997-T1</td><td>2026-T1</td><td>117</td></tr>
+              <tr><td><code>abate_suinos</code></td><td>1997-T1</td><td>2026-T1</td><td>117</td></tr>
+              <tr><td><code>abate_frangos</code></td><td>1997-T1</td><td>2026-T1</td><td>117</td></tr>
+              <tr><td><code>producao_ovos</code></td><td>1987-T1</td><td>2026-T1</td><td>157</td></tr>
+              <tr><td><code>producao_leite</code></td><td>1997-T1</td><td>2026-T1</td><td>117</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O tipo de junção decide o que fazer com os 40 trimestres em que só existe ovo:</p>
+        <pre class="doc-codigo"><code>base_inner = base.merge(outra, on="periodo", how="inner")   # (117, 6)
+base_outer = base.merge(outra, on="periodo", how="outer")   # (157, 6)
+
+base_outer.isna().sum()
+# periodo            0
+# abate_bovinos     40
+# abate_suinos      40
+# abate_frangos     40
+# producao_ovos      0
+# producao_leite    40</code></pre>
+        <p>Os dois resultados estão corretos. <code>inner</code> responde "quais trimestres têm as
+        cinco medições"; <code>outer</code> responde "quais trimestres têm alguma medição". A
+        pergunta do case é a primeira, porque o modelo da Aula 05 recebe as cinco colunas de uma
+        vez.</p>
+        <div class="doc-nota">
+          <p><strong>O <code>rename</code> não é cosmético.</strong> As cinco séries têm a coluna
+          chamada <code>valor</code>. Sem renomear cada uma para o nome da série antes da junção, o
+          pandas resolve a colisão sozinho, criando <code>valor_x</code> e <code>valor_y</code>, e
+          a partir da terceira junção o resultado fica ilegível. Renomear antes é o que mantém a
+          base auditável na Aula 05, quando alguém precisar saber qual coluna é frango.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="ausentes">
+        <h2>3. Escolher entre dropna e fillna</h2>
+        <p>A Aula 03 rodou <code>isna()</code> nas cinco séries e encontrou zero, e registrou que a
+        escolha entre diagnosticar e agir ficaria para hoje. O <code>outer join</code> da seção
+        anterior produz os primeiros ausentes reais do acervo, e eles têm uma característica que
+        muda a decisão: <strong>não vieram de falha de medição, vieram da junção</strong>. Ninguém
+        perdeu o dado de abate de 1990; ele nunca foi publicado nessa série.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>opção</th><th>o que faz</th><th>o que afirma sobre 1987 a 1996</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>dropna()</code></td><td>remove as 40 linhas</td><td>nada: o período sai da base</td></tr>
+              <tr><td><code>fillna(0)</code></td><td>escreve zero</td><td>que o Brasil abateu zero boi por dez anos</td></tr>
+              <tr><td><code>fillna(media)</code></td><td>escreve a média histórica</td><td>que 1990 se parecia com 2011, na média</td></tr>
+              <tr><td><code>fillna(method="bfill")</code></td><td>copia o valor de 1997 para trás</td><td>que a produção ficou estável dez anos antes do primeiro registro</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Nesta base, <code>dropna()</code> é a escolha certa, e o motivo é o uso: uma linha de
+        treino com quatro colunas preenchidas artificialmente ensina ao regressor uma relação que
+        ninguém observou. As três variantes de <code>fillna</code> são legítimas em outros
+        contextos (sensor com falha pontual, questionário com item não respondido), e o critério é
+        sempre o mesmo: preencher só quando existe uma afirmação defensável sobre o valor que
+        faltou.</p>
+        <div class="doc-nota">
+          <p><strong>O que se perde ao descartar.</strong> Os dez anos de <code>producao_ovos</code>
+          que a base analítica joga fora continuam existindo em <code>dados/producao_ovos.csv</code>
+          e podem ser usados em qualquer análise que trate ovos isoladamente. Descartar aqui é uma
+          decisão restrita à <em>base de modelagem</em>, e é por isso que o
+          padrão ELT da seção 1 importa.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="defasagem">
+        <h2>4. Features de defasagem: o passado como coluna</h2>
+        <p>O TAPI da Louis Dreyfus Company proíbe modelos de série temporal, e a ADR-003 registrou
+        a consequência: o case usa regressão tabular. Um regressor tabular trata cada linha como
+        uma observação independente; a ordem das linhas não significa nada para ele. Se a base tem
+        apenas <code>periodo</code> e <code>valor</code>, o modelo não tem como saber que o
+        trimestre anterior existiu.</p>
+        <p>A feature de defasagem resolve isso movendo o passado para dentro da linha do presente:</p>
+        <pre class="doc-codigo"><code>base["frangos_lag1"] = base["abate_frangos"].shift(1)
+base["frangos_lag4"] = base["abate_frangos"].shift(4)
+
+periodo   abate_frangos   frangos_lag1   frangos_lag4
+1997-T1     859.853.089            NaN            NaN
+1997-T2     867.003.479    859.853.089            NaN
+1997-T3     926.331.791    867.003.479            NaN
+1997-T4     972.151.812    926.331.791            NaN
+1998-T1     880.739.407    972.151.812    859.853.089
+1998-T2     931.106.052    880.739.407    867.003.479</code></pre>
+        <p><code>shift(k)</code> desce a coluna <em>k</em> posições e preenche o topo com
+        <code>NaN</code>. Com <code>shift(4)</code>, as quatro primeiras linhas ficam sem histórico
+        suficiente, e <code>dropna()</code> deixa <strong>113 das 117 linhas</strong>. Esse é o
+        custo em dados de olhar um ano para trás, e ele é conhecido antes de treinar qualquer
+        modelo.</p>
+        <p>As duas defasagens carregam informações diferentes. <code>lag1</code> é a inércia de
+        curto prazo: o abate de um trimestre se parece com o do trimestre anterior porque o rebanho,
+        a capacidade instalada e os contratos não mudam em três meses. <code>lag4</code> é o ciclo
+        anual: compara T3 com T3, sem misturar estação do ano. Medidas sobre as cinco séries:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>série</th><th>correlação com lag1</th><th>correlação com lag4</th><th>qual lidera</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>abate_bovinos</code></td><td>+0,9744</td><td>+0,9561</td><td>lag1</td></tr>
+              <tr><td><code>abate_suinos</code></td><td>+0,9946</td><td>+0,9938</td><td>lag1</td></tr>
+              <tr><td><code>abate_frangos</code></td><td>+0,9949</td><td>+0,9910</td><td>lag1</td></tr>
+              <tr><td><code>producao_ovos</code></td><td>+0,9983</td><td>+0,9961</td><td>lag1</td></tr>
+              <tr><td><code>producao_leite</code></td><td>+0,9609</td><td>+0,9819</td><td>lag4</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><code>producao_leite</code> é a única série em que o mesmo trimestre do ano anterior
+        prediz melhor que o trimestre imediatamente anterior. É a mesma série que a Aula 03
+        identificou como a mais sazonal das cinco, e as duas medidas estão dizendo a mesma coisa por
+        caminhos diferentes: quando a estação do ano domina o comportamento, o vizinho mais
+        parecido é o do mesmo trimestre do ano anterior.</p>
+      </section>
+
+      <section class="doc-secao" id="vazamento">
+        <h2>5. Vazamento temporal, o erro que não aparece no teste</h2>
+        <p>O argumento de <code>shift</code> é sempre positivo em previsão. <code>shift(-1)</code>
+        sobe a coluna, colocando o valor do <strong>próximo</strong> trimestre na linha de hoje. O
+        modelo treinado assim atinge métricas excelentes em validação, porque recebeu a resposta
+        como entrada, e falha completamente em produção, onde o próximo trimestre ainda não
+        aconteceu.</p>
+        <p>Isso se chama vazamento de dados (<em>data leakage</em>) na sua forma temporal, e tem
+        uma propriedade que o torna perigoso: <strong>nenhum aviso é emitido</strong>. O código
+        roda, o R² sobe, o gráfico fica bonito. O sintoma aparece só quando o modelo entra em
+        operação, e nesse ponto a decisão de negócio já foi tomada com base nele.</p>
+        <div class="doc-nota">
+          <p><strong>Duas variantes menos óbvias do mesmo erro,</strong> que a Aula 05 retoma ao
+          separar treino e teste: calcular a média para padronização sobre a base inteira antes de
+          dividir treino e teste (a média do teste vaza para o treino), e usar
+          <code>train_test_split</code> com embaralhamento em dados ordenados no tempo (linhas do
+          futuro entram no treino). As três variantes têm a mesma raiz: informação que não estaria
+          disponível no momento da previsão entrou no modelo.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="sazonalidade">
+        <h2>6. Codificar sazonalidade: dummies e seno/cosseno</h2>
+        <p><code>trimestre</code> é uma variável <strong>categórica nominal</strong>: T1, T2, T3 e
+        T4 são rótulos, e T4 não vale quatro vezes T1. Passar o número cru como entrada afirmaria
+        essa ordem e essa proporção, que não existem. É exatamente o assunto do autoestudo
+        "Adequação de variáveis numéricas e categóricas".</p>
+        <p>Duas codificações resolvem isso de maneiras diferentes:</p>
+        <pre class="doc-codigo"><code># A: variaveis indicadoras, uma por categoria, menos a primeira
+dummies = pd.get_dummies(base["trimestre"], prefix="tri", drop_first=True)
+# colunas: tri_2, tri_3, tri_4
+
+# B: par seno/cosseno, tratando o ciclo como angulo
+base["sen"] = np.sin(2 * np.pi * base["trimestre"] / 4)
+base["cos"] = np.cos(2 * np.pi * base["trimestre"] / 4)</code></pre>
+        <p><code>drop_first=True</code> não é economia de espaço. Com as quatro dummies presentes,
+        a soma das quatro é sempre 1, uma coluna é combinação linear das outras três, e a matriz
+        fica sem posto completo. Em regressão linear isso deixa os coeficientes indeterminados.
+        A categoria descartada vira a <strong>referência</strong>: os coeficientes de
+        <code>tri_2</code>, <code>tri_3</code> e <code>tri_4</code> passam a medir a diferença em
+        relação a T1.</p>
+        <p>O par seno/cosseno trata o trimestre como posição num círculo, o que traz uma propriedade
+        que as dummies não têm: T4 e T1 ficam adjacentes, como de fato são no calendário. Custa duas
+        colunas em vez de três. Medindo o ganho de cada uma sobre a série mais sazonal das cinco:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>modelo sobre <code>producao_leite</code></th><th>colunas de entrada</th><th>R²</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>só tendência (posição no tempo)</td><td>1</td><td>0,8896</td></tr>
+              <tr><td>tendência e três dummies</td><td>4</td><td>0,9194</td></tr>
+              <tr><td>tendência e seno/cosseno</td><td>3</td><td>0,9193</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Com quatro categorias, as duas codificações entregam praticamente o mesmo, e a
+        seno/cosseno faz isso com uma coluna a menos. A diferença cresce com o número de categorias
+        do ciclo: em base mensal são 11 dummies contra 2 colunas, e em base semanal, 51 contra 2. Em
+        compensação, dummies capturam qualquer padrão entre as categorias, enquanto o par
+        seno/cosseno captura apenas o ciclo suave; um mês atípico isolado aparece nas dummies e
+        escapa do seno/cosseno.</p>
+        <div class="doc-nota">
+          <p><strong>O ganho depende da série.</strong> Sobre <code>abate_frangos</code>, o mesmo
+          exercício sai de R² 0,9776 (só tendência) para 0,9780 (dummies) e 0,9778 (seno/cosseno).
+          A amplitude sazonal do frango é de 2,55 pontos percentuais entre o trimestre mais alto e o
+          mais baixo, contra 14,85 do leite. Feature que não tem o que capturar não melhora modelo,
+          e adicionar coluna sem ganho aumenta a chance de sobreajuste.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="escala">
+        <h2>7. Escalonamento das variáveis numéricas</h2>
+        <p>As cinco colunas de série medem coisas diferentes em unidades diferentes, e a diferença
+        numérica entre elas chega a quatro ordens de grandeza:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>coluna</th><th>média</th><th>desvio padrão</th><th>unidade</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>abate_frangos</code></td><td>2,30e+09</td><td>8,10e+08</td><td>kg</td></tr>
+              <tr><td><code>abate_bovinos</code></td><td>1,71e+09</td><td>4,88e+08</td><td>kg</td></tr>
+              <tr><td><code>abate_suinos</code></td><td>7,84e+08</td><td>3,43e+08</td><td>kg</td></tr>
+              <tr><td><code>producao_leite</code></td><td>4,98e+06</td><td>1,37e+06</td><td>mil litros</td></tr>
+              <tr><td><code>producao_ovos</code></td><td>6,99e+05</td><td>2,55e+05</td><td>mil dúzias</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <pre class="doc-codigo"><code>from sklearn.preprocessing import StandardScaler
+
+Z = StandardScaler().fit_transform(base[SERIES])
+Z.mean(axis=0)   # aproximadamente 0 nas cinco colunas
+Z.std(axis=0)    # 1 nas cinco colunas</code></pre>
+        <p>A padronização z-score subtrai a média e divide pelo desvio padrão de cada coluna. O
+        resultado é adimensional: um valor 1,5 significa "um desvio e meio acima da média desta
+        série", e isso é comparável entre frango e ovo, o que os números crus não são.</p>
+        <p>Nem todo modelo precisa disso. Regressão linear sem regularização produz exatamente as
+        mesmas previsões com ou sem padronização, porque os coeficientes se ajustam à escala.
+        Precisam de escala comparável: KNN e SVM (que medem distância, e a coluna maior domina a
+        distância), regressão com regularização (a penalidade é aplicada ao tamanho do coeficiente,
+        que depende da unidade) e PCA. Três desses aparecem entre as Aulas 05 e 08.</p>
+        <div class="doc-nota">
+          <p><strong>A ordem importa e é fonte de vazamento.</strong> A média e o desvio usados na
+          padronização precisam ser calculados <em>só sobre o treino</em>, e depois aplicados ao
+          teste. Padronizar a base inteira antes de dividir faz a média do conjunto de teste entrar
+          no cálculo, e o modelo passa a conhecer, ainda que indiretamente, dados que deveria
+          desconhecer. A Aula 05 trata isso com <code>fit</code> no treino e
+          <code>transform</code> nos dois.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="selecao">
+        <h2>8. Seleção de característica e a armadilha da tendência</h2>
+        <p>Com a base montada, uma pergunta natural é qual coluna vale a pena manter. O primeiro
+        instinto costuma ser ranquear as colunas por correlação com o alvo e cortar as mais fracas.
+        Sobre esta base, esse ranking produz o seguinte:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>coluna</th><th>correlação com <code>abate_frangos</code> em nível</th><th>correlação sobre a primeira diferença</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>abate_suinos</code></td><td>+0,9727</td><td>+0,2041</td></tr>
+              <tr><td><code>producao_leite</code></td><td>+0,9585</td><td>&minus;0,0404</td></tr>
+              <tr><td><code>producao_ovos</code></td><td>+0,9449</td><td>+0,1497</td></tr>
+              <tr><td><code>abate_bovinos</code></td><td>+0,9287</td><td>+0,0538</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Em nível, as quatro parecem excelentes preditoras. Sobre a primeira diferença, três das
+        quatro ficam abaixo de 0,21, e leite fica praticamente em zero. As duas medidas foram
+        calculadas sobre as mesmas linhas, com o mesmo código; a única diferença é o
+        <code>.diff()</code> aplicado antes.</p>
+        <p>A explicação é que as cinco séries crescem ao longo de 29 anos. Duas séries crescentes
+        correlacionam alto entre si mesmo sem nenhuma relação causal ou preditiva, porque a
+        correlação de Pearson está medindo, nas duas, a mesma tendência de longo prazo.
+        <code>.diff()</code> remove o nível e deixa só a variação trimestre a trimestre, que é onde
+        estaria a informação nova. Ranquear característica por correlação em nível, nesta base,
+        selecionaria a tendência cinco vezes seguidas e chamaria isso de cinco preditoras.</p>
+        <div class="doc-nota">
+          <p><strong>Isso não significa descartar as quatro colunas.</strong> Significa que o
+          critério de seleção precisa ser aplicado sobre a série transformada, e que a decisão final
+          é tomada com uma medida de desempenho preditivo: o erro em dados que o modelo não viu.
+          A Aula 09 volta ao tema com seleção
+          automática; a Aula 05 já dá o instrumento, ao separar treino e teste por corte
+          temporal.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="normalidade">
+        <h2>9. Normalidade e o que a ART.5 pede</h2>
+        <p>A ART.5 (Distribuição normal e teste de hipótese, peso 4) pede um teste de hipótese
+        conduzido, com estatística e valor-p. O teste de Shapiro-Wilk formaliza isso: a hipótese nula é que a amostra vem de uma
+        distribuição normal, e um valor-p baixo rejeita essa hipótese.</p>
+        <pre class="doc-codigo"><code>from scipy import stats
+
+W, p = stats.shapiro(base["abate_frangos"])
+# W = 0,9462   p = 0,00014   ->  rejeita a normalidade</code></pre>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>série</th><th>W (nível)</th><th>p (nível)</th><th>p (primeira diferença)</th><th>conclusão na diferença</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>abate_bovinos</code></td><td>0,9563</td><td>0,00077</td><td>0,21719</td><td>não rejeita a normalidade</td></tr>
+              <tr><td><code>abate_suinos</code></td><td>0,9575</td><td>0,00096</td><td>0,00404</td><td>rejeita</td></tr>
+              <tr><td><code>abate_frangos</code></td><td>0,9462</td><td>0,00014</td><td>0,04224</td><td>rejeita</td></tr>
+              <tr><td><code>producao_ovos</code></td><td>0,9193</td><td>0,000003</td><td>0,01161</td><td>rejeita</td></tr>
+              <tr><td><code>producao_leite</code></td><td>0,9204</td><td>0,000003</td><td>0,00115</td><td>rejeita</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>As cinco séries rejeitam normalidade em nível, e o motivo é estrutural: uma série com
+        tendência de crescimento não tem como ser normal, porque a média muda ao longo da amostra.
+        O gráfico quantil-quantil do deck mostra isso pelas pontas se afastando da reta. Depois de
+        <code>.diff()</code>, <code>abate_bovinos</code> deixa de rejeitar (p = 0,217) e as outras
+        quatro continuam rejeitando, uma delas por pouco (frango, p = 0,042).</p>
+        <div class="doc-nota">
+          <p><strong>Rejeitar normalidade não invalida a regressão.</strong> Mínimos quadrados não
+          exige que as variáveis de entrada sejam normais. A suposição de normalidade, quando
+          aparece em regressão linear, é sobre os <strong>resíduos</strong> do modelo ajustado, e
+          serve para os testes de significância dos coeficientes e para os intervalos de confiança.
+          O teste conduzido hoje é sobre as variáveis, e responde à ART.5; o teste sobre os
+          resíduos vem depois de existir um modelo, na Aula 05.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="art3">
+        <h2>10. O que levar para a ART.3 e a ART.5</h2>
+        <p>A Sprint 2 abriu em 17/08 e fecha em <strong>28/08</strong>, com a <strong>ART.3
+        Exploração, Pré-processamento e Hipóteses (peso 5)</strong> e a <strong>ART.5 Distribuição
+        normal e teste de hipótese (peso 4)</strong>. Cinco itens desta aula entram direto nas duas
+        entregas:</p>
+        <ol>
+          <li><strong>A base analítica</strong>, com as cinco séries unidas por
+          <code>periodo</code>, e o registro de qual tipo de junção foi usado e por quê.</li>
+          <li><strong>O tratamento dos ausentes</strong>, com a decisão entre <code>dropna</code> e
+          <code>fillna</code> justificada pelo que cada opção afirmaria sobre o período sem
+          medição.</li>
+          <li><strong>As features de defasagem</strong> de 1 e de 4 trimestres, com a contagem de
+          linhas perdidas (4 de 117) declarada no texto da entrega.</li>
+          <li><strong>A codificação de sazonalidade escolhida</strong>, com o ganho medido em R²
+          para a série da dupla, e a padronização das colunas numéricas.</li>
+          <li><strong>O teste de Shapiro-Wilk</strong> da série da dupla, com W e valor-p, em nível
+          e sobre a primeira diferença, e a conclusão escrita em uma frase.</li>
+        </ol>
+        <p>Os autoestudos da semana e a leitura complementar estão em
+        <a href="../referencias/aula04.html">referencias/aula04.html</a>. O laboratório executável é
+        <code>notebooks/aula04.ipynb</code>, que produz cada tabela desta página em código, sobre os
+        cinco CSVs reais. As duas decisões de arquitetura citadas aqui estão em
+        <code>docs/adrs/ADR-003</code> (regressão tabular) e <code>docs/adrs/ADR-007</code> (a base
+        analítica a partir das cinco séries do SIDRA).</p>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula04.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../referencias/aula04.html"><span class="material-symbols-outlined" aria-hidden="true">link</span>Referências</a>
+  </nav>
+</body>
+</html>

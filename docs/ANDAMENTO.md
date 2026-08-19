@@ -42,9 +42,16 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
   (`docs/notas-do-professor/aula02.md`). O notebook dela é a fase 2 do CRISP-DM executada: mede os
   seis pilares de qualidade sobre as cinco séries, ainda sem pandas. Os quatro botões do card no
   portal estão habilitados.
-- **ADRs** (`docs/adrs/ADR-001` a `ADR-006`): as seis decisões de arquitetura do acervo, para o
+- **Aula 04 completa, os quatro artefatos** (`aulas/aula04.html`, `materiais/aula04.html`,
+  `referencias/aula04.html`, `notebooks/aula04.ipynb`) mais as notas do professor
+  (`docs/notas-do-professor/aula04.md`) e as duas figuras
+  (`tools/graficos_aula04.py`). O notebook constrói a base analítica que a Aula 05 recebe: junção
+  das cinco séries, defasagens, sazonalidade codificada, padronização e o teste de Shapiro-Wilk. Os
+  quatro botões do card no portal estão habilitados.
+- **ADRs** (`docs/adrs/ADR-001` a `ADR-007`): as sete decisões de arquitetura do acervo, para o
   fan-out não relitigar nenhuma. Motor Reveal.js, Platypi no lugar da Azurio, regressão tabular em
-  base trimestral, case só com fonte aberta, os quatro artefatos por aula e as skills globais.
+  base trimestral, case só com fonte aberta, os quatro artefatos por aula, as skills globais e a
+  base analítica montada a partir das cinco séries do SIDRA.
 - **Integração contínua** (`.github/workflows/validate.yml` e `.github/workflows/static.yml`):
   validação em push e pull_request (marca, links, layout, pytest e execução dos notebooks, mais um
   passo que reprova se a validação alterar arquivo versionado) e publicação da raiz do repositório
@@ -64,10 +71,40 @@ saída, abaixo.
   `github-pages` foi corrigida pelo professor em 07/08/2026, e o `static.yml` passou a
   publicar normalmente a cada push em `main` (run 31142595526, 22s).
 
-- **Aulas 04 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
-  `aria-disabled="true"`. A Aula 03 ja existe e esta publicada. A Aula 04 e em **19/08** e e a primeira da fila. O agente
-  `construtor-aulas` existe para esse fan-out, mas as aulas 01 e 02 foram escritas sem ele, à mão,
-  seguindo as mesmas skills.
+- **Aulas 05 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
+  `aria-disabled="true"`. As Aulas 01 a 04 já existem e estão publicadas. A **Aula 05, em 24/08**,
+  é a próxima da fila, e recebe pronta a base analítica construída na Aula 04. O agente
+  `construtor-aulas` existe para esse fan-out, mas as quatro primeiras aulas foram escritas sem
+  ele, à mão, seguindo as mesmas skills.
+
+## Corrigido em 18/08/2026, junto com a Aula 04
+
+- **A validação de CI estava vermelha desde a Aula 03.** O passo de execução dos notebooks
+  instalava apenas `pandas`, e o notebook da Aula 03 passou a importar `matplotlib` e `seaborn` sem
+  que a lista de dependências fosse atualizada junto (`ModuleNotFoundError: No module named
+  'matplotlib'`). A lista saiu da linha de comando do workflow e virou `requirements-ci.txt`, com o
+  motivo de cada pacote ao lado, como o próprio comentário do workflow já previa. A Aula 04
+  acrescenta `scipy` e `scikit-learn`.
+- **O roteiro da Aula 04 citava o Sindirações como segunda fonte da junção**, em
+  `PLANEJAMENTO_AULA_A_AULA.md`, `PLANO_DE_ENSINO.md` e no resumo do card do portal, mas não existe
+  série aberta do Sindirações em `dados/`. Os três documentos foram corrigidos, e o motivo está em
+  `docs/adrs/ADR-007`.
+
+## Achados abertos da revisão da Aula 04
+
+Dois achados da revisão da Aula 04 que valem para o acervo inteiro, não só para ela:
+
+1. **As figuras da Aula 02 têm fonte abaixo do piso de legibilidade em projeção.** Medido: com
+   `dpi=160` e exibição entre 860px e 900px, um rótulo de N pontos chega à tela com cerca de N
+   pixels, então os `fontsize` de 8,5 a 12 de `tools/graficos_aula02.py` chegam a projetar entre
+   9px e 12px, contra o piso de 18px que o tema fixa para texto de slide. `tools/graficos_aula04.py`
+   já parte de 18 pontos e traz a conta escrita no cabeçalho. Aplicar o mesmo ajuste às figuras da
+   Aula 02 é trabalho pendente, e a Aula 03 usa figuras geradas em notebook, que precisam da mesma
+   conferência.
+2. **O cabeçalho das notas do professor usa uma construção que as diretivas de tom proíbem**
+   ("Material de condução do encontro, não de distribuição ao aluno. Não é resumo do deck: são as
+   perguntas..."). O texto é idêntico nas quatro aulas, então corrigir só uma criaria divergência.
+   A decisão de reescrever o cabeçalho nas quatro de uma vez é do professor.
 
 ## Achados abertos da revisão da Aula 01
 
@@ -128,9 +165,8 @@ inteiro no GitHub Pages, então qualquer arquivo commitado fica público.
 - **`nbconvert` não está instalado no Python do sistema.** O Homebrew marca o ambiente como
   gerenciado externamente (PEP 668), então a execução do notebook da Aula 01 foi validada num
   venv descartável. O `validate.yml` instala `nbconvert` e `ipykernel` no runner, mas quem rodar a
-  bateria localmente precisa de um venv próprio. Quando as dependências de notebook crescerem, na
-  Aula 03 (pandas, numpy, matplotlib, seaborn), trocar a linha de `pip install` do workflow por um
-  `requirements-ci.txt` em vez de continuar acumulando pacote no YAML.
+  bateria localmente precisa de um venv próprio. **Feito em 18/08/2026:** a lista de dependências
+  virou `requirements-ci.txt`, e o workflow instala a partir dele.
 - **O notebook é versionado sem saída de execução, de propósito.** O plano previa
   `nbconvert --execute --inplace`, mas gravar a saída no arquivo entrega o gabarito: a célula do
   desafio imprime as respostas das duas primeiras perguntas, e a célula do `KeyError` mostra o

@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 04 &middot; Pré-processamento e Feature Engineering &middot; Módulo 03 IN</title>
+
+  <!-- Aula 04, 19/08/2026, Sprint 2. Roteiro em PLANEJAMENTO_AULA_A_AULA.md.
+       Tres blocos tematicos de 30 minutos (integracao, defasagem e
+       sazonalidade, codificacao e selecao), cada um com teoria, pratica em
+       duplas e correcao rapida embutidas, mais o fechamento com o teste de
+       normalidade da ART.5.
+       A base analitica vem do merge das cinco series do SIDRA entre si, nao
+       do Sindiracoes: ver docs/adrs/ADR-007.
+       Todo numero e grafico citados aqui vem dos cinco CSVs de dados/,
+       conferidos com pandas/numpy/scipy antes de escrever qualquer slide. -->
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-theme.css">
+  <link rel="stylesheet" href="../assets/css/inteli-print.css" media="print">
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- 1 - Capa -->
+      <section class="cover-slide">
+        <div class="cover-panel">
+          <div class="cover-content">
+            <p class="cover-eyebrow">Módulo 03 IN &middot; Aula 04 &middot; 19/08/2026</p>
+            <h1>Pré-processamento e Feature Engineering</h1>
+            <h3>Da exploração das cinco séries à base que treina o primeiro modelo</h3>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 - Agenda -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Agenda do encontro</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>08h00 &middot; 10h00</h3>
+            <p>Autoestudo na Adalove: pré-processamento, ETL e ELT, adequação de variáveis e
+            seleção de característica [5].</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h00 &middot; 10h15</h3>
+            <p>Daily e abertura da Sprint 2 (planning em 17/08). Cada dupla relata em que ponto
+            ficou a EDA da própria série.</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h15 &middot; 12h00</h3>
+            <p>Três blocos de 30 minutos (integração, defasagem e sazonalidade, codificação e
+            seleção), cada um com teoria, prática em duplas e correção rápida. Fecha com o teste
+            de normalidade da ART.5.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">2</p>
+        </div>
+      </section>
+
+      <!-- 3 - Resgate -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que a Aula 03 deixou pronto</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <p>Três coisas, e a terceira é a que hoje resolve:</p>
+            <p><strong>1.</strong> as cinco séries carregadas em <code>DataFrame</code>, com
+            <code>describe()</code> conferido contra <code>dados/README.md</code>;</p>
+            <p><strong>2.</strong> o mapa cruzado das cinco: leite tem sazonalidade forte, frango
+            é quase linear, bovinos tem o salto de 2005;</p>
+            <p><strong>3.</strong> <code>isna()</code> devolveu <strong>zero</strong> nas cinco, e
+            a escolha entre <code>fillna()</code> e <code>dropna()</code> ficou registrada como
+            assunto da Aula 04.</p>
+          </div>
+          <div>
+            <p><strong>Pergunta disparada:</strong></p>
+            <p>o TAPI da LDC proíbe modelo de série temporal e a base é trimestral. O que significa
+            <strong>"prever com defasagem"</strong> nessas duas condições?</p>
+            <p>A resposta exige uma tabela só, em que o passado de cada série apareça como coluna da
+            linha do trimestre corrente. Montar essa tabela é o trabalho de hoje.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">3</p>
+        </div>
+      </section>
+
+      <!-- 4 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Bloco 1 &middot; Integração</h2>
+        <h3>10h15 &middot; 10h45 &middot; cinco arquivos viram uma base analítica</h3>
+      </section>
+
+      <!-- 5 - ETL, ELT, lake e warehouse -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Onde o acervo do case se encaixa nos dois autoestudos</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>Extract</h3>
+            <p><code>tools/baixar_dados.py</code> chama a API do SIDRA e filtra os marcadores de
+            ausência do IBGE. É a única etapa que depende de rede [1].</p>
+          </div>
+          <div class="concept-card">
+            <h3>Load</h3>
+            <p>Os cinco CSVs de <code>dados/</code>, crus, uma série por arquivo, versionados. Faz
+            o papel do <em>data lake</em> do case.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Transform</h3>
+            <p>O que a aula de hoje faz: junção, defasagem, codificação e escala. O resultado é a
+            base analítica, o <em>data warehouse</em> deste projeto.</p>
+          </div>
+        </div>
+        <p>O acervo carrega o dado cru antes e transforma depois, e essa ordem é o que define
+        <strong>ELT</strong>. A consequência prática aparece hoje: a transformação pode ser refeita
+        quantas vezes for preciso sem baixar nada, porque o dado cru continua no repositório.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">5</p>
+        </div>
+      </section>
+
+      <!-- 6 - merge -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A chave de junção das cinco séries é <code>periodo</code></h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>base = None
+for nome in SERIES:
+    col = (pd.read_csv(f"../dados/{nome}.csv")
+             [["periodo", "valor"]]
+             .rename(columns={"valor": nome}))
+    base = col if base is None else base.merge(
+        col, on="periodo", how="inner")
+
+base.shape
+# (117, 6)</code></pre>
+          <div>
+            <p><code>pd.merge</code> [2] precisa de três decisões, e só a primeira é óbvia:</p>
+            <p><strong>1. a chave.</strong> <code>periodo</code>, presente nos cinco arquivos, com
+            o mesmo formato <code>"1997-T1"</code>.</p>
+            <p><strong>2. o tipo.</strong> <code>inner</code> mantém só o período que existe nas
+            cinco. <code>outer</code> mantém todo período que exista em pelo menos uma.</p>
+            <p><strong>3. o nome das colunas.</strong> Sem o <code>rename</code>, cinco colunas
+            <code>valor</code> colidem e o pandas devolve <code>valor_x</code> e
+            <code>valor_y</code>.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">6</p>
+        </div>
+      </section>
+
+      <!-- 7 - Pratica bloco 1 -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática em duplas (10h27 &middot; 10h40)</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Montem a base larga com <code>how="inner"</code> e anotem <code>base.shape</code>.</li>
+          <li>Refaçam a mesma junção com <code>how="outer"</code> e anotem
+          <code>base.shape</code> de novo.</li>
+          <li>Rodem <code>base.isna().sum()</code> na versão <code>outer</code>. Quantos ausentes
+          aparecem, e em quais colunas?</li>
+          <li>Antes da correção: de onde vem essa diferença de linhas? A resposta está no
+          <code>count</code> que vocês calcularam na Aula 03.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">7</p>
+        </div>
+      </section>
+
+      <!-- 8 - Correcao bloco 1 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2><code>inner</code> devolve 117 linhas, <code>outer</code> devolve 157</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>base.isna().sum()   # how="outer"
+
+periodo            0
+abate_bovinos     40
+abate_suinos      40
+abate_frangos     40
+producao_ovos      0
+producao_leite    40</code></pre>
+          <div>
+            <p><code>producao_ovos</code> começa em <strong>1987-T1</strong>; as outras quatro,
+            em <strong>1997-T1</strong>. São dez anos, 40 trimestres, em que só existe ovo.</p>
+            <p>São os <strong>primeiros valores ausentes reais</strong> do acervo, e a origem deles é a
+            decisão de junção que a dupla acabou de tomar.</p>
+            <p><code>dropna()</code> devolve exatamente as 117 linhas do <code>inner</code>.
+            <code>fillna(0)</code> mentiria: afirmaria que o Brasil abateu zero boi em 1990.
+            <code>fillna(method="bfill")</code> inventaria produção que ninguém mediu.</p>
+          </div>
+        </div>
+        <p>Nesta base, o <code>inner</code> é a escolha certa, e a razão é o modelo: uma linha de
+        treino com quatro colunas vazias não ensina nada ao regressor da Aula 05.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">8</p>
+        </div>
+      </section>
+
+      <!-- 9 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Bloco 2 &middot; Defasagem</h2>
+        <h3>10h45 &middot; 11h15 &middot; o passado da série vira coluna</h3>
+      </section>
+
+      <!-- 10 - Por que defasagem -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A proibição do TAPI empurra o problema para regressão tabular</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <p>O TAPI da LDC proíbe modelo de série temporal (ARIMA, Prophet e afins). Um regressor
+            tabular, porém, não sabe que a linha de cima é o trimestre anterior: para ele, as 117
+            linhas são independentes e a ordem não significa nada.</p>
+            <p>A ponte entre as duas coisas é a <strong>feature de defasagem</strong>: colocar o
+            passado na mesma linha do presente, como coluna. É o que a ADR-003 fixou como decisão
+            de arquitetura do case [7].</p>
+          </div>
+          <div>
+            <p><strong>Duas defasagens, dois motivos diferentes:</strong></p>
+            <p><code>valor_t-1</code>, o trimestre imediatamente anterior, carrega a inércia de
+            curto prazo.</p>
+            <p><code>valor_t-4</code>, o mesmo trimestre do ano anterior, carrega o ciclo anual:
+            compara T3 com T3, sem misturar estação do ano.</p>
+            <p>Sem <code>t-4</code>, o modelo compara o inverno com o verão anterior e chama a
+            diferença de tendência.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">10</p>
+        </div>
+      </section>
+
+      <!-- 11 - shift -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2><code>shift()</code> custa 4 das 117 linhas, e o custo é visível</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>base["frangos_lag1"] = base["abate_frangos"].shift(1)
+base["frangos_lag4"] = base["abate_frangos"].shift(4)
+
+periodo   abate_frangos  frangos_lag1  frangos_lag4
+1997-T1     859.853.089           NaN           NaN
+1997-T2     867.003.479   859.853.089           NaN
+1997-T3     926.331.791   867.003.479           NaN
+1997-T4     972.151.812   926.331.791           NaN
+1998-T1     880.739.407   972.151.812   859.853.089
+1998-T2     931.106.052   880.739.407   867.003.479
+
+len(base.dropna())   # 113</code></pre>
+          <div>
+            <p><code>shift(4)</code> desce a coluna quatro posições, então as quatro primeiras
+            linhas não têm passado suficiente e viram <code>NaN</code> [2].</p>
+            <p>Esses quatro ausentes têm origem diferente dos 40 do bloco anterior: aqui o dado
+            existe, o que falta é histórico anterior ao início da série. <code>dropna()</code>
+            resolve os dois casos, e deixa 113 linhas de treino.</p>
+            <p><strong>A regra que não pode ser quebrada:</strong> o argumento de
+            <code>shift</code> é sempre positivo. <code>shift(-1)</code> traz o futuro para a linha
+            de hoje, e um modelo treinado assim acerta em teste e falha em produção, porque em
+            produção o futuro ainda não aconteceu.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">11</p>
+        </div>
+      </section>
+
+      <!-- 12 - Pratica bloco 2 -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática em duplas (10h57 &middot; 11h10)</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Criem <code>lag1</code> e <code>lag4</code> da série da sua dupla sobre a base
+          <code>inner</code>, com <code>shift()</code>.</li>
+          <li>Contem os <code>NaN</code> de cada uma das duas colunas novas. Confirmem que são
+          1 e 4, e expliquem por quê.</li>
+          <li>Meçam a correlação de cada defasagem com o valor do trimestre corrente:
+          <code>base["serie"].corr(base["serie_lag1"])</code>.</li>
+          <li>Qual das duas defasagens correlaciona mais com o presente na sua série? Anotem o
+          número, com duas casas.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">12</p>
+        </div>
+      </section>
+
+      <!-- 13 - Correcao bloco 2 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Correção rápida (11h10 &middot; 11h15)</h2>
+        </div>
+        <pre class="code-compact"><code>correlacao com abate_frangos no trimestre corrente, 113 linhas
+
+frangos_lag1     +0,9944
+frangos_lag4     +0,9910
+abate_suinos     +0,9705
+producao_leite   +0,9539
+producao_ovos    +0,9445
+abate_bovinos    +0,9200</code></pre>
+        <p>As duas defasagens lideram, o que era esperado. O que <strong>não</strong> era esperado
+        é que as outras quatro séries, medindo animais diferentes em unidades diferentes, também
+        cheguem acima de <strong>+0,92</strong>. Guardem esse desconforto: o Bloco 3 mostra de onde
+        ele vem.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">13</p>
+        </div>
+      </section>
+
+      <!-- 14 - Divisor -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Bloco 3 &middot; Codificação e seleção</h2>
+        <h3>11h15 &middot; 11h45 &middot; sazonalidade, escala e o que entra no modelo</h3>
+      </section>
+
+      <!-- 15 - Codificacao de sazonalidade -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A sazonalidade eleva o R² do leite a 0,9194</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>base["trimestre"] = base["periodo"].str[-1].astype(int)
+
+# A: tres dummies (a quarta e redundante)
+d = pd.get_dummies(base["trimestre"], prefix="tri",
+                   drop_first=True)
+
+# B: um par seno/cosseno
+base["sen"] = np.sin(2 * np.pi * base["trimestre"] / 4)
+base["cos"] = np.cos(2 * np.pi * base["trimestre"] / 4)</code></pre>
+          <div>
+            <p><code>trimestre</code> é variável <strong>categórica nominal</strong>: T4 não é
+            "quatro vezes" T1. Passar o número cru ao modelo afirmaria essa ordem falsa [2].</p>
+            <p><strong>Regressão do leite sobre tendência mais sazonalidade:</strong></p>
+            <p>só tendência: R² = <strong>0,8896</strong><br>
+            tendência e 3 dummies: R² = <strong>0,9194</strong><br>
+            tendência e seno/cosseno: R² = <strong>0,9193</strong></p>
+            <p>Com quatro trimestres, o par seno/cosseno entrega o mesmo com uma coluna a menos.
+            A vantagem cresce com 12 meses ou 52 semanas.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">15</p>
+        </div>
+      </section>
+
+      <!-- 16 - Escala -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Quatro ordens de grandeza entre as colunas</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <pre class="code-compact"><code>coluna            media        unidade
+abate_frangos     2,30e+09     kg
+abate_bovinos     1,71e+09     kg
+abate_suinos      7,84e+08     kg
+producao_leite    4,98e+06     mil litros
+producao_ovos     6,99e+05     mil duzias</code></pre>
+            <p>Ao colocar as cinco na mesma matriz de entrada, a coluna de frango domina qualquer
+            cálculo de distância só por ser numericamente maior.</p>
+          </div>
+          <div>
+            <pre class="code-compact"><code>from sklearn.preprocessing import StandardScaler
+
+X = base[SERIES]
+Z = StandardScaler().fit_transform(X)
+
+Z.mean(axis=0)   # ~0 nas cinco
+Z.std(axis=0)    # 1 nas cinco</code></pre>
+            <p>A padronização z-score subtrai a média e divide pelo desvio: cada coluna passa a ter
+            média 0 e desvio 1 [4].</p>
+            <p>KNN, SVM e regularização exigem escala comparável entre as colunas, e são as próximas
+            aulas. Regressão linear funciona sem essa exigência.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">16</p>
+        </div>
+      </section>
+
+      <!-- 17 - Pratica bloco 3 -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática em duplas (11h27 &middot; 11h40)</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Criem as três dummies de trimestre e o par seno/cosseno na base da dupla.</li>
+          <li>Padronizem as cinco colunas de série com <code>StandardScaler</code> e confiram
+          média e desvio do resultado.</li>
+          <li>Meçam a correlação entre a série da dupla e <code>abate_frangos</code>
+          <strong>duas vezes</strong>: sobre o nível e sobre <code>.diff()</code>.</li>
+          <li>Escrevam a diferença entre os dois números em uma frase. É a pergunta central da
+          seleção de característica de hoje.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">17</p>
+        </div>
+      </section>
+
+      <!-- 18 - Correcao bloco 3, com figura -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Sem a tendência, a correlação do leite cai a -0,04</h2>
+        </div>
+        <img src="../assets/img/aula04-correlacao-nivel-vs-diferenca.png" alt="Gráfico de barras horizontais comparando a correlação de Pearson de quatro séries com abate_frangos: sobre o nível fica entre +0,93 e +0,97, sobre a primeira diferença cai para a faixa de -0,04 a +0,20" style="width: 100%; max-width: 900px; display: block; margin: 0 auto 10px;">
+        <p>As cinco séries crescem ao longo de 29 anos, e duas séries que sobem juntas
+        correlacionam alto mesmo sem relação entre elas. <code>.diff()</code> remove o nível e
+        deixa a variação trimestre a trimestre, que é onde está a informação nova.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">18</p>
+        </div>
+      </section>
+
+      <!-- 19 - Quiz -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Verificação rápida</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">A correlação entre <code>producao_leite</code> e
+          <code>abate_frangos</code> é <strong>+0,96</strong> em nível e <strong>-0,04</strong> em
+          primeira diferença. O que essa queda indica?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: as duas correlações foram calculadas sobre as mesmas 117 linhas, com o mesmo código. A única diferença entre elas é o .diff() aplicado antes.">Que uma das duas séries tem menos observações que a outra</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: o +0,96 mede as duas séries subindo ao longo de 29 anos. Removida a tendência, sobra a variação trimestre a trimestre, e aí a correlação some."
+                data-incorrect-msg="Não.">Que o +0,96 mede a tendência comum das duas séries ao longo de 29 anos</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: a primeira diferença é a transformação que remove o nível da série. As duas medidas estão certas e respondem perguntas diferentes.">Que a primeira diferença foi calculada errado, porque correlação não pode cair tanto</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: correlação perto de zero na diferença significa ausência de relação linear na variação, e nada indica que ela seria negativa forte em outra escala.">Que leite e frango têm relação inversa e a de nível estava com o sinal trocado</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">19</p>
+        </div>
+      </section>
+
+      <!-- 20 - ART.5, normalidade -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Shapiro-Wilk rejeita normalidade nas cinco séries</h2>
+        </div>
+        <img src="../assets/img/aula04-normalidade-frangos.png" alt="Dois painéis para abate_frangos: histograma com a curva normal de mesma média e desvio sobreposta, e gráfico quantil-quantil em que as pontas se afastam da reta. Shapiro-Wilk W igual a 0,9462 e p igual a 0,00014" style="width: 100%; max-width: 800px; display: block; margin: 0 auto 4px;">
+        <div class="side-by-side">
+          <table class="data-table">
+            <thead>
+              <tr><th>série</th><th>p (nível)</th><th>p (diferença)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>abate_bovinos</td><td>0,00077</td><td><strong>0,21719</strong></td></tr>
+              <tr><td>abate_frangos</td><td>0,00014</td><td>0,04224</td></tr>
+              <tr><td>producao_leite</td><td>0,000003</td><td>0,00115</td></tr>
+            </tbody>
+          </table>
+          <div>
+            <p>Em nível, as cinco rejeitam a hipótese nula, com <code>p</code> abaixo de 0,001 [3]:
+            uma série com tendência de crescimento tem a média mudando ao longo da amostra. Depois
+            de <code>.diff()</code>, <strong>abate_bovinos</strong> passa a 0,217 e deixa de
+            rejeitar. As cinco linhas da tabela estão no material de apoio.
+            <strong>11h45 &middot; 11h55.</strong></p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">20</p>
+        </div>
+      </section>
+
+      <!-- 21 - Hands-on -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Notebook da aula</h2>
+        </div>
+        <p><code>notebooks/aula04.ipynb</code> reúne os três blocos de hoje em sequência: a junção
+        das cinco séries nos dois tipos, as defasagens com <code>shift()</code>, as duas
+        codificações de sazonalidade, a padronização, a comparação de correlação em nível e em
+        diferença, e o teste de Shapiro-Wilk das cinco séries.</p>
+        <ol class="exercise-steps">
+          <li>Abram pelo Colab (badge na primeira célula) ou localmente, com o repositório
+          clonado.</li>
+          <li>A última seção grava a base analítica pronta em memória: é ela que a Aula 05 recebe
+          para treinar o primeiro modelo.</li>
+          <li>O desafio no final pede a base completa da série da sua dupla, com defasagem,
+          sazonalidade e escala, mais o valor-p do teste de normalidade dessa série.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">21</p>
+        </div>
+      </section>
+
+      <!-- 22 - Amarracao com a sprint -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que hoje entrega para a Sprint 2 (11h55 &middot; 12h00)</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>ART.3, peso 5</h3>
+            <p>Exploração, Pré-processamento e Hipóteses [6]. A base analítica de hoje é o
+            pré-processamento pedido pela entrega, documentado decisão por decisão.</p>
+          </div>
+          <div class="concept-card">
+            <h3>ART.5, peso 4</h3>
+            <p>Distribuição normal e teste de hipótese [6]. O Shapiro-Wilk das cinco séries é o
+            resultado medido que a entrega exige.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Sprint 2</h3>
+            <p>Aberta em 17/08, fecha em <strong>28/08</strong>, com ART.3 (5), ART.4 (3) e
+            ART.5 (4).</p>
+          </div>
+        </div>
+        <p>O que a dupla leva pronto: a base larga com as cinco séries, as defasagens de 1 e de 4
+        trimestres, a codificação de sazonalidade escolhida, as colunas padronizadas e o valor-p do
+        teste de normalidade. É essa tabela que a Aula 05 recebe, em 24/08, para treinar a primeira
+        regressão.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">22</p>
+        </div>
+      </section>
+
+      <!-- 23 - Referencias -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Referências</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite, tabelas
+          1092, 1093, 1094, 7524 e 1086 do SIDRA. Contrato e checagem de sanidade em
+          <code>dados/README.md</code>.</li>
+          <li>pandas development team. <em>pandas documentation</em>: <code>merge</code>,
+          <code>shift</code>, <code>get_dummies</code>, <code>fillna</code>, <code>dropna</code>.</li>
+          <li>Virtanen, P. et al. <em>SciPy 1.0</em>. Nature Methods, 2020:
+          <code>scipy.stats.shapiro</code>.</li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn: Machine Learning in Python</em>. JMLR, 2011:
+          <code>StandardScaler</code> e seleção de característica.</li>
+          <li>Autoestudos da Semana 03 na Adalove, listados em
+          <a href="../referencias/aula04.html">referencias/aula04.html</a>.</li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seção 4: ART.3 peso 5, ART.5 peso 4.</li>
+          <li><code>docs/adrs/ADR-003</code> (regressão tabular) e <code>docs/adrs/ADR-007</code>
+          (a base analítica a partir das cinco séries do SIDRA).</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 04 &middot; Sprint 2</p>
+          <p class="footer-page">23</p>
+        </div>
+      </section>
+
+      <!-- 24 - Encerramento -->
+      <section class="end-slide">
+        <h1>Até 24/08</h1>
+        <h3>Aula 05: Aprendizado Supervisionado parte I, Sprint 2</h3>
+        <p>Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot; 2026-2A</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      width: 1280, height: 720, center: false, margin: 0,
+      hash: true, slideNumber: false, transition: 'fade'
+    });
+  </script>
+  <script src="../assets/js/inteli-quiz.js"></script>
+  <script src="../assets/js/inteli-zoom.js"></script>
+  <script src="../assets/js/inteli-print.js"></script>
+</body>
+</html>

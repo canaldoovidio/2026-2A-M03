@@ -1,0 +1,23 @@
+# Dependencias da validacao do acervo (.github/workflows/validate.yml).
+#
+# Sem versao fixada de proposito: o acervo nao e uma aplicacao, e os notebooks
+# precisam rodar no Colab, que atualiza os pacotes sozinho. Fixar aqui criaria
+# divergencia silenciosa entre o que o CI valida e o que o aluno executa.
+#
+# Validadores
+playwright        # tools/check_slides.py
+pytest            # tools/tests/
+openpyxl          # tools/extrair_autoestudos.py (o teste se pula sem o Turma.xlsx)
+
+# Execucao dos notebooks
+nbconvert
+jupyter
+ipykernel
+
+# Notebooks e scripts de figura
+pandas            # Aulas 03 e 04
+numpy             # Aulas 03 e 04
+matplotlib        # Aulas 02, 03 e 04, mais tools/graficos_aula*.py
+seaborn           # Aula 03
+scipy             # Aula 04, teste de Shapiro-Wilk
+scikit-learn      # Aula 04, StandardScaler e LinearRegression

@@ -71,7 +71,7 @@ capturar antes que ela vire um modelo entregue no compasso errado.
 | 01 | 04/08 | 1 | Introdução ao Python | ler o CSV do SIDRA de abate bovino; tipos, listas, dicionários |
 | 02 | 07/08 | 1 | Visão Geral do Aprendizado de Máquina, Inteligência Artificial e Ciência de Dados | enquadrar os 3 modelos do TAPI; CRISP-DM sobre o problema da LDC |
 | 03 | 11/08 | 1 | Introdução ao Pandas, Numpy e bibliotecas gráficas - Exploração de Dados | EDA das 5 séries de proteína animal |
-| 04 | 19/08 | 2 | Pré Processamento e Feature Engineering | unir SIDRA e Sindirações; defasagens e sazonalidade |
+| 04 | 19/08 | 2 | Pré Processamento e Feature Engineering | unir as cinco séries do SIDRA; defasagens e sazonalidade |
 | 05 | 24/08 | 2 | Aprendizado Supervisionado parte I | regressão da produção de frango; corte temporal treino/teste |
 | 06 | 01/09 | 3 | Aprendizado Não Supervisionado - parte I | clusterização de perfis de dieta e de meses |
 | 07 | 04/09 | 3 | Aprendizado Supervisionado - parte II | árvores e ensembles no Modelo 1; RMSE e MAPE |
@@ -137,7 +137,7 @@ pronto sobre o case da LDC, antes de avançar.
 | 02 | Visão Geral do Aprendizado de Máquina, Inteligência Artificial e Ciência de Dados | A Aula 01 deixou pronto a leitura do CSV de abate bovino do SIDRA em Python, com tipos, listas e dicionários prontos para enquadrar o problema da LDC. |
 | 03 | Introdução ao Pandas, Numpy e bibliotecas gráficas - Exploração de Dados | A Aula 02 deixou pronto os três modelos do TAPI mapeados no CRISP-DM e a decisão de trabalhar em base trimestral, prontos para orientar a exploração das cinco séries. |
 | 04 | Pré Processamento e Feature Engineering | A Aula 03 deixou pronto a EDA das cinco séries de proteína animal, com padrões, sazonalidade e problemas de qualidade já identificados. |
-| 05 | Aprendizado Supervisionado parte I | A Aula 04 deixou pronto a base unificada de SIDRA e Sindirações, com features de defasagem e de sazonalidade, pronta para alimentar o primeiro modelo. |
+| 05 | Aprendizado Supervisionado parte I | A Aula 04 deixou pronto a base analítica com as cinco séries do SIDRA unidas por trimestre, com features de defasagem e de sazonalidade, pronta para alimentar o primeiro modelo. |
 | 06 | Aprendizado Não Supervisionado - parte I | A Aula 05 deixou pronto o primeiro modelo de regressão da produção de frango, com corte temporal treino/teste validado. |
 | 07 | Aprendizado Supervisionado - parte II | A Aula 06 deixou pronto os perfis de clusterização de dieta e de meses, que revelam agrupamentos a testar como features. |
 | 08 | Aprendizado Não Supervisionado Parte II | A Aula 07 deixou pronto os modelos de árvore e ensemble do Modelo 1, com RMSE e MAPE medidos contra a baseline de coeficientes estáticos da LDC. |

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referências &middot; Aula 04 &middot; Pré-processamento e Feature Engineering</title>
+  <meta name="description" content="Autoestudos da Semana 03 na Adalove e leitura complementar da Aula 04 do Módulo 03 IN.">
+
+  <!-- Duas secoes fixas, nesta ordem, em TODAS as 14 aulas:
+       1. Autoestudos da semana (Adalove), copiados de
+          docs/autoestudos-por-semana.md, titulo por titulo, sem inventar
+          nenhum e sem alterar caractere.
+       2. Leitura complementar do professor.
+       A segunda secao nunca e omitida, mesmo sem curadoria fechada. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 04 &middot; 19/08/2026 &middot; Semana 03</p>
+      <h1>Referências: Pré-processamento e Feature Engineering</h1>
+      <p class="doc-subtitulo">A Semana 03 tem um único Encontro de Instrução e sete itens de
+      autoestudo: seis leituras que sustentam os três blocos do encontro, e a Ponderada 1 de
+      Computação, que é atividade avaliada.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#autoestudos">Autoestudos da semana (Adalove)</a></li>
+        <li><a href="#complementar">Leitura complementar do professor</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="autoestudos">
+        <h2>1. Autoestudos da semana (Adalove)</h2>
+        <p>Semana 03, que cobre o encontro de 19/08 (Aula 04). Os sete itens que o roteiro desta
+        aula pressupõe:</p>
+        <ol class="doc-referencias">
+          <li>Adequação de variáveis numéricas e categóricas
+            <span class="doc-porque">Base do Bloco 3 (11h15 &middot; 11h45): <code>trimestre</code> é
+            categórica nominal e vira dummy ou par seno/cosseno; as cinco colunas de série são
+            numéricas em escalas diferentes e passam por padronização z-score.</span></li>
+          <li>Diferenças entre Data Lakes e Data Warehouses
+            <span class="doc-porque">Enquadra o slide 5: os cinco CSVs crus de <code>dados/</code>
+            fazem o papel de <em>data lake</em> do case, e a base analítica montada hoje faz o de
+            <em>data warehouse</em>.</span></li>
+          <li>Diferenças entre ETL e ELT
+            <span class="doc-porque">O acervo carrega o dado cru antes e transforma depois, então
+            segue ELT. É o enquadramento do Bloco 1 (Integração, 10h15 &middot; 10h45).</span></li>
+          <li>Limpeza de dados com exemplos em Python (FreeCodeCamp)
+            <span class="doc-porque">Sustenta a decisão entre <code>dropna()</code> e
+            <code>fillna()</code> sobre os 40 valores ausentes que o <code>outer join</code>
+            produz, discutida na correção do Bloco 1.</span></li>
+          <li>Ponderada 1 de Computação
+            <span class="doc-porque">Atividade avaliada da semana, entregue pela Adalove. Não é
+            leitura de apoio ao encontro; entra aqui porque consta da mesma semana em
+            <code>docs/autoestudos-por-semana.md</code> e ocupa a mesma janela de estudo.</span></li>
+          <li>Pré-processamento de dados (conceito + prática)
+            <span class="doc-porque">Cobre o encontro inteiro: junção, tratamento de ausente,
+            codificação de categórica e escalonamento de numérica.</span></li>
+          <li>Seleção de característica
+            <span class="doc-porque">Base da correção do Bloco 3: por que ranquear variável por
+            correlação em nível seleciona a tendência comum, e o que muda ao medir a correlação
+            sobre a primeira diferença.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>Estes títulos são cópia literal de <code>docs/autoestudos-por-semana.md</code>, que é
+          gerado do <code>Turma.xlsx</code> oficial. Autoestudo que não está lá não entra aqui. O
+          acesso ao conteúdo é pela Adalove, com o login institucional.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="complementar">
+        <h2>2. Leitura complementar do professor</h2>
+        <p>A curadoria definitiva desta seção ainda será fechada pelo professor. Até lá, ficam aqui
+        as fontes efetivamente citadas no deck e no material de apoio, na mesma numeração usada no
+        slide de referências.</p>
+        <ol class="doc-referencias">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite, tabelas
+            1092, 1093, 1094, 7524 e 1086 do SIDRA.
+            <span class="doc-porque">Contrato de colunas e checagem de sanidade dos valores em
+            <code>dados/README.md</code>. As cinco séries são as colunas da base analítica montada
+            hoje.</span></li>
+          <li>pandas development team. <em>pandas user guide</em>:
+            <a href="https://pandas.pydata.org/docs/user_guide/merging.html">merge, join e concat</a>,
+            <a href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.shift.html">shift</a>,
+            <a href="https://pandas.pydata.org/docs/reference/api/pandas.get_dummies.html">get_dummies</a>,
+            <a href="https://pandas.pydata.org/docs/user_guide/missing_data.html">dados ausentes</a>.
+            <span class="doc-porque">Documentação oficial das quatro operações que constroem a base
+            de hoje.</span></li>
+          <li>Virtanen, P. et al. <em>SciPy 1.0: fundamental algorithms for scientific computing in
+            Python</em>. Nature Methods, v. 17, p. 261-272, 2020:
+            <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.shapiro.html">scipy.stats.shapiro</a>.
+            <span class="doc-porque">O teste de normalidade usado no fechamento, que produz o
+            resultado medido exigido pela ART.5.</span></li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn: Machine Learning in Python</em>. Journal of
+            Machine Learning Research, v. 12, p. 2825-2830, 2011:
+            <a href="https://scikit-learn.org/stable/modules/preprocessing.html">pré-processamento</a>
+            e <a href="https://scikit-learn.org/stable/modules/feature_selection.html">seleção de característica</a>.
+            <span class="doc-porque">Referência do <code>StandardScaler</code> e do que a
+            biblioteca oferece de seleção automática, que a Aula 09 retoma.</span></li>
+          <li>Autoestudos da Semana 03 na Adalove, listados na seção 1 desta página.
+            <span class="doc-porque">Referência cruzada usada como citação [5] no deck.</span></li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seção 4.
+            <span class="doc-porque">Os pesos oficiais da ART.3 Exploração, Pré-processamento e
+            Hipóteses (5) e da ART.5 Distribuição normal e teste de hipótese (4), citados no slide
+            de amarração com a sprint.</span></li>
+          <li><code>docs/adrs/ADR-003-regressao-tabular-em-vez-de-series-temporais.md</code> e
+            <code>docs/adrs/ADR-007-base-analitica-a-partir-das-cinco-series-do-sidra.md</code>.
+            <span class="doc-porque">As duas decisões de arquitetura que explicam por que a aula
+            constrói features de defasagem e por que a segunda fonte da junção é o próprio
+            SIDRA.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>O item 1 vai sem link de propósito: a URL de consulta da API do SIDRA, para cada
+          tabela, está documentada em <code>dados/README.md</code>, e apontar direto para ela aqui
+          duplicaria a mesma informação em dois lugares que podem divergir com o tempo.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula04.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../materiais/aula04.html"><span class="material-symbols-outlined" aria-hidden="true">menu_book</span>Material</a>
+  </nav>
+</body>
+</html>
