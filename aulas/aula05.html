@@ -95,7 +95,7 @@ analitica["periodo"].iloc[-1]  # '2026-T1'
 # colunas que o modelo de hoje usa
 # frangos_lag1  frangos_lag4  sen  cos</code></pre>
           <div>
-            <p>A Aula 04 uniu as cinco séries do SIDRA pela chave <code>periodo</code>, construiu
+            <p>A Aula 04 uniu as cinco séries do SIDRA [1] pela chave <code>periodo</code>, construiu
             as defasagens de 1 e de 4 trimestres, codificou a sazonalidade em
             <code>sen</code> e <code>cos</code> e padronizou as colunas numéricas.</p>
             <p>Sobraram <strong>113 linhas</strong>: 117 do <code>inner</code> menos as 4 que
@@ -306,8 +306,8 @@ teste  = analitica.iloc[corte:]   #   8
 # 1998-T1 a 2024-T1  ->  treino
 # 2024-T2 a 2026-T1  ->  teste</code></pre>
           <div>
-            <p>Duas fatias contíguas no tempo, com <code>iloc</code>, sobre a base já ordenada por
-            <code>periodo</code>. Nenhuma função de sorteio aparece.</p>
+            <p>Duas fatias contíguas no tempo, com <code>iloc</code> [2], sobre a base já
+            ordenada por <code>periodo</code>. Nenhuma função de sorteio aparece.</p>
             <p>Oito trimestres são dois anos, que é o horizonte que o TAPI pede [7]. O teste imita
             a situação real: o modelo conhece tudo até 2024-T1 e precisa dizer o que acontece
             depois.</p>
@@ -340,7 +340,7 @@ teste  = analitica.iloc[corte:]   #   8
         </div>
       </section>
 
-      <!-- 12 - Vazamento medido -->
+      <!-- 13 - Vazamento medido -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -372,7 +372,7 @@ base["frangos_futuro"] = base[ALVO].shift(-1)
         </div>
       </section>
 
-      <!-- 13 - Pratica bloco 2 -->
+      <!-- 14 - Pratica bloco 2 -->
       <section class="exercise-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -396,14 +396,14 @@ base["frangos_futuro"] = base[ALVO].shift(-1)
         </div>
       </section>
 
-      <!-- 14 - Divisor bloco 3 -->
+      <!-- 15 - Divisor bloco 3 -->
       <section class="section-slide">
         <div class="accent-bar"></div>
         <h2>Bloco 3 &middot; Avaliar</h2>
         <p>11h00 &middot; 11h30</p>
       </section>
 
-      <!-- 15 - RMSE e MAPE -->
+      <!-- 16 - RMSE e MAPE -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -442,7 +442,7 @@ base["frangos_futuro"] = base[ALVO].shift(-1)
         </div>
       </section>
 
-      <!-- 16 - A baseline -->
+      <!-- 17 - A baseline -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -481,7 +481,7 @@ previsao = teste["frangos_lag4"] * fator</code></pre>
         </div>
       </section>
 
-      <!-- 17 - Pratica bloco 3 -->
+      <!-- 18 - Pratica bloco 3 -->
       <section class="exercise-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -504,7 +504,7 @@ previsao = teste["frangos_lag4"] * fator</code></pre>
         </div>
       </section>
 
-      <!-- 18 - Correcao bloco 3: historico vs previsao -->
+      <!-- 19 - Correcao bloco 3: historico vs previsao -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -523,7 +523,7 @@ previsao = teste["frangos_lag4"] * fator</code></pre>
         </div>
       </section>
 
-      <!-- 19 - O leite -->
+      <!-- 20 - O leite -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -553,7 +553,7 @@ previsao = teste["frangos_lag4"] * fator</code></pre>
         </div>
       </section>
 
-      <!-- 20 - Quiz -->
+      <!-- 21 - Quiz -->
       <section class="quiz-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -585,14 +585,14 @@ previsao = teste["frangos_lag4"] * fator</code></pre>
         </div>
       </section>
 
-      <!-- 21 - Divisor bloco 4 -->
+      <!-- 22 - Divisor bloco 4 -->
       <section class="section-slide">
         <div class="accent-bar"></div>
         <h2>Bloco 4 &middot; O que uma métrica não mostra</h2>
         <p>11h30 &middot; 11h45</p>
       </section>
 
-      <!-- 22 - Doze janelas -->
+      <!-- 23 - Doze janelas -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -600,7 +600,7 @@ previsao = teste["frangos_lag4"] * fator</code></pre>
           <div class="accent-bar"></div>
           <h2>O modelo vence as doze janelas medidas</h2>
         </div>
-        <img src="../assets/img/aula05-janelas-modelo-vs-baseline.png" alt="Gráfico de linhas com o MAPE do modelo e o da baseline de coeficiente fixo em doze janelas de teste consecutivas, de 2021-T3 a 2024-T2. A linha da baseline fica acima da do modelo em todas as janelas, com a distância entre elas caindo para 0,10 ponto percentual na última" style="width: 100%; max-width: 880px; display: block; margin: 0 auto 6px;">
+        <img src="../assets/img/aula05-janelas-modelo-vs-baseline.png" alt="Gráfico de linhas com o MAPE do modelo e o da baseline de coeficiente fixo em doze janelas de teste consecutivas, de 2021-T3 a 2024-T2. A linha da baseline fica acima da do modelo em todas as janelas, com a distância entre elas caindo para 0,10 ponto percentual na última" style="width: 100%; max-width: 900px; display: block; margin: 0 auto 6px;">
         <p>A janela de 2024-T2, sozinha, mostrou uma vantagem de 0,10 ponto percentual, que
         qualquer sorte de calendário explicaria. Repetida em doze cortes consecutivos, a vantagem
         aparece nas doze janelas, com média de 2,18% contra 3,14%. Oito trimestres de teste são
@@ -611,7 +611,7 @@ previsao = teste["frangos_lag4"] * fator</code></pre>
         </div>
       </section>
 
-      <!-- 23 - Escalonamento -->
+      <!-- 24 - Escalonamento -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -648,7 +648,7 @@ cos   -1,38e+07
         </div>
       </section>
 
-      <!-- 24 - Residuos -->
+      <!-- 25 - Residuos -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -661,7 +661,7 @@ cos   -1,38e+07
             <p>A Aula 04 deixou esta medição marcada para hoje: a suposição de normalidade em
             mínimos quadrados recai sobre os <strong>resíduos</strong> do modelo ajustado, e serve
             aos testes de significância dos coeficientes.</p>
-            <p>Shapiro-Wilk nos 105 resíduos de treino devolve <strong>W = 0,9690</strong> e
+            <p>Shapiro-Wilk [3] nos 105 resíduos de treino devolve <strong>W = 0,9690</strong> e
             <strong>p = 0,0147</strong>, o que rejeita a hipótese de normalidade.</p>
             <p><strong>Consequência prática:</strong> valor-p de coeficiente desta regressão fica
             sem garantia. As previsões e o RMSE continuam válidos, porque nenhum dos dois depende
@@ -670,19 +670,19 @@ cos   -1,38e+07
           <div>
             <table class="data-table">
               <thead>
-                <tr><th>Trimestre</th><th>Erro do modelo</th></tr>
+                <tr><th>Trimestre</th><th>Erro (milhões de kg)</th><th>Em proporção</th></tr>
               </thead>
               <tbody>
-                <tr><td>2006-T2</td><td>-12,52%</td></tr>
-                <tr><td>2009-T1</td><td>-10,86%</td></tr>
-                <tr><td>2012-T4</td><td>-7,31%</td></tr>
-                <tr><td>2020-T2</td><td>-7,17%</td></tr>
+                <tr><td>2009-T1</td><td>-225,9</td><td>-10,86%</td></tr>
+                <tr><td>2006-T2</td><td>-210,4</td><td>-12,52%</td></tr>
+                <tr><td>2020-T2</td><td>-203,1</td><td>-7,17%</td></tr>
+                <tr><td>2012-T4</td><td>-173,5</td><td>-7,31%</td></tr>
               </tbody>
             </table>
-            <p>Os quatro maiores erros são todos de superestimação, concentrados em quatro
-            trimestres isolados, e é essa cauda que o Shapiro-Wilk detecta. Atribuir cada um a um
-            evento do setor é <strong>hipótese</strong>, e testá-la exigiria uma variável que a
-            base não tem.</p>
+            <p>Os quatro maiores <strong>em volume</strong> são todos de superestimação, e é essa
+            cauda que o Shapiro-Wilk detecta. Em proporção a ordem muda, e 1998-T1 (-11,69%) entra
+            no lugar de 2020-T2: as duas colunas ordenam diferente, então o critério precisa ser
+            declarado antes de alguém dizer "os maiores erros".</p>
           </div>
         </div>
         <div class="slide-footer">
@@ -691,7 +691,7 @@ cos   -1,38e+07
         </div>
       </section>
 
-      <!-- 25 - Reprodutibilidade -->
+      <!-- 26 - Reprodutibilidade -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -736,7 +736,7 @@ cos   -1,38e+07
         </div>
       </section>
 
-      <!-- 26 - Discussao dirigida -->
+      <!-- 27 - Discussao dirigida -->
       <section class="exercise-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -758,7 +758,7 @@ cos   -1,38e+07
         </div>
       </section>
 
-      <!-- 27 - Hands-on -->
+      <!-- 28 - Hands-on -->
       <section class="exercise-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -783,7 +783,7 @@ cos   -1,38e+07
         </div>
       </section>
 
-      <!-- 28 - Amarracao com a sprint -->
+      <!-- 29 - Amarracao com a sprint -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -798,14 +798,14 @@ cos   -1,38e+07
             reservados, é a segunda versão da comunicação visual do produto.</p>
           </div>
           <div class="concept-card">
-            <h3>ART.5, peso 4</h3>
-            <p>Distribuição normal e teste de hipótese [6]. O Shapiro-Wilk dos resíduos fecha o
-            ciclo que a Aula 04 abriu sobre as variáveis.</p>
-          </div>
-          <div class="concept-card">
             <h3>Sprint 2</h3>
             <p>Fecha em <strong>28/08</strong>, com review. A Sprint 3 abre em 31/08, e a Aula 06
             é em 01/09.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Dívida da Aula 04</h3>
+            <p>O Shapiro-Wilk dos resíduos fecha o ciclo que a Aula 04 abriu sobre as variáveis,
+            e é lá que a ART.5 está amarrada [6].</p>
           </div>
         </div>
         <p>O que a dupla leva pronto: o primeiro modelo do Modelo 1 do TAPI, o erro dele medido em
@@ -818,7 +818,7 @@ cos   -1,38e+07
         </div>
       </section>
 
-      <!-- 29 - Referencias -->
+      <!-- 30 - Referencias -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -839,8 +839,8 @@ cos   -1,38e+07
           <code>mean_squared_error</code> e <code>mean_absolute_percentage_error</code>.</li>
           <li>Autoestudos da Semana 04 na Adalove, listados em
           <a href="../referencias/aula05.html">referencias/aula05.html</a>.</li>
-          <li><code>PLANO_DE_ENSINO.md</code>, seção 4: ART.4 peso 3, ART.5 peso 4, e as métricas
-          do módulo.</li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seção 4 (peso 3 da ART.4 e as métricas do módulo)
+          e seção 5, a matriz que amarra cada aula a uma ART.</li>
           <li><code>docs/adrs/ADR-003</code> (regressão tabular no lugar de série temporal) e
           <code>docs/adrs/ADR-008</code> (o corte temporal de oito trimestres e a baseline de
           coeficiente fixo).</li>
@@ -851,7 +851,7 @@ cos   -1,38e+07
         </div>
       </section>
 
-      <!-- 30 - Encerramento -->
+      <!-- 31 - Encerramento -->
       <section class="end-slide">
         <h1>Até 01/09</h1>
         <h3>Aula 06: Aprendizado Não Supervisionado parte I, Sprint 3</h3>

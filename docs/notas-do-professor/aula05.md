@@ -184,10 +184,11 @@ com `Pipeline`, e vale deixar registrado como pendência conhecida.
 
 ## 11h45 - 12h00 &middot; Amarração com a sprint
 
-**O que declarar:** a ART.4 (UX parte 2, peso 3) recebe a figura de histórico contra previsão. A
-ART.5 (Distribuição normal e teste de hipótese, peso 4) recebe o Shapiro-Wilk dos resíduos, que
-fecha o ciclo aberto na Aula 04 sobre as variáveis. A Sprint 2 fecha em 28/08, e a Sprint 3 abre em
-31/08.
+**O que declarar:** a ART.4 (UX parte 2, peso 3) recebe a figura de histórico contra previsão, e
+é a única ART que a matriz do `PLANO_DE_ENSINO.md` (seção 5) amarra a esta aula. O Shapiro-Wilk
+dos resíduos fecha o ciclo aberto na Aula 04 sobre as variáveis, e a ART.5 está amarrada lá, não
+aqui: vale dizer isso à turma, para ninguém achar que a entrega de hoje mudou. A Sprint 2 fecha em
+28/08, e a Sprint 3 abre em 31/08.
 
 **Três cuidados a passar sobre a figura da ART.4**, porque é o que separa uma entrega boa de uma
 mediana: marcar onde termina o histórico e começa a projeção; mostrar a baseline junto do modelo; e
@@ -203,8 +204,8 @@ quais trimestres se parecem entre si na demanda de ração?
 
 - "Por que o modelo erra sempre para o mesmo lado nos oito trimestres de teste?" (sete dos oito
   ficam abaixo do realizado). Resposta: viés de nível, provavelmente por a tendência recente ser
-  mais forte que a média dos 29 anos de treino. Erro sistemático é corrigível, e erro sem direção
-  não é.
+  mais forte que a média dos 29 anos de treino. Um erro sistemático se corrige com um ajuste de
+  nível, e é por isso que vale a pena olhar o sinal dos resíduos antes do tamanho deles.
 - "As outras quatro séries defasadas derrubam o MAPE para 1,14%. Por que não usamos?" Resposta: nós
   vamos, na Aula 07. Hoje o objetivo é o ciclo completo com o modelo mais simples que funciona.
 - "O que aconteceria se usássemos `producao_leite` do mesmo trimestre?" Resposta: exigiria conhecer
