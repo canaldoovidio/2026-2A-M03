@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material de apoio &middot; Aula 05 &middot; Aprendizado Supervisionado parte I</title>
+  <meta name="description" content="Material de apoio da Aula 05 do Módulo 03 IN: regressão linear do abate de frango, corte temporal de treino e teste, RMSE e MAPE contra a baseline de coeficiente fixo da LDC, overfitting e reprodutibilidade.">
+
+  <!-- Este material NAO e o roteiro do deck em prosa. Ele aprofunda o que o
+       slide so pode apontar. Todo numero citado aqui sai da execucao de
+       notebooks/aula05.ipynb sobre os cinco CSVs de dados/, conferida antes
+       de escrever qualquer paragrafo. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 05 &middot; 24/08/2026 &middot; Sprint 2</p>
+      <h1>Material de apoio: Aprendizado Supervisionado parte I</h1>
+      <p class="doc-subtitulo">A Aula 04 entregou uma tabela de 113 linhas em que cada uma carrega
+      tudo que o modelo pode ver naquele trimestre. Esta página acompanha o que acontece quando
+      essa tabela vira um modelo treinado: como os mínimos quadrados escolhem os coeficientes, por
+      que a separação de treino e teste é feita por data, o que RMSE e MAPE medem de diferente, e
+      as três dívidas que a Aula 04 deixou marcadas para hoje. A seção 9 registra um achado que
+      contradiz parcialmente o que a aula passada afirmou.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#supervisionado">O que torna este problema supervisionado</a></li>
+        <li><a href="#minimos">O que <code>fit</code> faz por dentro</a></li>
+        <li><a href="#coeficientes">Ler os coeficientes do modelo de frango</a></li>
+        <li><a href="#corte">Por que o corte é por data</a></li>
+        <li><a href="#vazamento">Três formas de vazar o futuro para dentro do treino</a></li>
+        <li><a href="#metricas">RMSE e MAPE, e o que cada um esconde</a></li>
+        <li><a href="#baseline">A baseline de coeficiente fixo</a></li>
+        <li><a href="#overfitting">Overfitting, com o caso do leite</a></li>
+        <li><a href="#condicionamento">O achado: padronizar mudou o modelo</a></li>
+        <li><a href="#residuos">Normalidade, agora no lugar certo</a></li>
+        <li><a href="#reprodutibilidade">Reprodutibilidade e replicabilidade</a></li>
+        <li><a href="#art4">O que levar para a ART.4 e a ART.5</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="supervisionado">
+        <h2>1. O que torna este problema supervisionado</h2>
+        <p>Aprendizado supervisionado é o caso em que cada linha de treino traz, junto com as
+        características, a <strong>resposta certa</strong>. O modelo compara a previsão dele com
+        essa resposta e ajusta os parâmetros para reduzir a diferença. A supervisão está na
+        presença do rótulo. O nome descreve o dado disponível, e o processo roda sozinho.</p>
+        <p>No case, o rótulo é a coluna <code>abate_frangos</code>: 113 trimestres em que o IBGE já
+        mediu quanto foi abatido. O modelo aprende a relação entre o que é conhecido no momento da
+        previsão (o trimestre anterior, o mesmo trimestre do ano passado, a estação do ano) e o
+        valor que se quer prever.</p>
+        <p>O rótulo ser numérico e contínuo faz disto uma <strong>regressão</strong>. Se a pergunta
+        do parceiro fosse "a produção vai subir ou cair no próximo trimestre", o mesmo dado viraria
+        um problema de <strong>classificação</strong>, com duas classes, e as métricas de avaliação
+        seriam outras. A Aula 06 apresenta o terceiro caso, o não supervisionado, em que nenhum
+        rótulo existe.</p>
+        <div class="doc-nota">
+          <p>Vale registrar o que <em>não</em> torna um problema supervisionado: o fato de os dados
+          serem históricos. Toda a base da Aula 06 é a mesma, e lá não há rótulo porque a pergunta
+          muda. O que define é a existência de uma coluna-resposta contra a qual o erro é medido.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="minimos">
+        <h2>2. O que <code>fit</code> faz por dentro</h2>
+        <p>Ao chamar <code>modelo.fit(X, y)</code>, o scikit-learn procura os valores de
+        <em>b</em><sub>0</sub> a <em>b</em><sub>4</sub> que minimizam a soma dos quadrados dos
+        erros:</p>
+        <pre class="doc-codigo"><code>previsao = b0
+         + b1 * frangos_lag1
+         + b2 * frangos_lag4
+         + b3 * sen
+         + b4 * cos
+
+erro     = valor_real - previsao
+objetivo = soma(erro ** 2)   ->  o menor possivel</code></pre>
+        <p>Três consequências práticas saem dessa definição, e as três aparecem no resultado de
+        hoje.</p>
+        <p><strong>O quadrado pune erro grande mais que proporcionalmente.</strong> Errar 10% em um
+        trimestre custa quatro vezes mais ao objetivo do que errar 5% em dois. O ajuste final é
+        puxado pelos trimestres em que o modelo mais erra, que são os de choque (seção 10).</p>
+        <p><strong>A solução é fechada.</strong> Não há taxa de aprendizado, nem
+        número de épocas, nem ponto de parada. O scikit-learn resolve o sistema por decomposição em
+        valores singulares, o que devolve sempre a mesma resposta para os mesmos dados. É por isso
+        que este modelo não precisa de <code>random_state</code> (seção 11), e é também o que abre
+        a porta para o problema numérico da seção 9.</p>
+        <p><strong>A média dos resíduos é sempre zero</strong> quando existe intercepto. Isso é
+        propriedade da solução, não evidência de que o modelo esteja bom: um modelo péssimo também
+        tem resíduo de média zero. Por isso a avaliação usa RMSE e MAPE, que somam o erro em valor
+        absoluto ou ao quadrado antes de tirar a média.</p>
+      </section>
+
+      <section class="doc-secao" id="coeficientes">
+        <h2>3. Ler os coeficientes do modelo de frango</h2>
+        <p>Ajustado sobre as 113 linhas da base, o modelo devolve:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>coeficiente</th><th>valor</th><th>como se lê</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>frangos_lag1</code></td><td>+0,6819</td><td>cada quilo abatido no trimestre anterior contribui com 0,68 quilo na previsão de hoje</td></tr>
+              <tr><td><code>frangos_lag4</code></td><td>+0,3147</td><td>cada quilo abatido no mesmo trimestre do ano passado contribui com 0,31 quilo</td></tr>
+              <tr><td><code>sen</code>, <code>cos</code></td><td>ver seção 9</td><td>o valor depende de a base ter sido padronizada, e esse é o achado do dia</td></tr>
+              <tr><td>intercepto</td><td>+5,494e+07</td><td>o piso da previsão quando todas as entradas valem zero, situação que nunca ocorre nesta base</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Os dois pesos de defasagem somam <strong>0,9966</strong>, praticamente 1. Ninguém impôs
+        essa restrição: ela emergiu dos mínimos quadrados sobre 29 anos de abate real. O modelo
+        descobriu sozinho que a melhor previsão para um trimestre é uma média ponderada entre o
+        passado recente e o mesmo período do ciclo anterior, com dois terços do peso na inércia de
+        curto prazo.</p>
+        <p>A soma perto de 1 também explica por que o intercepto é pequeno em relação à escala da
+        série: com os pesos somando a unidade, a previsão já sai na ordem de grandeza certa sem
+        precisar de um termo constante grande.</p>
+        <div class="doc-nota">
+          <p><strong>Cuidado ao interpretar coeficiente como causa.</strong> O coeficiente de
+          <code>frangos_lag1</code> descreve uma associação dentro desta amostra, com estas outras
+          colunas presentes. Ele não afirma que aumentar o abate de um trimestre <em>causa</em>
+          aumento no seguinte, e o valor dele mudaria se outra coluna entrasse no modelo. A Aula 10
+          retoma o tema com SHAP e partial dependence, que é o requisito de explicabilidade do
+          parceiro.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="corte">
+        <h2>4. Por que o corte é por data</h2>
+        <p>O autoestudo da semana apresenta <code>train_test_split</code>, cujo padrão é
+        <code>shuffle=True</code>. Aplicada a esta base, a função devolve um conjunto de teste como
+        este: 1999-T1, 2000-T3, 2008-T1, 2009-T2, 2014-T3, 2015-T2, 2015-T3 e 2018-T1.</p>
+        <p>Cada um desses trimestres tem vizinhos temporais dentro do treino, dos dois lados. O
+        modelo conhece 2014-T2 e 2014-T4 e precisa prever 2014-T3, o que é <strong>interpolação
+        dentro de um histórico conhecido</strong>. O corte por data pede outra coisa: conhecer tudo
+        até 2024-T1 e projetar dois anos adiante, sem nenhum ponto de apoio à frente.</p>
+        <p>As duas medições são legítimas, e respondem a perguntas diferentes. A que corresponde ao
+        uso do modelo pela LDC é a segunda, e é ela que o protocolo do case adota (ADR-008).</p>
+        <div class="doc-nota">
+          <p><strong>Uma correção a uma intuição comum.</strong> Costuma-se dizer que embaralhar
+          "infla a métrica". Nesta base isso não se verifica de forma limpa: o teste sorteado cobre
+          períodos antigos, de menor volume e maior variação relativa, e o MAPE ali sai
+          <em>pior</em>. O argumento contra o sorteio não depende de a métrica melhorar ou piorar,
+          e sim de ela deixar de responder à pergunta do parceiro. Uma métrica que responde à
+          pergunta errada não fica confiável por acaso ter saído alta.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="vazamento">
+        <h2>5. Três formas de vazar o futuro para dentro do treino</h2>
+        <p>Vazamento é qualquer informação que chega ao modelo durante o treino e que não estaria
+        disponível no momento real da previsão. As três formas abaixo aparecem neste case, e
+        nenhuma delas gera mensagem de erro.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>forma</th><th>como aparece no código</th><th>efeito medido aqui</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>O valor futuro como coluna</td>
+                <td><code>shift(-1)</code> em vez de <code>shift(1)</code></td>
+                <td>MAPE de teste cai de 1,69% para 1,13%</td>
+              </tr>
+              <tr>
+                <td>Padronizar antes de separar</td>
+                <td><code>fit_transform</code> na base inteira, e só depois o corte</td>
+                <td>desloca a média do escalador em 12% de um desvio, e não muda o MAPE deste
+                modelo (ver abaixo)</td>
+              </tr>
+              <tr>
+                <td>Escolher colunas olhando o teste</td>
+                <td>rodar a seção 8 várias vezes e ficar com a combinação de melhor MAPE de teste</td>
+                <td>o conjunto de teste vira parte do processo de treino, e deixa de medir dado novo</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A primeira é a mais grosseira e a mais fácil de detectar depois: o modelo funciona na
+        validação e falha em produção. A terceira é a mais difícil, porque acontece devagar, ao
+        longo de várias iterações do trabalho, e é o motivo de existirem três conjuntos (treino,
+        validação e teste) em projetos maiores. A Aula 10 introduz a validação cruzada, que é a
+        resposta padrão para ela.</p>
+        <p>A segunda merece uma medição honesta, porque ela é a que este notebook mais repete como
+        disciplina. Ajustar o escalador sobre treino e teste juntos desloca a média dele em mais de
+        12% de um desvio, e o MAPE sai <strong>idêntico até a nona casa decimal</strong>. A razão é
+        que regressão linear sem regularização é invariante a transformação afim das entradas: os
+        coeficientes absorvem qualquer mudança de escala. <strong>Neste modelo, esse vazamento é
+        inofensivo.</strong></p>
+        <p>A disciplina de <code>fit</code> só no treino continua obrigatória, e o motivo é outro:
+        KNN, SVM, regressão regularizada e PCA não têm essa invariância, e nesses casos a média do
+        teste dentro do escalador muda o resultado de verdade. Três deles aparecem entre as Aulas
+        06 e 08. Adquirir o hábito num modelo em que ele não custa nada é mais barato do que
+        descobrir a necessidade dele num modelo em que ele já fez estrago.</p>
+        <p><strong>O ponto de método que atravessa as três:</strong> vazamento se detecta lendo o
+        desenho do experimento. A métrica de um modelo vazado é justamente a que parece boa,
+        então ela não pode servir de alarme.</p>
+      </section>
+
+      <section class="doc-secao" id="metricas">
+        <h2>6. RMSE e MAPE, e o que cada um esconde</h2>
+        <pre class="doc-codigo"><code>RMSE = raiz( media( (real - previsto) ** 2 ) )      # em quilogramas
+MAPE = media( abs(real - previsto) / abs(real) )    # em proporcao</code></pre>
+        <p>O <strong>RMSE</strong> fica na unidade do alvo, o que permite conversar com o parceiro
+        em quilos: um RMSE de 67,2 milhões de kg num trimestre que produz cerca de 3,5 bilhões
+        significa que o erro típico é da ordem de 2% do volume. Por elevar o erro ao quadrado antes
+        de somar, ele é dominado pelos piores trimestres, e é a métrica certa quando um erro grande
+        isolado custa mais caro do que vários erros pequenos.</p>
+        <p>O <strong>MAPE</strong> é adimensional, o que permite comparar o desempenho entre séries
+        de tamanhos muito diferentes: o mesmo número serve para frango (bilhões de kg) e para leite
+        (milhões de litros). Ele tem duas armadilhas conhecidas. A primeira é explodir quando o
+        valor real se aproxima de zero, porque ele entra no denominador. A segunda é ser
+        assimétrico: prever metade do valor real dá 50% de erro, e prever o dobro dá 100%, o que
+        empurra modelos otimizados por MAPE a subestimar sistematicamente.</p>
+        <p>O <code>PLANO_DE_ENSINO.md</code> fixa as duas como métricas do módulo, e a razão de
+        serem duas é que a decisão do parceiro precisa das duas respostas: o volume em quilos
+        dimensiona estoque e contrato, e a porcentagem diz se o modelo é confiável o bastante para
+        substituir o processo atual.</p>
+        <div class="doc-nota">
+          <p>O <code>R²</code> aparece no notebook apenas no ajuste inicial, e de propósito não
+          entra na avaliação final. Ele mede a fração da variância explicada em relação a prever
+          sempre a média, e "prever sempre a média" é uma régua fraca demais numa série com
+          tendência de crescimento: qualquer modelo razoável ganha dela. A régua útil aqui é o
+          processo que a LDC já usa, que é o assunto da próxima seção.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="baseline">
+        <h2>7. A baseline de coeficiente fixo</h2>
+        <p>O <code>PLANO_DE_ENSINO.md</code> define que as métricas do módulo são comparadas contra
+        a abordagem de coeficientes estáticos que a LDC usa hoje. "Coeficiente estático" descreve
+        uma família de previsores, então o case precisou de uma definição operacional, registrada
+        na ADR-008:</p>
+        <pre class="doc-codigo"><code># o fator sai SO do treino
+fator = (treino["abate_frangos"] / treino["frangos_lag4"]).mean()
+# 1,0522
+
+previsao = teste["frangos_lag4"] * fator</code></pre>
+        <p>A previsão é o mesmo trimestre do ano anterior corrigido por um fator constante de
+        crescimento. Três previsores foram medidos sobre os mesmos oito trimestres:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>previsor</th><th>RMSE (milhões de kg)</th><th>MAPE</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>A. repete o trimestre anterior</td><td>76,3</td><td>2,01%</td></tr>
+              <tr><td>B. repete o mesmo trimestre do ano anterior</td><td>174,3</td><td>4,54%</td></tr>
+              <tr><td>C. ano anterior vezes o fator de 1,0522</td><td>67,8</td><td>1,69%</td></tr>
+              <tr><td>regressão linear com quatro entradas</td><td>67,2</td><td>1,60%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Duas leituras merecem atenção. A primeira: a baseline B, sozinha, é a pior das três,
+        porque repetir o ano anterior sem correção ignora o crescimento de longo prazo. O fator de
+        1,05 que a baseline C aplica é exatamente essa correção, e ele sozinho derruba o erro de
+        4,54% para 1,69%. <strong>Uma linha de aritmética resolve a maior parte do problema.</strong></p>
+        <p>A segunda: o modelo ganha da baseline C por 0,10 ponto percentual, o que é pouco. Um
+        primeiro modelo que empata com o processo atual é resultado comum e honesto, e a resposta
+        certa não é procurar uma métrica que favoreça o modelo. A resposta é medir mais vezes, o
+        que a seção 8.1 do notebook faz e a seção 12 desta página retoma.</p>
+        <div class="doc-nota">
+          <p><strong>Separando o que é da fonte do que é nosso.</strong> Que a LDC projeta com
+          coeficientes estáticos é o que o TAPI afirma. A fórmula específica acima, com o fator
+          estimado como razão média sobre o treino, é <strong>adaptação nossa</strong>: o TAPI não
+          publica o coeficiente em uso. Se o parceiro fornecer o número real, ele entra no lugar do
+          fator estimado sem alterar nada do protocolo.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="overfitting">
+        <h2>8. Overfitting, com o caso do leite</h2>
+        <p>Overfitting tem uma definição operacional, que dispensa qualquer metáfora: <strong>o
+        erro de treino cai e o de teste sobe</strong>. A Aula 04 deixou uma hipótese pendente sobre
+        <code>producao_leite</code>, e testá-la produz o exemplo exato.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>entradas do modelo</th><th>MAPE no treino</th><th>MAPE no teste</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>lag1</code></td><td>2,79%</td><td>1,78%</td></tr>
+              <tr><td><code>lag1</code> + <code>lag4</code></td><td>2,63%</td><td>1,71%</td></tr>
+              <tr><td><code>lag1</code> + <code>lag4</code> + <code>sen</code>/<code>cos</code></td><td>2,53%</td><td>1,60%</td></tr>
+              <tr><td>as quatro acima + <code>producao_leite</code></td><td>2,50%</td><td>1,89%</td></tr>
+              <tr><td>as quatro acima + <code>producao_leite</code> defasado</td><td>2,48%</td><td>1,96%</td></tr>
+              <tr><td>as quatro acima + as 4 séries defasadas</td><td>2,41%</td><td>1,14%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A coluna do meio melhora a cada linha, sem exceção. Acrescentar característica dá ao
+        modelo mais liberdade para se ajustar às 105 linhas que ele já viu, e por isso ela não
+        decide nada. A coluna da direita é a que decide, e ela reprova o leite nas duas formas
+        testadas.</p>
+        <p>A Aula 04 previu esse resultado a partir da correlação: r = +0,96 sobre o nível, e
+        praticamente zero sobre a primeira diferença. A correlação alta media a tendência comum de
+        29 anos de crescimento, e tendência comum não ajuda a prever a variação de um trimestre
+        específico. <strong>A hipótese formulada com estatística descritiva se confirmou em dados
+        que o modelo não viu</strong>, que é o ciclo completo que a ART.5 pede.</p>
+        <p>A última linha guarda uma oportunidade: as outras quatro séries, defasadas em um
+        trimestre, derrubam o MAPE de teste para 1,14%. Elas ficam de fora do modelo de hoje, que é
+        o primeiro, e entram como candidata declarada para a Aula 07.</p>
+        <div class="doc-nota">
+          <p><strong>Por que defasar as outras séries é obrigatório.</strong> Usar
+          <code>producao_leite</code> do mesmo trimestre exigiria conhecer a produção de leite de
+          2026-T1 para prever o frango de 2026-T1. As duas medições são publicadas pelo IBGE ao
+          mesmo tempo, então essa informação não existe no momento da previsão. É a segunda forma
+          de vazamento da seção 5, e ela passa despercebida com facilidade porque a coluna não tem
+          nada de "futuro" no nome.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="condicionamento">
+        <h2>9. O achado: padronizar mudou o modelo</h2>
+        <p>A Aula 04 afirmou, na seção sobre escalonamento, que regressão linear sem regularização
+        produz as mesmas previsões com ou sem padronização. <strong>Em álgebra exata, a afirmação
+        está correta.</strong> Medida nesta base, ela falha.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>medida</th><th>sem padronizar</th><th>com padronizar</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>coeficiente de <code>sen</code></td><td>+2,653e-10</td><td>-1,075e+07</td></tr>
+              <tr><td>coeficiente de <code>cos</code></td><td>+2,290e-10</td><td>-1,384e+07</td></tr>
+              <tr><td>MAPE no teste</td><td>1,71%</td><td>1,60%</td></tr>
+              <tr><td>número de condição da matriz</td><td>1,08e+10</td><td>14</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Os coeficientes na coluna do meio estão na ordem de 1e-10, que é <strong>zero na
+        prática</strong> para uma série medida em bilhões: as duas colunas de sazonalidade foram
+        descartadas sem que nenhum aviso fosse emitido.</p>
+        <p>A causa é o <strong>número de condição</strong>, que mede o quanto uma matriz amplifica
+        erro de arredondamento. As colunas de defasagem estão na casa de 1e9 e o par seno/cosseno
+        varia entre -1 e +1, o que dá à matriz uma condição da ordem de dez bilhões. A decomposição
+        em valores singulares que resolve os mínimos quadrados descarta as direções de menor valor
+        singular, tratando-as como ruído numérico, e são exatamente as direções das duas colunas
+        pequenas. Padronizar coloca todas as colunas na mesma escala, a condição cai para cerca de
+        14, e as colunas voltam a participar da solução.</p>
+        <p>O efeito prático nas métricas é pequeno: 0,11 ponto percentual de MAPE. O efeito de
+        método é grande, e é este: <strong>um coeficiente zerado por corte numérico tem exatamente
+        a mesma aparência de um coeficiente que o modelo julgou irrelevante.</strong> Quem lesse o
+        resultado sem padronização concluiria que a sazonalidade não importa para o frango, e a
+        conclusão viria de aritmética de ponto flutuante, não do dado.</p>
+        <div class="doc-nota">
+          <p>A prática que evita o problema não exige entender decomposição em valores singulares:
+          <strong>padronizar as entradas quando as escalas diferem por várias ordens de grandeza</strong>,
+          sempre com <code>fit</code> no treino. Vale para regressão linear pela razão numérica
+          desta seção, e para KNN, SVM, regressão regularizada e PCA pela razão que a Aula 04 já
+          registrou, que é a de distância e penalidade dependerem da unidade.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="residuos">
+        <h2>10. Normalidade, agora no lugar certo</h2>
+        <p>A Aula 04 rejeitou a normalidade das cinco séries com Shapiro-Wilk e registrou uma
+        distinção que fecha aqui: rejeitar normalidade das <strong>variáveis</strong> não impede
+        usar regressão linear. A suposição de normalidade em mínimos quadrados recai sobre os
+        <strong>resíduos</strong> do modelo ajustado, e serve aos testes de significância dos
+        coeficientes.</p>
+        <p>Aplicado aos 105 resíduos de treino, o teste devolve <strong>W = 0,9690</strong> e
+        <strong>p = 0,0147</strong>, o que rejeita a hipótese de normalidade ao nível de 5%.</p>
+        <p><strong>Consequência prática, e ela é limitada:</strong> valor-p de coeficiente desta
+        regressão fica sem garantia, e afirmar que <code>frangos_lag4</code> é "significativo"
+        exigiria outro caminho, como intervalo por reamostragem. As previsões, o RMSE e o MAPE
+        continuam válidos, porque nenhum dos três depende dessa suposição. Mínimos quadrados
+        continua sendo o melhor estimador linear não enviesado sem precisar de normalidade
+        nenhuma.</p>
+        <p>Os quatro maiores erros de treino são todos de superestimação, e caem em trimestres
+        isolados: 2006-T2 (-12,52%), 2009-T1 (-10,86%), 2012-T4 (-7,31%) e 2020-T2 (-7,17%). É essa
+        cauda que o Shapiro-Wilk detecta.</p>
+        <div class="doc-nota">
+          <p><strong>O que fica como hipótese.</strong> É tentador associar cada um desses
+          trimestres a um evento do setor, e alguns deles têm candidatos óbvios no calendário
+          econômico. Nada disso foi testado aqui, e testar exigiria uma variável que a base não
+          tem. O que se pode afirmar com o dado disponível é que os erros grandes se concentram em
+          trimestres isolados, e não se espalham pela série. Registrar a lacuna é mais útil do que
+          preenchê-la com uma explicação plausível.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="reprodutibilidade">
+        <h2>11. Reprodutibilidade e replicabilidade</h2>
+        <p>Os dois termos do autoestudo da semana descrevem exigências diferentes.</p>
+        <p><strong>Reprodutibilidade</strong> é obter o mesmo resultado com os mesmos dados e o
+        mesmo código. Neste notebook ela vem de graça, e isso é propriedade do modelo escolhido:
+        o corte é por posição fixa com <code>iloc</code>, e <code>LinearRegression</code> resolve um
+        sistema com solução fechada, sem componente aleatório. Duas execuções devolvem
+        1,5968319479% de MAPE, dígito por dígito.</p>
+        <p>O que precisa estar travado para que isso continue verdadeiro:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>fonte de variação</th><th>como fica travada</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>sorteio de linhas</td><td>não existe: corte por <code>iloc</code>, e o estimador não tem aleatoriedade</td></tr>
+              <tr><td>versão dos dados</td><td>os cinco CSVs estão versionados em <code>dados/</code>, com a URL de cada tabela do SIDRA em <code>dados/README.md</code></td></tr>
+              <tr><td>ordem das operações</td><td>o <code>fit</code> do escalador vê só o treino</td></tr>
+              <tr><td>ambiente</td><td>o notebook roda no Colab pelo badge da primeira célula</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Replicabilidade</strong> é obter a mesma conclusão com dados novos, e ela custa
+        trabalho. Foi o que a repetição em doze janelas mediu: o modelo vence a baseline nas doze,
+        com MAPE médio de 2,18% contra 3,14%, e margem que varia de 0,10 a 1,56 ponto percentual. A
+        janela mais recente, a de vantagem apertada, é o pior caso das doze.</p>
+        <p>A ressalva honesta é que as doze janelas se sobrepõem entre si, então as medidas não são
+        independentes. Elas reduzem o risco de a conclusão vir de um acaso de calendário, e não
+        equivalem a doze amostras independentes. A Aula 10 formaliza a ideia com
+        <code>TimeSeriesSplit</code>.</p>
+        <p>Os modelos das próximas aulas têm sorteio de verdade (árvores, K-means, divisão de
+        validação), e ali <code>random_state</code> passa a ser obrigatório para a primeira das
+        duas propriedades continuar valendo.</p>
+      </section>
+
+      <section class="doc-secao" id="art4">
+        <h2>12. O que levar para a ART.4 e a ART.5</h2>
+        <p>A Sprint 2 fecha em 28/08, com review. Duas entregas recebem material de hoje, com os
+        pesos citados do <code>PLANO_DE_ENSINO.md</code>.</p>
+        <p><strong>ART.4 UX parte 2 (peso 3).</strong> A segunda versão da comunicação visual do
+        produto. O que a aula produz para ela é a figura de histórico contra previsão, com os oito
+        trimestres reservados, as duas linhas de previsão e o erro de cada uma declarado na
+        legenda. Três cuidados de leitura que valem a pena registrar junto da figura:</p>
+        <ul>
+          <li>marcar visualmente onde termina o histórico conhecido e começa a projeção, porque
+          quem lê a figura sem essa marca supõe que tudo foi medido;</li>
+          <li>mostrar a baseline junto, e não só o modelo, porque o valor da entrega está na
+          comparação;</li>
+          <li>declarar o erro em número na própria figura, para que ela se sustente fora da
+          apresentação.</li>
+        </ul>
+        <p><strong>ART.5 Distribuição normal e teste de hipótese (peso 4).</strong> A Aula 04
+        entregou os testes sobre as variáveis; hoje fecha o ciclo com o teste sobre os resíduos do
+        modelo ajustado, que é onde a suposição de fato recai. A entrega ganha a hipótese
+        declarada, o teste escolhido com justificativa, o resultado (W = 0,9690, p = 0,0147) e a
+        consequência prática delimitada, que é a perda de garantia sobre valor-p de coeficiente
+        sem perda de validade das previsões.</p>
+        <p>O que cada dupla leva pronto ao fim do encontro: um modelo treinado, o erro dele medido
+        em oito trimestres reservados, a comparação com a baseline de coeficiente fixo, a decisão
+        documentada sobre o leite e uma recomendação defensável sobre substituir ou não o processo
+        atual. A Aula 07 retoma este mesmo alvo com árvores e ensembles, e vai comparar contra os
+        números medidos hoje.</p>
+        <p>Os autoestudos da semana e a leitura complementar estão em
+        <a href="../referencias/aula05.html">referencias/aula05.html</a>. O laboratório executável é
+        <code>notebooks/aula05.ipynb</code>, que produz cada número desta página em código, em vez
+        de pedir que vocês acreditem nos valores do slide.</p>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula05.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../referencias/aula05.html"><span class="material-symbols-outlined" aria-hidden="true">list_alt</span>Referências</a>
+  </nav>
+</body>
+</html>

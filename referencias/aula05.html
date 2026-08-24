@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referências &middot; Aula 05 &middot; Aprendizado Supervisionado parte I</title>
+  <meta name="description" content="Autoestudos da Semana 04 na Adalove e leitura complementar da Aula 05 do Módulo 03 IN.">
+
+  <!-- Duas secoes fixas, nesta ordem, em TODAS as 14 aulas:
+       1. Autoestudos da semana (Adalove), copiados de
+          docs/autoestudos-por-semana.md, titulo por titulo, sem inventar
+          nenhum e sem alterar caractere.
+       2. Leitura complementar do professor.
+       A segunda secao nunca e omitida, mesmo sem curadoria fechada. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 05 &middot; 24/08/2026 &middot; Semana 04</p>
+      <h1>Referências: Aprendizado Supervisionado parte I</h1>
+      <p class="doc-subtitulo">A Semana 04 tem um único Encontro de Instrução e doze itens de
+      autoestudo, o maior número de qualquer semana do módulo. Quatro deles sustentam diretamente
+      o roteiro de hoje, três tratam de KNN e preparam a Aula 07, um é a atividade ponderada da
+      competição de modelo preditivo e os demais dão o enquadramento geral.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#autoestudos">Autoestudos da semana (Adalove)</a></li>
+        <li><a href="#complementar">Leitura complementar do professor</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="autoestudos">
+        <h2>1. Autoestudos da semana (Adalove)</h2>
+        <p>Semana 04, que cobre o encontro de 24/08 (Aula 05). Os doze itens que o roteiro desta
+        aula pressupõe:</p>
+        <ol class="doc-referencias">
+          <li>Atividade ponderada - Competição de modelo preditivo (entrega na semana 9)
+            <span class="doc-porque">Atividade avaliada, entregue pela Adalove. O modelo treinado
+            hoje é o primeiro candidato defensável dessa competição, e o ciclo de medir contra
+            baseline em dados reservados é exatamente o que ela cobra.</span></li>
+          <li>Avaliação de modelos — Regressão (Scikit-learn)
+            <span class="doc-porque">Base do Bloco 3 (11h00 &middot; 11h30): RMSE e MAPE, o que
+            cada um mede e por que o módulo usa os dois.</span></li>
+          <li>Exemplo de aplicação: Regressão Linear
+            <span class="doc-porque">Base do Bloco 1 (10h15 &middot; 10h45): a interface
+            <code>fit</code> e <code>predict</code> aplicada ao alvo <code>abate_frangos</code>.</span></li>
+          <li>Exemplo prático de classificação com KNN (dois vídeos)
+            <span class="doc-porque">KNN não entra no roteiro de hoje, que é de regressão. O
+            vínculo com esta aula é a exigência de escala comparável: KNN decide por distância, e
+            é um dos modelos que a padronização do Bloco 4 torna viável.</span></li>
+          <li>Introdução a séries temporais
+            <span class="doc-porque">Sustenta a discussão do Bloco 2 sobre por que o corte de
+            treino e teste é feito por data. O TAPI proíbe modelos de série temporal (ADR-003),
+            e o autoestudo entra como enquadramento do problema, não como método a aplicar.</span></li>
+          <li>Machine Learning, by Google
+            <span class="doc-porque">Enquadramento geral do ciclo supervisionado, que a aula
+            percorre inteiro pela primeira vez no módulo.</span></li>
+          <li>Modelos não paramétricos e KNN (Russell &amp; Norvig)
+            <span class="doc-porque">Contraponto teórico à regressão linear de hoje, que é
+            paramétrica: quatro coeficientes resumem 105 trimestres. Prepara a Aula 07.</span></li>
+          <li>Opcional: Classificação com k-vizinhos mais próximos (K-NN)
+            <span class="doc-porque">Item opcional na Adalove, mantido aqui com o mesmo rótulo da
+            fonte.</span></li>
+          <li>Overfitting
+            <span class="doc-porque">Base do Bloco 4 (11h30 &middot; 11h45), e o conceito que
+            explica o resultado do leite: MAPE de treino cai para 2,50% e o de teste sobe para
+            1,89%.</span></li>
+          <li>Primeiros passos com Scikit-Learn
+            <span class="doc-porque">Pré-requisito prático do encontro. Quem não fez este item
+            trava na primeira célula do notebook.</span></li>
+          <li>Reprodutibilidade e replicabilidade
+            <span class="doc-porque">Fecha o Bloco 4: o que precisa estar travado para outra
+            pessoa obter os mesmos números, e por que os dois termos não são sinônimos.</span></li>
+          <li>Separação de dados: treinamento e teste
+            <span class="doc-porque">Base do Bloco 2 (10h45 &middot; 11h00). O autoestudo
+            apresenta <code>train_test_split</code>, e a aula mostra por que esta base específica
+            pede corte por data em vez de sorteio.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>Estes títulos são cópia literal de <code>docs/autoestudos-por-semana.md</code>, que é
+          gerado do <code>Turma.xlsx</code> oficial. Autoestudo que não está lá não entra aqui. O
+          acesso ao conteúdo é pela Adalove, com o login institucional.</p>
+          <p>O título do item 2 traz um travessão longo. O acervo proíbe esse caractere em texto
+          próprio, e aqui ele é preservado porque a regra de citar autoestudo com título exato tem
+          precedência: alterar um caractere do título faria a busca na Adalove falhar.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="complementar">
+        <h2>2. Leitura complementar do professor</h2>
+        <p>A curadoria definitiva desta seção ainda será fechada pelo professor. Até lá, ficam aqui
+        as fontes efetivamente citadas no deck e no material de apoio, na mesma numeração usada no
+        slide de referências.</p>
+        <ol class="doc-referencias">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite, tabelas
+            1092, 1093, 1094, 7524 e 1086 do SIDRA.
+            <span class="doc-porque">Contrato de colunas e checagem de sanidade dos valores em
+            <code>dados/README.md</code>. A série 1094 é o alvo do modelo de hoje.</span></li>
+          <li>pandas development team. <em>pandas user guide</em>:
+            <a href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.iloc.html">iloc</a>,
+            <a href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.shift.html">shift</a>,
+            <a href="https://pandas.pydata.org/docs/user_guide/merging.html">merge, join e concat</a>.
+            <span class="doc-porque"><code>iloc</code> é o que faz o corte temporal sem sorteio, e
+            é a operação central do Bloco 2.</span></li>
+          <li>Virtanen, P. et al. <em>SciPy 1.0: fundamental algorithms for scientific computing in
+            Python</em>. Nature Methods, v. 17, p. 261-272, 2020:
+            <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.shapiro.html">shapiro</a>.
+            <span class="doc-porque">O mesmo teste que a Aula 04 aplicou às variáveis, agora
+            aplicado aos resíduos do modelo ajustado, que é onde a suposição de normalidade de
+            mínimos quadrados de fato recai.</span></li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn: Machine Learning in Python</em>. Journal of
+            Machine Learning Research, v. 12, p. 2825-2830, 2011:
+            <a href="https://scikit-learn.org/stable/modules/linear_model.html">modelos lineares</a>,
+            <a href="https://scikit-learn.org/stable/modules/model_evaluation.html">métricas de avaliação</a>
+            e <a href="https://scikit-learn.org/stable/modules/cross_validation.html">validação cruzada</a>.
+            <span class="doc-porque">Referência de <code>LinearRegression</code>,
+            <code>mean_squared_error</code>, <code>mean_absolute_percentage_error</code> e
+            <code>StandardScaler</code>. A página de validação cruzada documenta o
+            <code>TimeSeriesSplit</code>, que é a versão pronta da repetição em janelas feita à mão
+            no Bloco 4.</span></li>
+          <li>Autoestudos da Semana 04 na Adalove, listados na seção 1 desta página.
+            <span class="doc-porque">Referência cruzada usada como citação [5] no deck.</span></li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seção 4.
+            <span class="doc-porque">Os pesos oficiais da ART.4 UX parte 2 (3) e da ART.5
+            Distribuição normal e teste de hipótese (4), e a definição de RMSE e MAPE como
+            métricas do módulo, comparadas contra a abordagem de coeficientes estáticos da
+            LDC.</span></li>
+          <li><code>docs/adrs/ADR-003-regressao-tabular-em-vez-de-series-temporais.md</code> e
+            <code>docs/adrs/ADR-008-corte-temporal-e-baseline-de-coeficiente-fixo.md</code>.
+            <span class="doc-porque">A primeira explica por que o case usa regressão tabular; a
+            segunda registra o tamanho do conjunto de teste, a definição da baseline e a decisão
+            de repetir a medição em doze janelas.</span></li>
+          <li>Trefethen, L. N.; Bau, D. <em>Numerical Linear Algebra</em>. SIAM, 1997, sobre número
+            de condição e mínimos quadrados por decomposição em valores singulares.
+            <span class="doc-porque">Leitura de fundo para o achado do Bloco 4: com condição da
+            ordem de 10<sup>10</sup>, o solver descarta as direções de menor valor singular, e os
+            coeficientes de sazonalidade saem zerados sem nenhum aviso.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>O item 1 vai sem link de propósito: a URL de consulta da API do SIDRA, para cada
+          tabela, está documentada em <code>dados/README.md</code>, e apontar direto para ela aqui
+          duplicaria a mesma informação em dois lugares que podem divergir com o tempo.</p>
+          <p>O item 8 é leitura de fundo, e não um pré-requisito do encontro. A aula demonstra o
+          efeito medindo o número de condição antes e depois da padronização, sem exigir a teoria
+          por trás.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula05.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../materiais/aula05.html"><span class="material-symbols-outlined" aria-hidden="true">menu_book</span>Material</a>
+  </nav>
+</body>
+</html>

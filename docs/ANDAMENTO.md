@@ -50,6 +50,34 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
   portal estão habilitados. O deck tem 30 slides, incluindo dois blocos pedidos pelo professor
   depois da primeira versão: dez minutos de revisão das Semanas 01 a 03, para a Ponderada 1 de
   Computação, e onze minutos de hipóteses declaradas para a ART.5.
+- **Aula 05 completa, os quatro artefatos** (`aulas/aula05.html`, `materiais/aula05.html`,
+  `referencias/aula05.html`, `notebooks/aula05.ipynb`) mais as notas do professor
+  (`docs/notas-do-professor/aula05.md`), as duas figuras (`tools/graficos_aula05.py`), a
+  `docs/adrs/ADR-008` e a suíte `tools/tests/test_modelo_aula05.py`. O deck tem 31 slides. É o
+  primeiro modelo preditivo do case: regressão de `abate_frangos` sobre a base analítica de 113
+  linhas que a Aula 04 deixou pronta, com corte temporal de 8 trimestres (2024-T2 a 2026-T1),
+  RMSE e MAPE contra três baselines, e o ciclo de overfitting e reprodutibilidade. Os quatro
+  botões do card no portal estão habilitados.
+- **Três achados da Aula 05, todos medidos antes de o primeiro slide ser escrito.** (1) O modelo
+  ganha da baseline de coeficiente fixo por apenas **0,10 ponto percentual** de MAPE na última
+  janela (1,60% contra 1,69%), e vence nas **doze janelas** consecutivas medidas, com média de
+  2,18% contra 3,14%. É a aula que ensina que uma janela de oito trimestres não decide. (2) **Sem
+  padronizar, o solver zera os coeficientes de sazonalidade**: as defasagens estão na casa de 1e9
+  e `sen`/`cos` na de 1, o número de condição da matriz chega a 1,08e10, e a decomposição em
+  valores singulares descarta as direções pequenas. Isso **contradiz parcialmente a Aula 04**,
+  que afirmou que padronizar não muda as previsões de uma regressão sem regularização: a
+  afirmação vale em álgebra exata e falha nesta base em ponto flutuante. O deck, o material e as
+  notas do professor tratam a divergência abertamente. (3) O leite, que a H2 da Aula 04 mandou
+  ficar de fora, **piora o MAPE de teste de 1,60% para 1,89%** e confirma a hipótese fora da
+  amostra.
+- **A segunda forma de vazamento do material da Aula 05 foi medida, e é inofensiva neste
+  modelo.** Ajustar o `StandardScaler` sobre treino e teste juntos desloca a média do escalador
+  em 12% de um desvio e devolve MAPE idêntico até a nona casa, porque regressão linear sem
+  regularização é invariante a transformação afim das entradas. O achado veio de um teste de
+  mutação: essa mutação passava nos oito testes originais. Em vez de escrever uma asserção que
+  nunca falha (seção 8.2 da `inteli-course-design`), o teste passou a travar a invariância, e o
+  material declara que a disciplina de `fit` só no treino vale por causa de KNN, SVM, regressão
+  regularizada e PCA, que aparecem entre as Aulas 06 e 08.
 - **A estatística da Aula 04 fecha o ciclo completo** (hipótese declarada, teste escolhido,
   decisão, consequência no projeto), com quatro testes sobre os CSVs reais: Shapiro-Wilk,
   Pearson, Kruskal-Wallis e teste t pareado. O achado que sustenta o bloco: a sazonalidade do
@@ -80,11 +108,16 @@ saída, abaixo.
   `github-pages` foi corrigida pelo professor em 07/08/2026, e o `static.yml` passou a
   publicar normalmente a cada push em `main` (run 31142595526, 22s).
 
-- **Aulas 05 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
-  `aria-disabled="true"`. As Aulas 01 a 04 já existem e estão publicadas. A **Aula 05, em 24/08**,
-  é a próxima da fila, e recebe pronta a base analítica construída na Aula 04. O agente
-  `construtor-aulas` existe para esse fan-out, mas as quatro primeiras aulas foram escritas sem
-  ele, à mão, seguindo as mesmas skills.
+- **Aulas 06 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
+  `aria-disabled="true"`. As Aulas 01 a 05 já existem. A **Aula 06, em 01/09**, é a próxima da
+  fila, abre a Sprint 3 e trata de aprendizado não supervisionado. O agente `construtor-aulas`
+  existe para esse fan-out, mas as cinco primeiras aulas foram escritas sem ele, à mão, seguindo
+  as mesmas skills.
+- **O que a Aula 05 deixa marcado para as aulas seguintes.** As quatro séries defasadas em um
+  trimestre derrubam o MAPE de teste para 1,14%, contra 1,60% do modelo de hoje, e ficaram de
+  fora de propósito: entram como candidata declarada na Aula 07. O reajuste do modelo sobre a
+  base completa, depois de a avaliação terminar, fica para a Aula 12 junto com o `Pipeline`. A
+  repetição em janelas feita à mão hoje vira `TimeSeriesSplit` na Aula 10.
 
 ## Corrigido em 18/08/2026, junto com a Aula 04
 
@@ -112,8 +145,10 @@ Dois achados da revisão da Aula 04 que valem para o acervo inteiro, não só pa
    conferência.
 2. **O cabeçalho das notas do professor usa uma construção que as diretivas de tom proíbem**
    ("Material de condução do encontro, não de distribuição ao aluno. Não é resumo do deck: são as
-   perguntas..."). O texto é idêntico nas quatro aulas, então corrigir só uma criaria divergência.
-   A decisão de reescrever o cabeçalho nas quatro de uma vez é do professor.
+   perguntas..."). O texto é idêntico nas Aulas 01 a 04. A decisão de reescrever o cabeçalho nas
+   quatro de uma vez é do professor. **A Aula 05 já nasceu na forma nova**, em conformidade com as
+   diretivas, e registra a divergência no fim do próprio arquivo: alinhar as quatro anteriores é
+   uma edição de dois minutos quando houver decisão.
 
 ## Achados abertos da revisão da Aula 01
 

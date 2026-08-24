@@ -1,0 +1,875 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 05 &middot; Aprendizado Supervisionado parte I &middot; Módulo 03 IN</title>
+
+  <!-- Aula 05, 24/08/2026, Sprint 2. Roteiro em PLANEJAMENTO_AULA_A_AULA.md.
+       Quatro blocos, seguindo as janelas de 15 minutos do roteiro oficial:
+       treinar (10h30), separar (10h45), avaliar (11h00 e 11h15) e o que a
+       metrica nao mostra (11h30), mais a amarracao com a sprint as 11h45.
+       Todo numero deste deck sai de tools/graficos_aula05.py e do notebook
+       da aula, executados sobre os cinco CSVs de dados/. A base analitica e
+       a que a Aula 04 deixou pronta: 113 linhas, 1998-T1 a 2026-T1.
+       Tres achados sustentam a aula, e os tres foram medidos antes de o
+       primeiro slide ser escrito:
+       1. o modelo ganha da baseline de coeficiente fixo por 0,10 ponto
+          percentual de MAPE na ultima janela, e por 0,96 ponto na media de
+          doze janelas consecutivas;
+       2. sem padronizar, o solver de minimos quadrados zera os coeficientes
+          de sazonalidade, porque o numero de condicao da matriz chega a
+          1,08e10 (as defasagens estao na casa de 1e9 e sen/cos na casa de 1);
+       3. os residuos rejeitam normalidade (Shapiro-Wilk p = 0,0147) e os
+          maiores erros caem em 2006-T2, 2009-T1, 2012-T4 e 2020-T2. -->
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-theme.css">
+  <link rel="stylesheet" href="../assets/css/inteli-print.css" media="print">
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- 1 - Capa -->
+      <section class="cover-slide">
+        <div class="cover-panel">
+          <div class="cover-content">
+            <p class="cover-eyebrow">Módulo 03 IN &middot; Aula 05 &middot; 24/08/2026</p>
+            <h1>Aprendizado Supervisionado parte I</h1>
+            <h3>O primeiro modelo de previsão do abate de frango, medido contra a baseline da LDC</h3>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 - Agenda -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Agenda do encontro</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>08h00 &middot; 10h00</h3>
+            <p>Autoestudo na Adalove: separação treino e teste, avaliação de modelos de regressão,
+            overfitting e reprodutibilidade [5].</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h00 &middot; 10h15</h3>
+            <p>Daily. Cada dupla confirma que a base de frango com defasagem e sazonalidade da
+            Aula 04 está pronta para treinar.</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h15 &middot; 12h00</h3>
+            <p>Treinar, separar, avaliar, e o que a métrica de uma janela não mostra. Fecha a
+            Sprint 2, com review em 28/08.</p>
+          </div>
+        </div>
+        <p>O Modelo 1 do TAPI começa a existir hoje. Ao final da aula cada dupla tem uma previsão
+        de oito trimestres, com erro medido em dados que o modelo não viu, e uma resposta para a
+        pergunta que o parceiro faz primeiro: isso é melhor do que o que já fazemos hoje?</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">2</p>
+        </div>
+      </section>
+
+      <!-- 3 - Resgate da espiral -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que a Aula 04 deixou pronto</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>analitica.shape
+# (113, 15)
+
+analitica["periodo"].iloc[0]   # '1998-T1'
+analitica["periodo"].iloc[-1]  # '2026-T1'
+
+# colunas que o modelo de hoje usa
+# frangos_lag1  frangos_lag4  sen  cos</code></pre>
+          <div>
+            <p>A Aula 04 uniu as cinco séries do SIDRA pela chave <code>periodo</code>, construiu
+            as defasagens de 1 e de 4 trimestres, codificou a sazonalidade em
+            <code>sen</code> e <code>cos</code> e padronizou as colunas numéricas.</p>
+            <p>Sobraram <strong>113 linhas</strong>: 117 do <code>inner</code> menos as 4 que
+            <code>shift(4)</code> consome no topo da série.</p>
+            <p>Ela também deixou <strong>três dívidas</strong>, e hoje é o dia de pagar as três.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">3</p>
+        </div>
+      </section>
+
+      <!-- 4 - As tres dividas -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Dívidas abertas da Aula 04</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>O que ficou em aberto</th><th>O que a Aula 04 disse</th><th>Onde fecha hoje</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Normalidade em regressão</td>
+              <td>A suposição recai sobre os resíduos, e eles só existem depois de um modelo
+              ajustado</td>
+              <td>Bloco 4, com Shapiro-Wilk nos resíduos</td>
+            </tr>
+            <tr>
+              <td>O leite entra no modelo?</td>
+              <td>Fica fora, e volta apenas se reduzir o erro em dados que o modelo não viu</td>
+              <td>Bloco 3, medindo o MAPE com e sem ele</td>
+            </tr>
+            <tr>
+              <td>Padronizar muda o resultado?</td>
+              <td>Regressão sem regularização produz as mesmas previsões com ou sem padronização</td>
+              <td>Bloco 4, e a resposta tem uma ressalva</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>A terceira é a mais interessante das três, porque a afirmação da Aula 04 está correta em
+        álgebra exata e falha em aritmética de ponto flutuante nesta base específica.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">4</p>
+        </div>
+      </section>
+
+      <!-- 5 - Divisor bloco 1 -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Bloco 1 &middot; Treinar</h2>
+        <p>10h15 &middot; 10h45</p>
+      </section>
+
+      <!-- 6 - Pergunta disparada -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pergunta de abertura</h2>
+        </div>
+        <p class="quiz-question">Por que não podemos embaralhar os 113 trimestres antes de separar
+        treino e teste?</p>
+        <div class="side-by-side">
+          <div>
+            <p><strong>A resposta que a turma costuma dar:</strong> porque a ordem importa em série
+            temporal.</p>
+            <p>Está certa, e é rasa. A pergunta seguinte é a que interessa: <strong>importa
+            para quê?</strong></p>
+          </div>
+          <div>
+            <p><strong>O que a LDC precisa saber:</strong> quanto o modelo erra ao prever um
+            trimestre que ainda não aconteceu.</p>
+            <p>Um teste embaralhado responde outra coisa: quanto o modelo erra ao preencher um
+            buraco no meio de um histórico que ele já conhece dos dois lados.</p>
+          </div>
+        </div>
+        <p>As duas perguntas têm resposta numérica, as duas saem do mesmo código, e só uma delas
+        corresponde ao que o parceiro vai fazer com o modelo. O Bloco 2 mede as duas.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">5</p>
+        </div>
+      </section>
+
+      <!-- 7 - Teoria: LinearRegression -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Três linhas ajustam o primeiro modelo</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>from sklearn.linear_model import LinearRegression
+
+FEATURES = ["frangos_lag1", "frangos_lag4",
+            "sen", "cos"]
+
+X = analitica[FEATURES]
+y = analitica["abate_frangos"]
+
+modelo = LinearRegression()
+modelo.fit(X, y)
+modelo.predict(X[:3])</code></pre>
+          <div>
+            <p>Todo estimador do scikit-learn [4] tem a mesma interface, e ela vale para os
+            modelos das Aulas 06 a 11 sem mudar nome de método:</p>
+            <p><strong><code>fit(X, y)</code></strong> aprende os parâmetros a partir dos dados.
+            <strong><code>predict(X)</code></strong> aplica o que foi aprendido.</p>
+            <p><code>X</code> é sempre bidimensional (uma linha por observação, uma coluna por
+            característica) e <code>y</code> é unidimensional. Passar uma
+            <code>Series</code> como <code>X</code> levanta erro de forma, e é o primeiro
+            tropeço de quase toda dupla.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">6</p>
+        </div>
+      </section>
+
+      <!-- 8 - Pratica bloco 1 -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática em duplas (10h32 &middot; 10h45)</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Ajustem <code>LinearRegression</code> sobre as 113 linhas, com as quatro colunas
+          acima, e anotem <code>modelo.score(X, y)</code>.</li>
+          <li>Imprimam <code>modelo.coef_</code> e <code>modelo.intercept_</code>. Qual das quatro
+          colunas recebeu o maior coeficiente?</li>
+          <li>Somem os coeficientes de <code>frangos_lag1</code> e <code>frangos_lag4</code>. O
+          resultado fica perto de qual número redondo?</li>
+          <li>Antes da correção: o <code>score</code> que vocês acabaram de ler foi calculado
+          sobre quais linhas? Isso é uma boa notícia?</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">7</p>
+        </div>
+      </section>
+
+      <!-- 9 - Correcao bloco 1 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Os dois coeficientes de defasagem somam 1,00</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code># ajuste sobre as 113 linhas
+frangos_lag1   +0,6819
+frangos_lag4   +0,3147
+               --------
+soma            0,9966
+
+modelo.score(X, y)   # R2 no TREINO
+# 0,9907</code></pre>
+          <div>
+            <p>O modelo aprendeu a prever cada trimestre como uma <strong>média ponderada</strong>
+            do trimestre anterior e do mesmo trimestre do ano anterior, com pesos de 68% e 31%.</p>
+            <p>Ninguém escreveu essa regra: ela saiu dos mínimos quadrados sobre 105 trimestres de
+            abate real.</p>
+            <p>E o <code>score</code> foi calculado sobre <strong>as mesmas linhas usadas no
+            treino</strong>. Um número alto ali significa apenas que o modelo consegue reproduzir
+            o que já viu, que é a pergunta mais fácil que se pode fazer a ele.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">8</p>
+        </div>
+      </section>
+
+      <!-- 10 - Divisor bloco 2 -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Bloco 2 &middot; Separar</h2>
+        <p>10h45 &middot; 11h00</p>
+      </section>
+
+      <!-- 11 - Corte temporal -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O teste são os 8 últimos trimestres</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>N_TESTE = 8
+corte = len(analitica) - N_TESTE
+
+treino = analitica.iloc[:corte]   # 105
+teste  = analitica.iloc[corte:]   #   8
+
+# 1998-T1 a 2024-T1  ->  treino
+# 2024-T2 a 2026-T1  ->  teste</code></pre>
+          <div>
+            <p>Duas fatias contíguas no tempo, com <code>iloc</code>, sobre a base já ordenada por
+            <code>periodo</code>. Nenhuma função de sorteio aparece.</p>
+            <p>Oito trimestres são dois anos, que é o horizonte que o TAPI pede [7]. O teste imita
+            a situação real: o modelo conhece tudo até 2024-T1 e precisa dizer o que acontece
+            depois.</p>
+            <p><code>train_test_split</code> com <code>shuffle=True</code>, que é o padrão da
+            função, colocaria 2026-T1 no treino e 2019-T3 no teste.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">9</p>
+        </div>
+      </section>
+
+      <!-- 12 - Figura do corte temporal -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O treino termina em 2024-T1</h2>
+        </div>
+        <img src="../assets/img/aula05-corte-temporal.png" alt="A série de abate de frangos de 1998 a 2026, em bilhões de quilogramas, com uma linha vertical tracejada em 2024-T1 separando os 105 trimestres de treino dos 8 trimestres de teste" style="width: 100%; max-width: 900px; display: block; margin: 0 auto 10px;">
+        <p>Os oito trimestres à direita da linha são os mais recentes da série, e também os de
+        maior volume: o modelo precisa acertar num patamar de produção que nunca viu no treino.
+        Um teste sorteado espalharia esses oito pontos por 29 anos, e mediria uma tarefa
+        diferente e mais fácil.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">10</p>
+        </div>
+      </section>
+
+      <!-- 12 - Vazamento medido -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O futuro como entrada derruba o MAPE a 1,13%</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code># o erro que ninguem avisa
+base["frangos_futuro"] = base[ALVO].shift(-1)
+
+# honesto                    MAPE 1,69%
+# com frangos_futuro         MAPE 1,13%
+
+# nenhum aviso, nenhum erro,
+# metrica 33% melhor</code></pre>
+          <div>
+            <p><code>shift(-1)</code> traz o valor do trimestre seguinte para a linha de hoje. O
+            modelo recebe parte da resposta como entrada, e o erro cai um terço.</p>
+            <p>O código roda, a métrica sobe e <strong>nenhuma mensagem de erro aparece</strong>.
+            Em produção o modelo falha, porque o próximo trimestre ainda não aconteceu.</p>
+            <p>Vazamento se detecta lendo o desenho do experimento. A métrica não serve de
+            alarme, porque a de um modelo vazado é justamente a que parece boa.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">11</p>
+        </div>
+      </section>
+
+      <!-- 13 - Pratica bloco 2 -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática em duplas (10h50 &middot; 11h00)</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Separem treino e teste por <code>iloc</code>, com os últimos 8 trimestres reservados,
+          e confiram os períodos das duas pontas.</li>
+          <li>Reajustem o modelo <strong>só sobre o treino</strong> e prevejam os 8 trimestres do
+          teste.</li>
+          <li>Refaçam a separação com <code>train_test_split(X, y, test_size=8,
+          random_state=42)</code> e olhem quais períodos caíram no teste.</li>
+          <li>Antes da correção: com o sorteio, algum trimestre de 2025 foi parar no treino? O que
+          o modelo passou a saber que não deveria?</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">12</p>
+        </div>
+      </section>
+
+      <!-- 14 - Divisor bloco 3 -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Bloco 3 &middot; Avaliar</h2>
+        <p>11h00 &middot; 11h30</p>
+      </section>
+
+      <!-- 15 - RMSE e MAPE -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>RMSE e MAPE respondem a perguntas diferentes</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Métrica</th><th>Unidade</th><th>A pergunta que responde</th><th>O limite dela</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>RMSE</td>
+              <td>quilogramas</td>
+              <td>De quanto erramos, na unidade em que a LDC compra ração</td>
+              <td>Não se compara entre séries de tamanhos diferentes, e pune erro grande com
+              o quadrado</td>
+            </tr>
+            <tr>
+              <td>MAPE</td>
+              <td>por cento</td>
+              <td>Quanto erramos em proporção ao que foi produzido</td>
+              <td>Explode quando o valor real se aproxima de zero, e pune erro para cima e para
+              baixo de forma assimétrica</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>O plano de ensino fixa as duas como métricas do módulo [6], e a razão de serem duas é
+        que a decisão do parceiro precisa das duas respostas: o volume em quilos dimensiona o
+        estoque, a porcentagem diz se o modelo é confiável o bastante para substituir o processo
+        atual.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">13</p>
+        </div>
+      </section>
+
+      <!-- 16 - A baseline -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A baseline da LDC erra 1,69% no mesmo teste</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code># o coeficiente fixo, estimado no treino
+fator = (treino["abate_frangos"] /
+         treino["frangos_lag4"]).mean()
+# 1,0522
+
+previsao = teste["frangos_lag4"] * fator</code></pre>
+          <div>
+            <p>A LDC projeta hoje aplicando um <strong>coeficiente estático</strong> sobre o
+            realizado do ano anterior [7]. Reproduzir isso são duas linhas, e o resultado é a
+            régua contra a qual o modelo precisa se justificar.</p>
+            <p>O fator sai <strong>só do treino</strong>: calcular a média sobre a base inteira
+            deixaria os oito trimestres de teste entrarem na conta.</p>
+          </div>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Previsor</th><th>RMSE (milhões de kg)</th><th>MAPE</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Repetir o trimestre anterior</td><td>76,3</td><td>2,01%</td></tr>
+            <tr><td>Repetir o mesmo trimestre do ano anterior</td><td>174,3</td><td>4,54%</td></tr>
+            <tr><td>Ano anterior vezes o coeficiente fixo de 1,0522</td><td>67,8</td><td>1,69%</td></tr>
+          </tbody>
+        </table>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">14</p>
+        </div>
+      </section>
+
+      <!-- 17 - Pratica bloco 3 -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática em duplas (11h15 &middot; 11h30)</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Calculem RMSE e MAPE do modelo de vocês sobre os 8 trimestres de teste, com
+          <code>mean_squared_error</code> e <code>mean_absolute_percentage_error</code>.</li>
+          <li>Calculem as mesmas duas métricas para a baseline de coeficiente fixo.</li>
+          <li>Acrescentem <code>producao_leite</code> às entradas, reajustem e meçam de novo. O
+          MAPE subiu ou desceu?</li>
+          <li>Antes da correção: pelo que vocês mediram, vocês recomendariam o modelo à LDC no
+          lugar do processo atual?</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">15</p>
+        </div>
+      </section>
+
+      <!-- 18 - Correcao bloco 3: historico vs previsao -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O modelo erra 1,60% e a baseline erra 1,69%</h2>
+        </div>
+        <img src="../assets/img/aula05-historico-vs-previsao.png" alt="Dois painéis. À esquerda, a série de abate de frangos de 1998 a 2026 em bilhões de quilogramas, com uma linha vertical tracejada separando 105 trimestres de treino de 8 trimestres de teste. À direita, o zoom nos oito trimestres de teste, com o valor realizado, a previsão do modelo e a previsão da baseline de coeficiente fixo" style="width: 100%; max-width: 900px; display: block; margin: 0 auto 8px;">
+        <p>O modelo fica abaixo do realizado em sete dos oito trimestres, com erro entre 0,53% e
+        2,92%, e só o supera em 2024-T4 (+1,12%). Um erro quase sempre no mesmo sentido indica
+        viés de nível, que é corrigível. A diferença entre os dois MAPE é de <strong>0,10 ponto
+        percentual</strong>, o que em RMSE dá 1% de vantagem para o modelo.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">16</p>
+        </div>
+      </section>
+
+      <!-- 19 - O leite -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O leite sobe o MAPE de teste a 1,89%</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Entradas do modelo</th><th>MAPE no treino</th><th>MAPE no teste</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>lag1</code></td><td>2,79%</td><td>1,78%</td></tr>
+            <tr><td><code>lag1</code>, <code>lag4</code></td><td>2,63%</td><td>1,71%</td></tr>
+            <tr><td><code>lag1</code>, <code>lag4</code>, <code>sen</code>, <code>cos</code></td><td>2,53%</td><td>1,60%</td></tr>
+            <tr><td>as quatro acima mais <code>producao_leite</code></td><td>2,50%</td><td>1,89%</td></tr>
+            <tr><td>as quatro acima mais <code>producao_leite</code> defasado</td><td>2,48%</td><td>1,96%</td></tr>
+          </tbody>
+        </table>
+        <p>A coluna do meio melhora sempre, porque acrescentar característica sempre ajuda a
+        reproduzir o que já foi visto. A coluna da direita é a que decide, e ela reprova o leite
+        nas duas formas testadas. A H2 da Aula 04 previu isso a partir da correlação em primeira
+        diferença, e a medição em dados novos confirma.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">17</p>
+        </div>
+      </section>
+
+      <!-- 20 - Quiz -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Verificação rápida</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">Acrescentar <code>producao_leite</code> baixou o MAPE de treino
+          de 2,53% para 2,50% e subiu o de teste de 1,60% para 1,89%. O que isso caracteriza?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: as duas medidas saíram da mesma execução, com o mesmo modelo. O que muda entre elas é o conjunto de linhas em que o erro foi medido.">Um erro de código, porque a mesma coluna não pode melhorar e piorar ao mesmo tempo</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: a coluna deu ao modelo mais liberdade para se ajustar às 105 linhas de treino, e essa liberdade não se transferiu para os 8 trimestres que ele não viu."
+                data-incorrect-msg="Não.">Overfitting: o ganho no treino veio de ajuste ao ruído das 105 linhas conhecidas</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: o teste usa exatamente os mesmos 8 trimestres nas duas execuções, e a única diferença é a coluna acrescentada.">Que o conjunto de teste ficou pequeno demais depois de acrescentar a coluna</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não: a correlação de +0,96 em nível é justamente o que a Aula 04 mostrou ser tendência comum. Ela não sobrevive à primeira diferença nem ao teste em dados novos.">Que o leite é um bom preditor, porque a correlação dele com o frango é +0,96</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">18</p>
+        </div>
+      </section>
+
+      <!-- 21 - Divisor bloco 4 -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Bloco 4 &middot; O que uma métrica não mostra</h2>
+        <p>11h30 &middot; 11h45</p>
+      </section>
+
+      <!-- 22 - Doze janelas -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O modelo vence as doze janelas medidas</h2>
+        </div>
+        <img src="../assets/img/aula05-janelas-modelo-vs-baseline.png" alt="Gráfico de linhas com o MAPE do modelo e o da baseline de coeficiente fixo em doze janelas de teste consecutivas, de 2021-T3 a 2024-T2. A linha da baseline fica acima da do modelo em todas as janelas, com a distância entre elas caindo para 0,10 ponto percentual na última" style="width: 100%; max-width: 880px; display: block; margin: 0 auto 6px;">
+        <p>A janela de 2024-T2, sozinha, mostrou uma vantagem de 0,10 ponto percentual, que
+        qualquer sorte de calendário explicaria. Repetida em doze cortes consecutivos, a vantagem
+        aparece nas doze janelas, com média de 2,18% contra 3,14%. Oito trimestres de teste são
+        uma amostra pequena, e o remédio para amostra pequena é repetir a medição.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">19</p>
+        </div>
+      </section>
+
+      <!-- 23 - Escalonamento -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Sem padronizar, o solver zera os coeficientes de sazonalidade</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code># coeficientes de sen e cos
+# sem padronizar
+sen   +2,7e-10
+cos   +2,3e-10      # zero, na pratica
+
+# com padronizar (escala original)
+sen   -1,08e+07
+cos   -1,38e+07
+
+# numero de condicao da matriz
+# cru 1,08e+10  ->  padronizado 14</code></pre>
+          <div>
+            <p>As defasagens estão na casa de <code>1e9</code> e <code>sen</code> e
+            <code>cos</code> na casa de <code>1</code>. O número de condição da matriz chega a
+            <strong>10 bilhões</strong>, e a decomposição em valores singulares que resolve os
+            mínimos quadrados descarta as direções pequenas por corte numérico.</p>
+            <p>A Aula 04 afirmou que padronizar não muda as previsões de uma regressão sem
+            regularização. Em álgebra exata, correto. Nesta base, o MAPE de teste vai de
+            <strong>1,71% para 1,60%</strong>, porque as duas colunas sazonais deixam de ser
+            silenciosamente descartadas.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">20</p>
+        </div>
+      </section>
+
+      <!-- 24 - Residuos -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Os resíduos rejeitam normalidade, com p igual a 0,0147</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <p>A Aula 04 deixou esta medição marcada para hoje: a suposição de normalidade em
+            mínimos quadrados recai sobre os <strong>resíduos</strong> do modelo ajustado, e serve
+            aos testes de significância dos coeficientes.</p>
+            <p>Shapiro-Wilk nos 105 resíduos de treino devolve <strong>W = 0,9690</strong> e
+            <strong>p = 0,0147</strong>, o que rejeita a hipótese de normalidade.</p>
+            <p><strong>Consequência prática:</strong> valor-p de coeficiente desta regressão fica
+            sem garantia. As previsões e o RMSE continuam válidos, porque nenhum dos dois depende
+            dessa suposição.</p>
+          </div>
+          <div>
+            <table class="data-table">
+              <thead>
+                <tr><th>Trimestre</th><th>Erro do modelo</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>2006-T2</td><td>-12,52%</td></tr>
+                <tr><td>2009-T1</td><td>-10,86%</td></tr>
+                <tr><td>2012-T4</td><td>-7,31%</td></tr>
+                <tr><td>2020-T2</td><td>-7,17%</td></tr>
+              </tbody>
+            </table>
+            <p>Os quatro maiores erros são todos de superestimação, concentrados em quatro
+            trimestres isolados, e é essa cauda que o Shapiro-Wilk detecta. Atribuir cada um a um
+            evento do setor é <strong>hipótese</strong>, e testá-la exigiria uma variável que a
+            base não tem.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">21</p>
+        </div>
+      </section>
+
+      <!-- 25 - Reprodutibilidade -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que torna este resultado reproduzível</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Fonte de variação</th><th>Como fica travada aqui</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Sorteio de linhas</td>
+              <td>Não existe: o corte é por <code>iloc</code> em posição fixa, e
+              <code>LinearRegression</code> não tem componente aleatório</td>
+            </tr>
+            <tr>
+              <td>Versão dos dados</td>
+              <td>Os cinco CSVs estão versionados em <code>dados/</code>, com a URL de cada tabela
+              do SIDRA registrada em <code>dados/README.md</code></td>
+            </tr>
+            <tr>
+              <td>Ordem das operações</td>
+              <td>O <code>fit</code> do escalador vê só o treino, e o <code>transform</code> é
+              aplicado aos dois conjuntos</td>
+            </tr>
+            <tr>
+              <td>Ambiente</td>
+              <td>O notebook roda no Colab pelo badge da primeira célula, sem dependência de
+              máquina local</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>Modelos das próximas aulas têm sorteio de verdade (árvores, K-means, divisão de
+        validação), e ali <code>random_state</code> passa a ser obrigatório. Reprodutibilidade e
+        replicabilidade são coisas distintas [5]: a primeira é obter o mesmo resultado com os
+        mesmos dados e código, a segunda é obter a mesma conclusão com dados novos.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">22</p>
+        </div>
+      </section>
+
+      <!-- 26 - Discussao dirigida -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Discussão dirigida (11h40 &middot; 11h45)</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Cada dupla aponta <strong>um sintoma de overfitting</strong> no próprio resultado, ou
+          declara que não encontrou nenhum e mostra os dois MAPE que sustentam isso.</li>
+          <li>Comparem a distância entre o MAPE de treino e o de teste de vocês. Quem tem a maior
+          distância da sala, e qual coluna vocês suspeitam que a causou?</li>
+          <li>Se a LDC pedisse previsão para 2026-T2, o que vocês precisariam ter em mãos que hoje
+          ainda não têm?</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">23</p>
+        </div>
+      </section>
+
+      <!-- 27 - Hands-on -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Notebook da aula</h2>
+        </div>
+        <p><code>notebooks/aula05.ipynb</code> refaz a base analítica da Aula 04 a partir dos CSVs
+        crus e conduz os quatro blocos de hoje: o ajuste com <code>fit</code> e
+        <code>predict</code>, o corte temporal, RMSE e MAPE contra as três baselines, o teste de
+        normalidade dos resíduos e a repetição da medida em doze janelas.</p>
+        <ol class="exercise-steps">
+          <li>Abram pelo Colab (badge na primeira célula) ou localmente, com o repositório
+          clonado.</li>
+          <li>A seção 7 gera a figura de histórico contra previsão, que é o material da ART.4.</li>
+          <li>O desafio no final pede o mesmo ciclo completo para a série da sua dupla, com a
+          baseline de coeficiente fixo daquela série e a decisão sobre recomendá-la ou não.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">24</p>
+        </div>
+      </section>
+
+      <!-- 28 - Amarracao com a sprint -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que hoje entrega para a Sprint 2 (11h45 &middot; 12h00)</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>ART.4, peso 3</h3>
+            <p>UX parte 2 [6]. A figura de histórico contra previsão, com os oito trimestres
+            reservados, é a segunda versão da comunicação visual do produto.</p>
+          </div>
+          <div class="concept-card">
+            <h3>ART.5, peso 4</h3>
+            <p>Distribuição normal e teste de hipótese [6]. O Shapiro-Wilk dos resíduos fecha o
+            ciclo que a Aula 04 abriu sobre as variáveis.</p>
+          </div>
+          <div class="concept-card">
+            <h3>Sprint 2</h3>
+            <p>Fecha em <strong>28/08</strong>, com review. A Sprint 3 abre em 31/08, e a Aula 06
+            é em 01/09.</p>
+          </div>
+        </div>
+        <p>O que a dupla leva pronto: o primeiro modelo do Modelo 1 do TAPI, o erro dele medido em
+        oito trimestres que ele não viu, a comparação com a baseline de coeficiente fixo e uma
+        recomendação defensável sobre substituir ou não o processo atual. A Aula 07 retoma este
+        mesmo alvo com árvores e ensembles, e vai comparar contra o número medido hoje.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">25</p>
+        </div>
+      </section>
+
+      <!-- 29 - Referencias -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Referências</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite, tabelas
+          1092, 1093, 1094, 7524 e 1086 do SIDRA. Contrato e checagem de sanidade em
+          <code>dados/README.md</code>.</li>
+          <li>pandas development team. <em>pandas documentation</em>: <code>iloc</code>,
+          <code>shift</code>, <code>merge</code>.</li>
+          <li>Virtanen, P. et al. <em>SciPy 1.0</em>. Nature Methods, 2020:
+          <code>scipy.stats.shapiro</code>.</li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn: Machine Learning in Python</em>. JMLR, 2011:
+          <code>LinearRegression</code>, <code>StandardScaler</code>,
+          <code>mean_squared_error</code> e <code>mean_absolute_percentage_error</code>.</li>
+          <li>Autoestudos da Semana 04 na Adalove, listados em
+          <a href="../referencias/aula05.html">referencias/aula05.html</a>.</li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seção 4: ART.4 peso 3, ART.5 peso 4, e as métricas
+          do módulo.</li>
+          <li><code>docs/adrs/ADR-003</code> (regressão tabular no lugar de série temporal) e
+          <code>docs/adrs/ADR-008</code> (o corte temporal de oito trimestres e a baseline de
+          coeficiente fixo).</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
+          <p class="footer-page">26</p>
+        </div>
+      </section>
+
+      <!-- 30 - Encerramento -->
+      <section class="end-slide">
+        <h1>Até 01/09</h1>
+        <h3>Aula 06: Aprendizado Não Supervisionado parte I, Sprint 3</h3>
+        <p>Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot; 2026-2A</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      width: 1280, height: 720, center: false, margin: 0,
+      hash: true, slideNumber: false, transition: 'fade'
+    });
+  </script>
+  <script src="../assets/js/inteli-quiz.js"></script>
+  <script src="../assets/js/inteli-zoom.js"></script>
+  <script src="../assets/js/inteli-print.js"></script>
+</body>
+</html>
