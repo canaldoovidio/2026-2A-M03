@@ -132,6 +132,19 @@ saída, abaixo.
   série aberta do Sindirações em `dados/`. Os três documentos foram corrigidos, e o motivo está em
   `docs/adrs/ADR-007`.
 
+## Corrigido em 24/08/2026, junto com a Aula 05
+
+- **A validação de CI estava vermelha desde 19/08**, e a causa não era conteúdo: o slide 25 da
+  Aula 04 tinha 58px de folga vertical no macOS e estourava 13px no Ubuntu do CI, porque as
+  métricas de fonte diferem entre os dois sistemas e o mesmo parágrafo ocupa mais linhas no Linux.
+  Os dois parágrafos do `side-by-side` foram encurtados de três para duas linhas cada, sem alterar
+  nenhum número nem a conclusão do slide, e a folga subiu para 93px. Encolher a figura foi
+  descartado: ela já está no piso de legibilidade (18px na tela a 900px de largura), e reduzi-la
+  para 820px levaria os rótulos a 16px. A armadilha ficou registrada em `CLAUDE.md`.
+- **O deck da Aula 05 passou limpo no Ubuntu na primeira tentativa** (31 slides, sem estouro,
+  sobreposição ou título no logo). A menor folga vertical dele é de 84px e a menor folga entre
+  título e logo é de 32px, contra 17px da Aula 04, que já passava.
+
 ## Achados abertos da revisão da Aula 04
 
 Dois achados da revisão da Aula 04 que valem para o acervo inteiro, não só para ela:

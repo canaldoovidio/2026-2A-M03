@@ -130,6 +130,14 @@ arquivo não repete isso.
   restrito do parceiro, e o repositório é publicado inteiro no GitHub Pages. Ambos estão no
   `.gitignore`; o que entra no repositório são os derivados publicáveis
   (`PLANO_DE_ENSINO.md`, `PLANEJAMENTO_AULA_A_AULA.md`, `docs/autoestudos-por-semana.md`).
+- **`check_slides.py` passar no macOS não garante que passe no Ubuntu do CI.** O validador mede o
+  layout com a fonte que o sistema entrega ao Chromium, e as métricas de fonte do Linux são
+  diferentes das do macOS: o mesmo parágrafo ocupa mais linhas lá. Medido em 24/08/2026, no slide
+  25 da Aula 04: **58px de folga no macOS e estouro de 13px no Ubuntu**, um delta de cerca de
+  70px num bloco de texto de três linhas por coluna. O delta cresce com o número de linhas de
+  texto do slide, então ele não é uma constante que se possa somar. Na prática: um slide com
+  menos de ~80px de folga vertical no macOS é candidato a reprovar no CI, e a checagem que vale é
+  a do próprio CI. A Aula 04 ficou com o CI vermelho de 19/08 a 24/08 por causa disso.
 - **`v/all` na API do SIDRA mistura peso, número de informantes e percentuais na mesma tabela.**
   `tools/baixar_dados.py` sempre pede a variável específica de cada série. Ver `dados/README.md`.
 
