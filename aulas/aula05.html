@@ -163,24 +163,53 @@ analitica["periodo"].iloc[-1]  # '2026-T1'
           <div class="accent-bar"></div>
           <h2>Pergunta de abertura</h2>
         </div>
-        <p class="quiz-question">Por que não podemos embaralhar os 113 trimestres antes de separar
-        treino e teste?</p>
-        <div class="side-by-side">
-          <div>
-            <p><strong>A resposta que a turma costuma dar:</strong> porque a ordem importa em série
-            temporal.</p>
-            <p>Está certa, e é rasa. A pergunta seguinte é a que interessa: <strong>importa
-            para quê?</strong></p>
-          </div>
-          <div>
-            <p><strong>O que a LDC precisa saber:</strong> quanto o modelo erra ao prever um
-            trimestre que ainda não aconteceu.</p>
-            <p>Um teste embaralhado responde outra coisa: quanto o modelo erra ao preencher um
-            buraco no meio de um histórico que ele já conhece dos dois lados.</p>
-          </div>
-        </div>
-        <p>As duas perguntas têm resposta numérica, as duas saem do mesmo código, e só uma delas
-        corresponde ao que o parceiro vai fazer com o modelo. O Bloco 2 mede as duas.</p>
+        <p class="quiz-question" style="font-size: var(--escala-subtitulo); font-weight: 600; margin: 0 0 6px;">Por que não podemos embaralhar os 113 trimestres antes de separar treino e teste?</p>
+        <!-- svg:interpolar -->
+<svg viewBox="0 0 1120 340" width="100%" height="340" role="img" aria-label="À esquerda, prever um trimestre cercado de vizinhos conhecidos dos dois lados, que é interpolar. À direita, prever depois do fim do histórico, sem nenhuma observação adiante, que é extrapolar e é o que a LDC precisa fazer">
+<text x="70.0" y="32.0" font-size="20" fill="var(--seg-texto)" text-anchor="start" font-weight="700">o sorteio pede isto</text>
+<text x="70.0" y="54.0" font-size="16" fill="var(--seg-texto)" text-anchor="start" font-weight="400">interpolar: vizinhos dos dois lados</text>
+<polyline points="70.0,220.7 92.7,217.5 115.5,240.0 138.2,232.2 160.9,248.7" fill="none" stroke="var(--seg-primaria)" stroke-width="3"/>
+<polyline points="206.4,190.3 229.1,194.5 251.8,150.1 274.5,83.8 297.3,101.1 320.0,122.5" fill="none" stroke="var(--seg-primaria)" stroke-width="3"/>
+<circle cx="70.0" cy="220.7" r="6" fill="var(--seg-primaria)"/>
+<circle cx="92.7" cy="217.5" r="6" fill="var(--seg-primaria)"/>
+<circle cx="115.5" cy="240.0" r="6" fill="var(--seg-primaria)"/>
+<circle cx="138.2" cy="232.2" r="6" fill="var(--seg-primaria)"/>
+<circle cx="160.9" cy="248.7" r="6" fill="var(--seg-primaria)"/>
+<circle cx="206.4" cy="190.3" r="6" fill="var(--seg-primaria)"/>
+<circle cx="229.1" cy="194.5" r="6" fill="var(--seg-primaria)"/>
+<circle cx="251.8" cy="150.1" r="6" fill="var(--seg-primaria)"/>
+<circle cx="274.5" cy="83.8" r="6" fill="var(--seg-primaria)"/>
+<circle cx="297.3" cy="101.1" r="6" fill="var(--seg-primaria)"/>
+<circle cx="320.0" cy="122.5" r="6" fill="var(--seg-primaria)"/>
+<line x1="160.9" y1="248.7" x2="183.6" y2="178.0" stroke="var(--seg-destaque)" stroke-width="2.5" stroke-dasharray="5 4" opacity="0.5"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="2.6s" repeatCount="indefinite"/></line>
+<line x1="206.4" y1="190.3" x2="183.6" y2="178.0" stroke="var(--seg-destaque)" stroke-width="2.5" stroke-dasharray="5 4" opacity="0.5"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="2.6s" repeatCount="indefinite"/></line>
+<circle cx="183.6" cy="178.0" r="9" fill="var(--seg-destaque)"><animate attributeName="r" values="9;15;9" dur="2.6s" repeatCount="indefinite"/></circle>
+<text x="183.6" y="294.0" font-size="16" fill="var(--seg-destaque)" text-anchor="middle" font-weight="700">2014-T3</text>
+<text x="650.0" y="32.0" font-size="20" fill="var(--seg-texto)" text-anchor="start" font-weight="700">a LDC pede isto</text>
+<text x="650.0" y="54.0" font-size="16" fill="var(--seg-texto)" text-anchor="start" font-weight="400">extrapolar: nada à frente para apoiar</text>
+<rect x="783.0" y="60.0" width="131.0" height="220.0" fill="var(--seg-borda)" opacity="0.30" rx="4"/>
+<text x="841.5" y="262.0" font-size="16" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">nada medido aqui</text>
+<polyline points="650.0,227.7 665.6,254.4 681.2,233.1 696.9,197.1 712.5,159.3 728.1,186.8 743.8,200.4 759.4,236.0 775.0,179.3" fill="none" stroke="var(--seg-primaria)" stroke-width="3"/>
+<circle cx="650.0" cy="227.7" r="6" fill="var(--seg-primaria)"/>
+<circle cx="665.6" cy="254.4" r="6" fill="var(--seg-primaria)"/>
+<circle cx="681.2" cy="233.1" r="6" fill="var(--seg-primaria)"/>
+<circle cx="696.9" cy="197.1" r="6" fill="var(--seg-primaria)"/>
+<circle cx="712.5" cy="159.3" r="6" fill="var(--seg-primaria)"/>
+<circle cx="728.1" cy="186.8" r="6" fill="var(--seg-primaria)"/>
+<circle cx="743.8" cy="200.4" r="6" fill="var(--seg-primaria)"/>
+<circle cx="759.4" cy="236.0" r="6" fill="var(--seg-primaria)"/>
+<circle cx="775.0" cy="179.3" r="6" fill="var(--seg-primaria)"/>
+<path d="M 775.0 179.3 L 900.0 44.3 L 900.0 112.3 Z" fill="var(--seg-destaque)" opacity="0.18"><animate attributeName="opacity" values="0.08;0.32;0.08" dur="2.6s" repeatCount="indefinite"/></path>
+<text x="775.0" y="294.0" font-size="16" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">2024-T1</text>
+<line x1="775.0" y1="189.3" x2="775.0" y2="276.0" stroke="var(--seg-texto)" stroke-width="2" stroke-dasharray="4 4"/>
+<circle cx="900.0" cy="78.3" r="9" fill="var(--seg-destaque)"><animate attributeName="r" values="9;15;9" dur="2.6s" repeatCount="indefinite"/></circle>
+<text x="900.0" y="294.0" font-size="16" fill="var(--seg-destaque)" text-anchor="middle" font-weight="700">2026-T1</text>
+<line x1="594.0" y1="22" x2="594.0" y2="302" stroke="var(--seg-borda)" stroke-width="2"/>
+</svg>
+        <!-- /svg:interpolar -->
+        <p>A resposta rasa é "porque a ordem importa". A que interessa vem depois: <strong>importa
+        para quê?</strong> As duas separações têm resposta numérica e saem do mesmo código, e só uma
+        delas mede a tarefa que o parceiro vai executar. O Bloco 2 mede as duas.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 05 &middot; Sprint 2</p>
           <p class="footer-page">5</p>

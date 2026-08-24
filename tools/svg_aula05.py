@@ -352,11 +352,123 @@ def svg_bandas(base):
     return "\n".join(p)
 
 
+
+# ------------------------------------------------------- 5. interpolar/extrapolar
+def svg_interpolar(base):
+    """A mesma serie, duas tarefas: preencher um buraco e avancar no vazio.
+
+    Responde a pergunta de abertura da aula. O painel da esquerda tira um
+    trimestre do meio de um historico conhecido dos dois lados, que e o que o
+    sorteio produz; o da direita corta no fim, que e o que a LDC enfrenta.
+    """
+    serie = base[ALVO].to_numpy(float) / 1e9
+    periodos = list(base["periodo"])
+    n_treino = len(base) - N_TESTE
+
+    # esquerda: 12 trimestres em torno de 2014-T3, com o do meio removido
+    centro = periodos.index("2014-T3")
+    ini = centro - 5
+    trecho = serie[ini:ini + 12]
+    alvo_local = centro - ini
+
+    meio_x = L / 2
+    topo, base_y = 62, ALT - 72
+    faixa = 250
+
+    def painel(x0, valores, alvo, ultimo_conhecido, rotulo, detalhe, rotulo_alvo,
+               rotulo_corte=None):
+        """Um painel. `ultimo_conhecido` separa o que existe do que ainda nao."""
+        vmin, vmax = min(valores) * 0.985, max(valores) * 1.015
+        px = lambda i: x0 + faixa * i / (len(valores) - 1)
+        py = lambda v: base_y - (base_y - topo) * (v - vmin) / (vmax - vmin)
+        out = [_texto(x0, topo - 30, rotulo, 20, "var(--seg-texto)", "start", "700"),
+               _texto(x0, topo - 8, detalhe, 16)]
+
+        vazio = ultimo_conhecido + 1 <= len(valores) - 1
+        if vazio:
+            # o trecho sem nenhuma observacao, entre o corte e o alvo
+            x_ini = px(ultimo_conhecido) + 8
+            out.append('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" '
+                       'fill="var(--seg-borda)" opacity="0.30" rx="4"/>'
+                       % (x_ini, topo - 2, px(len(valores) - 1) + 14 - x_ini,
+                          base_y - topo + 14))
+            out.append(_texto((x_ini + px(len(valores) - 1)) / 2, base_y - 6,
+                              "nada medido aqui", 16, "var(--seg-texto)", "middle"))
+
+        # so o que e conhecido vira linha e ponto
+        conhecidos = [i for i in range(ultimo_conhecido + 1) if i != alvo]
+        for corte_i in (0,):
+            antes = [i for i in conhecidos if i < alvo]
+            depois = [i for i in conhecidos if i > alvo]
+            for grupo in (antes, depois):
+                if len(grupo) > 1:
+                    out.append('<polyline points="%s" fill="none" '
+                               'stroke="var(--seg-primaria)" stroke-width="3"/>'
+                               % " ".join("%.1f,%.1f" % (px(i), py(valores[i]))
+                                          for i in grupo))
+        for i in conhecidos:
+            out.append('<circle cx="%.1f" cy="%.1f" r="6" fill="var(--seg-primaria)"/>'
+                       % (px(i), py(valores[i])))
+
+        ax, ay = px(alvo), py(valores[alvo])
+        if vazio:
+            # a incerteza abre em leque do corte ate o alvo
+            ux, uy = px(ultimo_conhecido), py(valores[ultimo_conhecido])
+            out.append('<path d="M %.1f %.1f L %.1f %.1f L %.1f %.1f Z" '
+                       'fill="var(--seg-destaque)" opacity="0.18">'
+                       '<animate attributeName="opacity" values="0.08;0.32;0.08" '
+                       'dur="2.6s" repeatCount="indefinite"/></path>'
+                       % (ux, uy, ax, ay - 34, ax, ay + 34))
+            if rotulo_corte:
+                out.append(_texto(ux, base_y + 26, rotulo_corte, 16,
+                                  "var(--seg-texto)", "middle"))
+                out.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" '
+                           'stroke="var(--seg-texto)" stroke-width="2" '
+                           'stroke-dasharray="4 4"/>' % (ux, uy + 10, ux, base_y + 8))
+        else:
+            # os dois vizinhos seguram o valor que falta
+            for viz in (alvo - 1, alvo + 1):
+                out.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" '
+                           'stroke="var(--seg-destaque)" stroke-width="2.5" '
+                           'stroke-dasharray="5 4" opacity="0.5">'
+                           '<animate attributeName="opacity" values="0.15;0.9;0.15" '
+                           'dur="2.6s" repeatCount="indefinite"/></line>'
+                           % (px(viz), py(valores[viz]), ax, ay))
+
+        out.append('<circle cx="%.1f" cy="%.1f" r="9" fill="var(--seg-destaque)">'
+                   '<animate attributeName="r" values="9;15;9" dur="2.6s" '
+                   'repeatCount="indefinite"/></circle>' % (ax, ay))
+        out.append(_texto(ax, base_y + 26, rotulo_alvo, 16, "var(--seg-destaque)",
+                          "middle", "700"))
+        return out
+
+    p = ['<svg viewBox="0 0 %d %d" width="100%%" height="%d" role="img" '
+         'aria-label="À esquerda, prever um trimestre cercado de vizinhos conhecidos dos dois '
+         'lados, que é interpolar. À direita, prever depois do fim do histórico, sem nenhuma '
+         'observação adiante, que é extrapolar e é o que a LDC precisa fazer">' % (L, ALT, ALT)]
+
+    p += painel(70, list(trecho), alvo_local, len(trecho) - 1,
+                "o sorteio pede isto", "interpolar: vizinhos dos dois lados",
+                periodos[centro])
+
+    # direita: nove trimestres conhecidos ate o corte, e o alvo oito passos adiante
+    passado = list(serie[n_treino - 9:n_treino]) + list(serie[n_treino:])
+    p += painel(meio_x + 90, passado, len(passado) - 1, 8,
+                "a LDC pede isto", "extrapolar: nada à frente para apoiar",
+                periodos[-1], periodos[n_treino - 1])
+
+    p.append('<line x1="%.1f" y1="%d" x2="%.1f" y2="%d" stroke="var(--seg-borda)" '
+             'stroke-width="2"/>' % (meio_x + 34, topo - 40, meio_x + 34, base_y + 34))
+    p.append("</svg>")
+    return "\n".join(p)
+
+
 BLOCOS = {
     "horizonte": svg_horizonte,
     "corte": svg_corte,
     "minimos": svg_minimos,
     "bandas": svg_bandas,
+    "interpolar": svg_interpolar,
 }
 
 

@@ -134,10 +134,10 @@ saída, abaixo.
 
 ## Ampliação da Aula 05, pedida pelo professor em 24/08/2026
 
-- **Quatro SVG animados** (`tools/svg_aula05.py`), inline no deck e gerados a partir dos CSVs
+- **Cinco SVG animados** (`tools/svg_aula05.py`), inline no deck e gerados a partir dos CSVs
   reais: os mínimos quadrados minimizando os resíduos, o corte por data contra o
-  `train_test_split`, o erro que se acumula ao longo do horizonte e a banda fixa em kg percorrendo
-  a série. São inline, e não `<img src>`, porque um `.svg` externo não enxerga as custom
+  `train_test_split`, o erro que se acumula ao longo do horizonte, a banda fixa em kg percorrendo
+  a série, e interpolar contra extrapolar no slide de abertura. São inline, e não `<img src>`, porque um `.svg` externo não enxerga as custom
   properties do tema e precisaria de cor literal, o que `check_brand.py` reprova. A animação é
   SMIL, para não colocar regra de uma aula no tema compartilhado. Todo `<animate>` parte de um
   estado já legível, porque o PDF exportado congela o primeiro quadro.
@@ -151,6 +151,13 @@ saída, abaixo.
   horizonte de 24 meses do TAPI, o MAPE vai de **1,60% para 2,85%**, com o erro crescendo de
   -1,02% em h=1 para -6,95% em h=8. Os 1,60% não estão errados: respondem outra pergunta, e a
   comparação com a baseline segue válida porque ela tem a mesma limitação.
+- **O slide de abertura foi redesenhado.** Ele tinha a pergunta disparada em corpo de texto comum
+  (`.quiz-question` só define `margin: 0`, então fora do `quiz-slide` ela não ganha destaque
+  nenhum), quatro blocos de texto sem hierarquia e a metade inferior vazia. A pergunta passou a
+  ter tamanho de subtítulo, o texto caiu para três linhas e o conceito virou animação: dois
+  painéis com dados reais, um prevendo 2014-T3 com vizinhos dos dois lados (interpolar, o que o
+  sorteio produz) e outro prevendo 2026-T1 com o histórico parando em 2024-T1 (extrapolar, o que
+  a LDC enfrenta), com o leque de incerteza abrindo sobre a região sem medição.
 - O deck foi de 31 para 34 slides, e `PLANEJAMENTO_AULA_A_AULA.md` registra o acréscimo na janela
   de 11h30. A ordem de corte ao vivo, se o tempo apertar, está nas notas do professor.
 - `tools/tests/test_modelo_aula05.py` foi de 9 para 12 testes, travando as três conclusões novas.
