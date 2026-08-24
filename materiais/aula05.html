@@ -41,8 +41,10 @@
         <li><a href="#overfitting">Overfitting, com o caso do leite</a></li>
         <li><a href="#condicionamento">O achado: padronizar mudou o modelo</a></li>
         <li><a href="#residuos">Normalidade, agora no lugar certo</a></li>
+        <li><a href="#horizonte">Um passo à frente não é horizonte de oito</a></li>
+        <li><a href="#intervalo">O intervalo, e a pergunta certa sobre uma série que cresce</a></li>
         <li><a href="#reprodutibilidade">Reprodutibilidade e replicabilidade</a></li>
-        <li><a href="#art4">O que levar para a ART.4 e a ART.5</a></li>
+        <li><a href="#art4">O que levar para a ART.4</a></li>
       </ol>
     </nav>
 
@@ -394,8 +396,103 @@ previsao = teste["frangos_lag4"] * fator</code></pre>
         </div>
       </section>
 
+      <section class="doc-secao" id="horizonte">
+        <h2>11. Um passo à frente não é horizonte de oito</h2>
+        <p>Toda métrica das seções anteriores usou o <code>frangos_lag1</code> <strong>real</strong>
+        de cada trimestre do teste. Isso mede oito previsões de <strong>um trimestre à frente</strong>,
+        cada uma partindo de um passado inteiramente conhecido. É uma medida legítima, e não é a
+        que o TAPI pede.</p>
+        <p>O parceiro pede projeção com horizonte de 24 meses. Nesse cenário, só o passado até o
+        corte existe: a previsão de 2024-T3 precisa usar como entrada a <strong>previsão</strong> de
+        2024-T2, porque o valor realizado ainda não aconteceu. Cada previsão herda o erro da
+        anterior.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>trimestre</th><th>erro de um passo</th><th>erro recursivo</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>2024-T2</td><td>-1,02%</td><td>-1,02%</td></tr>
+              <tr><td>2024-T3</td><td>-0,85%</td><td>-1,55%</td></tr>
+              <tr><td>2024-T4</td><td>+1,12%</td><td>+0,02%</td></tr>
+              <tr><td>2025-T1</td><td>-2,56%</td><td>-2,55%</td></tr>
+              <tr><td>2025-T2</td><td>-0,85%</td><td>-2,88%</td></tr>
+              <tr><td>2025-T3</td><td>-0,53%</td><td>-2,95%</td></tr>
+              <tr><td>2025-T4</td><td>-2,92%</td><td>-4,91%</td></tr>
+              <tr><td>2026-T1</td><td>-2,92%</td><td>-6,95%</td></tr>
+              <tr><td><strong>MAPE</strong></td><td><strong>1,60%</strong></td><td><strong>2,85%</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O erro quase dobra, e cresce com a distância do corte. As duas colunas partem do mesmo
+        modelo, com os mesmos coeficientes: o que muda é a informação disponível no momento de
+        prever.</p>
+        <p>Isso não invalida as medidas anteriores. Significa que <strong>1,60% e 2,85% respondem a
+        perguntas diferentes</strong>, e que a do parceiro é a segunda. Ao levar um número para a
+        LDC, o horizonte em que ele foi medido faz parte do número.</p>
+        <div class="doc-nota">
+          <p>A comparação com a baseline continua justa, porque ela tem a mesma limitação: para
+          prever 2026-T1 pelo mesmo trimestre do ano anterior, ela precisaria do valor de 2025-T1,
+          que também está dentro do período reservado. As duas foram medidas no mesmo regime, e é
+          isso que torna a comparação entre elas válida.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="intervalo">
+        <h2>12. O intervalo, e a pergunta certa sobre uma série que cresce</h2>
+        <p>Um ponto isolado não serve para decidir compra de insumo. A LDC precisa de uma faixa. A
+        construção clássica soma e subtrai <code>1,96</code> desvio-padrão dos resíduos, o que
+        produz uma banda de <strong>largura fixa na unidade do alvo</strong>: aqui, ±150 milhões de
+        quilogramas.</p>
+        <p>Numa série que quadruplicou de tamanho em 29 anos, essa escolha carrega uma afirmação
+        que quase ninguém percebe estar fazendo.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>momento da série</th><th>nível</th><th>quanto vale a MESMA banda</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1998-T1, início</td><td>0,88 bilhão de kg</td><td>±17,02%</td></tr>
+              <tr><td>2026-T1, fim</td><td>3,73 bilhões de kg</td><td>±4,01%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A banda de largura constante afirma que a incerteza é a mesma em 1998 e em 2026. Medindo
+        o resíduo por metade do treino, o desvio <strong>cresce em quilos</strong> (66,7 para 81,6
+        milhões) e <strong>encolhe em proporção</strong> (4,10% para 2,84%). A incerteza relativa
+        do modelo vem caindo, e a banda fixa diz o contrário.</p>
+        <p>Há ainda um segundo problema: o fator <code>1,96</code> vem da distribuição normal, e a
+        seção 10 mostrou que os resíduos rejeitam normalidade com p = 0,0147. O número tem a
+        aparência de precisão sem o respaldo dela.</p>
+        <p><strong>A alternativa adotada no notebook:</strong> medir o erro <strong>relativo</strong>
+        em 21 origens de previsão e usar o percentil 90 empírico como banda, um valor para cada
+        horizonte. Sem supor normalidade e sem supor largura constante.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>horizonte</th><th>banda empírica</th><th>erro medido</th><th>coberto</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>h = 1</td><td>±4,17%</td><td>-1,02%</td><td>sim</td></tr>
+              <tr><td>h = 4</td><td>±4,80%</td><td>-2,55%</td><td>sim</td></tr>
+              <tr><td>h = 7</td><td>±6,73%</td><td>-4,91%</td><td>sim</td></tr>
+              <tr><td>h = 8</td><td>±6,44%</td><td>-6,95%</td><td>não</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A banda alarga com o horizonte, que é o comportamento esperado de uma previsão que
+        realimenta a própria saída. A cobertura foi de 7 em 8, com o último trimestre ficando de
+        fora.</p>
+        <p>Esse furo é informação, e não defeito do método. Uma banda de 90% construída em 21
+        origens erra em cerca de 10% dos casos por construção, e 2026-T1 é o horizonte mais longo,
+        onde o modelo já vinha subestimando. <strong>O que se leva ao parceiro é a previsão
+        pontual, a banda do horizonte correspondente e a informação de que ela foi medida.</strong>
+        Uma faixa honesta que às vezes falha é mais útil do que uma faixa estreita que inspira
+        confiança sem tê-la.</p>
+      </section>
+
       <section class="doc-secao" id="reprodutibilidade">
-        <h2>11. Reprodutibilidade e replicabilidade</h2>
+        <h2>13. Reprodutibilidade e replicabilidade</h2>
         <p>Os dois termos do autoestudo da semana descrevem exigências diferentes.</p>
         <p><strong>Reprodutibilidade</strong> é obter o mesmo resultado com os mesmos dados e o
         mesmo código. Neste notebook ela vem de graça, e isso é propriedade do modelo escolhido:
@@ -430,7 +527,7 @@ previsao = teste["frangos_lag4"] * fator</code></pre>
       </section>
 
       <section class="doc-secao" id="art4">
-        <h2>12. O que levar para a ART.4 e a ART.5</h2>
+        <h2>14. O que levar para a ART.4</h2>
         <p>A Sprint 2 fecha em 28/08, com review. A matriz de rastreabilidade do
         <code>PLANO_DE_ENSINO.md</code> (seção 5) amarra a Aula 05 a uma única entrega, e o peso
         vem da seção 4 do mesmo documento.</p>

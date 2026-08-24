@@ -29,6 +29,14 @@ limite que esta base atravessa. Vale assumir isso abertamente na sala: uma afirm
 refinada por medição nova é exatamente o que o método faz, e esconder a divergência ensinaria o
 oposto.
 
+**O Bloco 4 cresceu, e o tempo saiu de onde havia folga.** Ele agora cobre seis slides: as doze
+janelas, o condicionamento numérico, os resíduos, a previsão recursiva, o intervalo e a
+reprodutibilidade. O roteiro original previa só overfitting e reprodutibilidade nessa janela. Se o
+tempo apertar ao vivo, o primeiro corte é o slide do condicionamento numérico (o achado da
+padronização), que está inteiro no material de apoio e não é pré-requisito de nenhuma aula
+seguinte. O último a cair é o par recursiva/intervalo, que responde a uma dúvida trazida pela
+própria turma.
+
 **Dependência da aula anterior:** cada dupla precisa da base analítica da Aula 04 rodando. Quem não
 tiver, abre `notebooks/aula05.ipynb`, cuja seção 2 reconstrói a base inteira a partir dos CSVs
 crus, numa única célula. Ninguém fica parado por causa disso.
@@ -172,6 +180,42 @@ movimento ao acrescentar característica, e não pelo nível absoluto das duas m
 **As doze janelas:** conduza como resposta à hesitação do bloco anterior. O modelo vence nas doze,
 com média de 2,18% contra 3,14%. A vantagem apertada da última janela é o pior caso das doze.
 Diga também a ressalva: as janelas se sobrepõem, então não são doze medidas independentes.
+
+### O horizonte, e a pergunta sobre intervalo que veio da turma
+
+**Contexto:** um aluno perguntou se faz sentido usar intervalo de confiança numa série cujos
+valores vão aumentando. A pergunta está certa, e a aula ganhou dois slides por causa dela.
+
+**A resposta curta, para dar na hora:** faz sentido usar intervalo, e não o de largura fixa. Um
+intervalo de ±1,96 desvio-padrão tem largura constante em quilos (±150 milhões), e essa mesma
+banda vale **±17,02% em 1998 e ±4,01% em 2026**. Ela afirma que a incerteza é a mesma nos dois
+extremos, e o dado diz o contrário: medindo o resíduo por metade do treino, ele cresce em quilos
+(66,7 para 81,6 milhões) e encolhe em proporção (4,10% para 2,84%).
+
+**O segundo furo, se a turma acompanhar:** o fator 1,96 vem da distribuição normal, e o
+Shapiro-Wilk da seção anterior rejeitou normalidade dos resíduos (p = 0,0147). O número tem
+aparência de precisão sem o respaldo dela.
+
+**O que a aula propõe no lugar:** banda empírica dos erros relativos, medida em 21 origens de
+previsão, uma para cada horizonte. Ela alarga de ±4,17% em h=1 para ±6,44% em h=8 e cobriu 7 dos 8
+trimestres reservados. **Diga o furo em voz alta:** 2026-T1 ficou fora. Uma banda de 90% erra em
+cerca de 10% dos casos por construção, e admitir isso é parte do método.
+
+**O achado que vem junto, e que muda o número da aula:** ao construir o intervalo apareceu que
+todas as métricas anteriores eram de **um passo à frente**. Cada previsão usava o
+`frangos_lag1` real, que em produção não existiria. Prevendo os oito de uma vez, realimentando a
+própria saída, o MAPE vai de 1,60% para **2,85%**, e o erro cresce de -1,02% em h=1 para -6,95%
+em h=8.
+
+**Como conduzir isso sem desmontar a aula:** os 1,60% não estão errados, respondem outra pergunta.
+Deixe claro que a comparação com a baseline continua válida, porque a baseline tem a mesma
+limitação (para prever 2026-T1 ela precisaria do valor de 2025-T1, também reservado). O que muda é
+o que se pode prometer ao parceiro.
+
+**Erro comum aqui:** o aluno conclui que o modelo "não presta" porque 2,85% é pior que 1,60%. São
+duas tarefas, e a segunda é mais difícil. A pergunta certa é qual delas a LDC vai executar.
+
+---
 
 **Pergunta de fechamento:** "Se a LDC pedisse previsão para 2026-T2, o que vocês precisariam ter em
 mãos que hoje ainda não têm?"

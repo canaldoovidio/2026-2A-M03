@@ -350,6 +350,21 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
     Discussão dirigida: cada dupla aponta um sintoma de overfitting no próprio resultado, se
     houver.
 
+    **Acréscimo de 24/08/2026, decidido pelo professor durante a construção da aula.** O bloco
+    passou a incluir dois pontos que não estavam no roteiro original, e o motivo do primeiro foi
+    uma pergunta trazida por um aluno:
+
+    - **Intervalo de previsão numa série que cresce.** Um intervalo de ±1,96 desvio-padrão tem
+      largura fixa em quilos, e a mesma banda vale ±17,02% em 1998 e ±4,01% em 2026. A alternativa
+      medida é a banda empírica dos erros relativos, por horizonte, que cobriu 7 dos 8 trimestres
+      reservados.
+    - **Horizonte de previsão.** As métricas do bloco anterior são de um passo à frente, porque
+      cada previsão usa o `frangos_lag1` real. Prevendo os oito de uma vez, de forma recursiva,
+      que é o que o TAPI pede, o MAPE vai de 1,60% para 2,85%.
+
+    O tempo saiu da teoria dos blocos 1 a 3, que ficaram mais enxutos. A ordem de corte ao vivo,
+    se necessário, está em `docs/notas-do-professor/aula05.md`.
+
   11h45 - 12h00  Amarração com a sprint: o primeiro modelo de regressão e sua comparação com a
     baseline viram a segunda versão da comunicação visual do produto (histórico vs. previsão),
     alimentando **ART.4 UX parte 2** (peso 3). Fecha a Sprint 2 (review em 28/08).

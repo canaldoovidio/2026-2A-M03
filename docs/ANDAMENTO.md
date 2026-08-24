@@ -132,6 +132,29 @@ saída, abaixo.
   série aberta do Sindirações em `dados/`. Os três documentos foram corrigidos, e o motivo está em
   `docs/adrs/ADR-007`.
 
+## Ampliação da Aula 05, pedida pelo professor em 24/08/2026
+
+- **Quatro SVG animados** (`tools/svg_aula05.py`), inline no deck e gerados a partir dos CSVs
+  reais: os mínimos quadrados minimizando os resíduos, o corte por data contra o
+  `train_test_split`, o erro que se acumula ao longo do horizonte e a banda fixa em kg percorrendo
+  a série. São inline, e não `<img src>`, porque um `.svg` externo não enxerga as custom
+  properties do tema e precisaria de cor literal, o que `check_brand.py` reprova. A animação é
+  SMIL, para não colocar regra de uma aula no tema compartilhado. Todo `<animate>` parte de um
+  estado já legível, porque o PDF exportado congela o primeiro quadro.
+- **Dois conceitos novos na aula, e o segundo veio de uma pergunta de aluno.** (1) Um aluno
+  perguntou se faz sentido usar intervalo de confiança numa série cujos valores crescem. Faz, e
+  não o de largura fixa: ±1,96 desvio-padrão vale **±17,02% em 1998 e ±4,01% em 2026**, e o
+  resíduo cresce em quilos enquanto encolhe em proporção (4,10% para 2,84%). A aula passou a usar
+  banda empírica dos erros relativos por horizonte, que cobriu 7 dos 8 trimestres. (2) Ao
+  construir isso apareceu que **todas as métricas da aula eram de um passo à frente**: cada
+  previsão usava o `frangos_lag1` real. Prevendo os oito de uma vez, de forma recursiva, que é o
+  horizonte de 24 meses do TAPI, o MAPE vai de **1,60% para 2,85%**, com o erro crescendo de
+  -1,02% em h=1 para -6,95% em h=8. Os 1,60% não estão errados: respondem outra pergunta, e a
+  comparação com a baseline segue válida porque ela tem a mesma limitação.
+- O deck foi de 31 para 34 slides, e `PLANEJAMENTO_AULA_A_AULA.md` registra o acréscimo na janela
+  de 11h30. A ordem de corte ao vivo, se o tempo apertar, está nas notas do professor.
+- `tools/tests/test_modelo_aula05.py` foi de 9 para 12 testes, travando as três conclusões novas.
+
 ## Corrigido em 24/08/2026, junto com a Aula 05
 
 - **A validação de CI estava vermelha desde 19/08**, e a causa não era conteúdo: o slide 25 da

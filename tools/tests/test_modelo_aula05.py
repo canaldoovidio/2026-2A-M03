@@ -303,3 +303,82 @@ def test_vazamento_do_escalador_nao_muda_a_metrica_neste_modelo(base):
     assert mape_correto == pytest.approx(mape_vazado, abs=1e-9), (
         "se este teste falhar, o modelo deixou de ser invariante a escala e o "
         "material de apoio precisa ser reescrito")
+
+
+def _recursivo(base, modelo, escalador, n_treino, passos=N_TESTE):
+    """Realimenta a propria previsao, como o horizonte de 24 meses exige."""
+    historico = list(base[ALVO][:n_treino])
+    saida = []
+    for k in range(passos):
+        tri = int(base["periodo"][n_treino + k][-1])
+        x = np.array([[historico[-1], historico[-4],
+                       np.sin(2 * np.pi * tri / 4), np.cos(2 * np.pi * tri / 4)]])
+        y = float(modelo.predict(escalador.transform(x))[0])
+        saida.append(y)
+        historico.append(y)
+    return np.array(saida)
+
+
+def test_horizonte_de_verdade_erra_mais_que_um_passo(base):
+    """A aula afirma 1,60% para um passo e 2,85% para o voo de oito trimestres."""
+    n = len(base["periodo"])
+    n_treino = n - N_TESTE
+    teste = slice(n_treino, n)
+    y_teste = base[ALVO][teste]
+
+    modelo, _, _ = _ajustar(base, FEATURES, n_treino, teste)
+    escalador = preprocessing.StandardScaler().fit(
+        _matriz(base, FEATURES, slice(0, n_treino)))
+    _, um_passo, _ = _ajustar(base, FEATURES, n_treino, teste)
+    recursivo = _recursivo(base, modelo, escalador, n_treino)
+
+    mape_um = _mape(y_teste, um_passo)
+    mape_rec = _mape(y_teste, recursivo)
+
+    assert mape_rec > mape_um, (
+        "se o recursivo deixar de errar mais, o slide do horizonte perde o sentido")
+    assert 1.4 < mape_um < 1.8, mape_um
+    assert 2.5 < mape_rec < 3.2, mape_rec
+
+
+def test_o_erro_recursivo_cresce_com_o_horizonte(base):
+    """O SVG do horizonte mostra o erro indo de -1,02% a -6,95%."""
+    n = len(base["periodo"])
+    n_treino = n - N_TESTE
+    modelo, _, _ = _ajustar(base, FEATURES, n_treino, slice(n_treino, n))
+    escalador = preprocessing.StandardScaler().fit(
+        _matriz(base, FEATURES, slice(0, n_treino)))
+    previsto = _recursivo(base, modelo, escalador, n_treino)
+    real = base[ALVO][slice(n_treino, n)]
+    erro = (previsto - real) / real * 100
+
+    assert abs(erro[-1]) > abs(erro[0]), "o erro do fim precisa superar o do comeco"
+    assert erro[-1] < -5, erro[-1]
+    assert -2 < erro[0] < 0, erro[0]
+    # o modelo subestima quase sempre, que e o vies discutido no slide
+    assert (erro < 0).sum() >= 7, erro
+
+
+def test_banda_fixa_em_kg_muda_de_significado_ao_longo_da_serie(base):
+    """A resposta a duvida da turma: largura constante, incerteza relativa que varia."""
+    n = len(base["periodo"])
+    n_treino = n - N_TESTE
+    _, _, previsto_treino = _ajustar(base, FEATURES, n_treino, slice(n_treino, n))
+    residuos = base[ALVO][slice(0, n_treino)] - previsto_treino
+    meia = 1.96 * residuos.std(ddof=len(FEATURES) + 1)
+
+    inicio = meia / base[ALVO][0] * 100
+    fim = meia / base[ALVO][-1] * 100
+
+    assert inicio > 4 * fim, (
+        "a mesma banda precisa valer muito mais no comeco, senao o slide nao se sustenta")
+    assert 15 < inicio < 19, inicio
+    assert 3 < fim < 5, fim
+
+    # e o residuo encolhe em proporcao, mesmo crescendo em quilos
+    meio = n_treino // 2
+    r1, r2 = residuos[:meio], residuos[meio:]
+    n1 = base[ALVO][slice(0, meio)].mean()
+    n2 = base[ALVO][slice(meio, n_treino)].mean()
+    assert r2.std() > r1.std(), "em quilos o residuo cresce"
+    assert r2.std() / n2 < r1.std() / n1, "em proporcao ele encolhe"
