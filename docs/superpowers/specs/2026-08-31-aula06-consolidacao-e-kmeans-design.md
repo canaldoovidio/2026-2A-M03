@@ -65,24 +65,24 @@ contraste é o conteúdo central da aula.
 
 As duas linhas que escapam são **2008-T2 e 2008-T4**, as duas alocadas no cluster do T3.
 
-O perfil sazonal, em participação no total do ano:
+O perfil sazonal, em participação média no total do ano, agrupado pelo trimestre do calendário:
 
-| Cluster | Bovinos | Suínos | Frangos | Ovos | Leite |
+| Trimestre | Bovinos | Suínos | Frangos | Ovos | Leite |
 |---|---|---|---|---|---|
 | T1 | 23,57% | 23,65% | 24,37% | 24,35% | 25,05% |
-| T2 | 24,75% | 24,95% | 24,73% | 24,86% | 23,06% |
-| T3 | 25,83% | 25,98% | 25,45% | 25,41% | 24,89% |
-| T4 | 25,81% | 25,35% | 25,42% | 25,37% | 27,00% |
+| T2 | 24,81% | 24,96% | 24,74% | 24,86% | 23,11% |
+| T3 | 25,88% | 26,01% | 25,47% | 25,43% | 24,89% |
+| T4 | 25,74% | 25,38% | 25,41% | 25,36% | 26,95% |
 
 Amplitude sazonal, em pontos percentuais entre o trimestre de maior e o de menor participação:
-leite 3,94, suínos 2,33, bovinos 2,26, frangos 1,08, ovos 1,06.
+leite 3,85, suínos 2,35, bovinos 2,31, frangos 1,10, ovos 1,08.
 
 Dois achados que servem ao case:
 
 - **O leite tem pico no T4 e as carnes no T3.** Picos em trimestres diferentes é informação direta
   para o Modelo 2 do TAPI, que converte produção em demanda de ração.
-- **O leite tem mais que o triplo da amplitude sazonal do frango**, 3,94 p.p. contra 1,08. Frango e
-  ovos ficam empatados no piso (1,08 e 1,06, diferença de 0,02 p.p., que é ruído). Frango é o alvo
+- **O leite tem mais que o triplo da amplitude sazonal do frango**, 3,85 p.p. contra 1,10. Frango e
+  ovos ficam empatados no piso (1,10 e 1,08, diferença de 0,02 p.p., que é ruído). Frango é o alvo
   do Modelo 1, treinado na Aula 05, e a amplitude pequena explica por que os coeficientes de `sen`
   e `cos` daquela regressão são pequenos mesmo depois de padronizar. O teste trava a razão entre
   leite e frango, não a ordem entre frango e ovos, que a medição não separa.
