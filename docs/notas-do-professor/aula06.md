@@ -56,12 +56,19 @@ Aula 07 vai precisar.
 | 1 | 4 e 5 | Aula 05: corte temporal e baseline | 19 | Pré-requisito da Aula 07, que compara árvores e ensembles contra os mesmos 1,60% e 1,69% no mesmo protocolo. Sem isto, a comparação de quinta-feira não significa nada. |
 | 2 | 3 | Aula 04: junção e as 113 linhas | 17 | O aluno que não sabe de onde vêm as 113 linhas não confia no próprio `shape`, e trava de novo na primeira célula de toda aula prática. |
 | 3 | 1 e 2 | Aulas 03 e 02: as cinco séries e a granularidade | 15 e 13 | Enquadramento do case. Custa pouco tempo e nenhuma das duas é pré-requisito técnico do que vem hoje. |
-| 4 | 6 | Aula 04: condicionamento numérico | 18 | Última da fila. O material de apoio da Aula 05, seção 9, cobre o assunto inteiro por escrito, com a tabela de antes e depois da padronização. |
+| 4 | 6 | Aula 05: o fit do escalador e o treino | 18 | Última da fila. A pergunta hoje diagnostica se o `fit` do `StandardScaler` foi calculado só nas linhas de treino, não mais o condicionamento numérico da matriz. O material de apoio da Aula 05, seção 9, cobre os dois assuntos por escrito, com a tabela de antes e depois da padronização. |
 
-A pergunta 6 sai da fila de sala com boa consciência. O que vale dizer em voz alta, mesmo sem abrir
-o slide 18, é a regra prática: padronizar as entradas sempre que as escalas diferirem por várias
-ordens de grandeza. Ela reaparece hoje no K-means, por um motivo diferente, e a seção 2 do material
-de apoio da Aula 06 faz a ponte entre os dois usos.
+A pergunta 6 sai da fila de sala com boa consciência, mesmo testando agora se o `fit` do escalador
+viu só o treino. O que vale dizer em voz alta, mesmo sem abrir o slide 18, é a regra prática:
+padronizar as entradas sempre que as escalas diferirem por várias ordens de grandeza, sempre
+ajustando o `fit` só no conjunto de treino. Ela reaparece hoje no K-means, por um motivo diferente,
+e a seção 2 do material de apoio da Aula 06 faz a ponte entre os dois usos.
+
+**Aviso sobre o condicionamento numérico:** o achado da Aula 05 sobre o número de condição da
+matriz (1,08e10 sem padronizar, 14 com padronização) não tem mais pergunta própria no quiz desde a
+troca da pergunta 6. O diagnóstico de hoje não revela se a turma entendeu esse ponto. Ele continua
+coberto por escrito na seção 9 do material de apoio da Aula 05, e cabe ao professor decidir se vale
+tocá-lo em voz alta, já que o quiz deixou de cobri-lo.
 
 O slide 11, da Aula 01, fica fora dessa ordem de propósito: ele não tem pergunta no quiz. Abra-o
 apenas se alguém travar em `read_csv` durante a retomada das 10h50, e nesse caso o atendimento é
@@ -118,9 +125,15 @@ O que cada pergunta revela, quando erra:
   o argumento: o corte por data costuma dar erro maior, e é isso que o torna honesto.
 - **Pergunta 5 (Aula 05, a margem contra a baseline).** Quem responde "mais de um ponto percentual"
   está lembrando da média das doze janelas (2,18% contra 3,14%) e aplicando ao teste. A margem da
-  janela de teste é de 0,10 ponto percentual.
-- **Pergunta 6 (Aula 05, padronização e condicionamento).** Quem erra aqui costuma achar que
-  `StandardScaler` remove linha. Tópico de menor prioridade na revisão, pelo motivo já registrado.
+  janela de teste é de 0,10 ponto percentual. Um dos distratores traz os números certos com a
+  atribuição invertida ("a baseline ganha, com 1,60% contra 1,69% do modelo"). Errar por esse
+  distrator específico pode ser leitura apressada em vez de desconhecimento do conteúdo: vale
+  confirmar oralmente com a dupla antes de gastar os vinte minutos da revisão dirigida no módulo
+  da Aula 05.
+- **Pergunta 6 (Aula 05, o fit do StandardScaler e o treino).** Quem erra aqui costuma achar que o
+  `fit` ajusta a escala nas 113 linhas, incluindo o teste, sem perceber que isso vaza estatística
+  do teste para dentro do treino. Tópico de menor prioridade na revisão dirigida: a regra prática
+  (padronizar com `fit` só no treino) pode ser dita em voz alta sem abrir o slide 18.
 
 **Se a turma acertar quase tudo:** encurte a revisão para um módulo e devolva o tempo ao bloco de
 interpretação das 11h40, que é onde a discussão rende mais.
