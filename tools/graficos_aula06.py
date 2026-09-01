@@ -301,8 +301,13 @@ def epocas_vs_trimestres(base, destino):
     dire.legend(handles=manejadores_dire, loc="upper center", bbox_to_anchor=(0.5, -0.16),
                 ncol=4, fontsize=18, frameon=False, handletextpad=0.5, columnspacing=1.4)
 
-    fig.tight_layout(rect=(0, 0.14, 1, 1))
-    fig.savefig(destino, dpi=160, facecolor=FUNDO)
+    # bbox_inches="tight" recorta a figura pela extensao real do que foi
+    # desenhado (titulos, eixos e as duas legendas, que ficam fora da area do
+    # eixo por causa do bbox_to_anchor negativo) em vez de reservar uma faixa
+    # fixa de rodape via `rect` que sobra vazia quando a legenda cabe em menos
+    # espaco do que o reservado. Ver docstring do modulo.
+    fig.tight_layout()
+    fig.savefig(destino, dpi=160, facecolor=FUNDO, bbox_inches="tight", pad_inches=0.15)
     plt.close(fig)
     return rotulos1, rotulos2, tris2, periodos2
 
