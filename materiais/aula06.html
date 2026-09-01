@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material de apoio &middot; Aula 06 &middot; Aprendizado Não Supervisionado parte I</title>
+  <meta name="description" content="Material de apoio da Aula 06 do Módulo 03 IN: K-means sobre as cinco séries do SIDRA, o contraste entre agrupar níveis e agrupar participação no ano, a silhueta que premia o agrupamento menos útil, o perfil sazonal por espécie e as duas exceções de 2008.">
+
+  <!-- Este material NAO e o roteiro do deck em prosa. Ele aprofunda o que o
+       slide so pode apontar, e e o lugar onde o aluno que ficou para tras na
+       Aula 05 recupera. Todo numero citado aqui sai de
+       notebooks/aula06.ipynb e de tools/tests/test_clusters_aula06.py sobre os
+       cinco CSVs de dados/, ou vem medido nas Aulas 04 e 05.
+
+       A secao 10 assume, por escrito, a divergencia entre esta aula e o
+       roteiro de PLANEJAMENTO_AULA_A_AULA.md, seguindo o precedente da secao 9
+       do material da Aula 05. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 06 &middot; 01/09/2026 &middot; Sprint 3</p>
+      <h1>Material de apoio: Aprendizado Não Supervisionado parte I</h1>
+      <p class="doc-subtitulo">A Aula 05 fechou o primeiro ciclo completo de modelagem, com um
+      alvo, um corte de treino e teste e um erro medido contra a baseline da LDC. Esta aula tira o
+      alvo da mesa. O K-means recebe os cinco produtos de cada trimestre, sem nenhuma
+      coluna-resposta, e devolve grupos. Esta página acompanha o que sai daí: por que o mesmo
+      algoritmo, com o mesmo K e a mesma semente, entrega dois resultados opostos conforme a
+      transformação aplicada à entrada; por que a métrica interna aprova o resultado que serve
+      menos ao case; o que o perfil sazonal de cada espécie diz ao Modelo 2 do TAPI; e por que
+      2008 é o único ano do histórico que sai do padrão. A seção 10 registra em que esta aula
+      diverge do que o roteiro original prometia.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#sem-rotulo">O que muda quando não existe coluna-resposta</a></li>
+        <li><a href="#kmeans">Como o K-means agrupa</a></li>
+        <li><a href="#ato1">O ato 1 acerta 26,5% do trimestre</a></li>
+        <li><a href="#ato2">O ato 2 acerta 114 das 116 linhas</a></li>
+        <li><a href="#silhueta">A silhueta cai de 0,4795 para 0,2853</a></li>
+        <li><a href="#perfil">O leite tem mais que o triplo da amplitude do frango</a></li>
+        <li><a href="#frango">A amplitude de 1,10 p.p. do frango e o achado da Aula 05</a></li>
+        <li><a href="#dois-mil-e-oito">2008 é o único ano com duas linhas fora do grupo</a></li>
+        <li><a href="#desafio">Respostas do desafio do notebook</a></li>
+        <li><a href="#divergencia">A aula não entrega os perfis de dieta previstos</a></li>
+        <li><a href="#art6">O que levar para a ART.6</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="sem-rotulo">
+        <h2>1. O que muda quando não existe coluna-resposta</h2>
+        <p>Nas Aulas 04 e 05 cada linha da base analítica trazia, junto com as características, o
+        valor que se queria prever. O erro era a distância entre a previsão e essa coluna, e a
+        avaliação consistia em medir esse erro em oito trimestres que o modelo nunca tinha visto:
+        1,60% de MAPE para o modelo e 1,69% para a baseline de coeficiente fixo.</p>
+        <p>No aprendizado não supervisionado essa coluna não existe. O algoritmo recebe apenas as
+        observações e devolve uma estrutura. Não há valor certo contra o qual comparar, então não
+        há MAPE, não há RMSE e não há conjunto de teste no sentido da aula passada. A pergunta
+        deixa de ser "quanto o modelo erra" e passa a ser "esta estrutura serve para alguma coisa".
+        Responder a segunda pergunta exige um julgamento que o algoritmo não pode fazer sozinho, e
+        é isso que a aula de hoje exercita.</p>
+        <p>A base é a mesma de sempre. Os cinco CSVs de <code>dados/</code> se cruzam em
+        <strong>117 trimestres</strong>, de 1997-T1 a 2026-T1, e é essa matriz de cinco colunas que
+        entra no K-means. Nenhuma defasagem é criada, então as 113 linhas da base analítica da Aula
+        04 não são o insumo daqui: o corte de quatro linhas no topo vinha do <code>shift(4)</code>,
+        e não existe defasagem nesta aula.</p>
+        <div class="doc-nota">
+          <p>O que <em>não</em> distingue os dois regimes é o dado ser histórico. A base é
+          exatamente a mesma que sustentou a regressão de frango. O que muda é a pergunta feita
+          sobre ela, e com a pergunta muda o que conta como resultado bom.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="kmeans">
+        <h2>2. Como o K-means agrupa</h2>
+        <p>O algoritmo recebe a matriz de observações e um número <code>K</code>. Ele posiciona
+        <code>K</code> centros no espaço das colunas, liga cada observação ao centro mais próximo e
+        recalcula cada centro como a média das observações ligadas a ele. As duas etapas se repetem
+        até os centros pararem de andar.</p>
+        <pre class="doc-codigo"><code>from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+
+X = StandardScaler().fit_transform(producao)   # 5 colunas
+modelo = KMeans(n_clusters=4, n_init=50, random_state=42).fit(X)
+
+modelo.labels_    # o grupo de cada trimestre
+modelo.inertia_   # soma das distancias ao quadrado dentro dos grupos</code></pre>
+        <p>Três detalhes desse código decidem o resultado, e vale saber o que cada um faz.</p>
+        <p><strong>"Próximo" quer dizer distância euclidiana</strong>, a raiz da soma dos quadrados
+        das diferenças coluna a coluna. A soma trata todas as colunas com o mesmo peso, e uma
+        coluna medida em unidades grandes contribui com diferenças grandes. Sem padronizar, a série
+        de maior magnitude domina a distância e as outras quatro deixam de influenciar o
+        agrupamento. Na Aula 05 a padronização servia ao condicionamento numérico da matriz. Aqui ela define o
+        que o algoritmo considera parecido, e por isso vem sempre antes do agrupamento.</p>
+        <p><strong><code>n_init=50</code> roda o algoritmo cinquenta vezes</strong>, com centros
+        iniciais diferentes, e devolve a melhor das cinquenta pela inércia. O K-means converge para
+        um mínimo local que depende de onde os centros começaram, então uma execução única pode
+        parar num agrupamento pior sem avisar.</p>
+        <p><strong><code>random_state=42</code> fixa a sequência de sorteios.</strong> Esta é a
+        primeira técnica do módulo com aleatoriedade de verdade: a regressão da Aula 05 tinha
+        solução fechada e dispensava semente. Sem <code>random_state</code>, duas execuções da
+        mesma célula podem devolver rótulos diferentes, e a reprodutibilidade que a Aula 05 obteve
+        de graça passa a exigir uma linha de código.</p>
+        <div class="doc-nota">
+          <p><strong>Os rótulos são nomes arbitrários.</strong> O grupo que sai como <code>0</code>
+          numa execução pode sair como <code>2</code> em outra, e isso não é um resultado
+          diferente. Comparar dois agrupamentos exige olhar quais linhas ficaram juntas, porque o número
+          impresso ao lado de cada uma é só um identificador. O notebook resolve isso ordenando os grupos pela posição
+          média no tempo antes de imprimir.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="ato1">
+        <h2>3. O ato 1 acerta 26,5% do trimestre, contra 25% do acaso</h2>
+        <p>A primeira execução padroniza as cinco colunas de produção em nível e roda o K-means com
+        K = 4 sobre os 117 trimestres. A aposta natural da turma é que os quatro grupos separem T1,
+        T2, T3 e T4. O que sai é outra coisa.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>grupo</th><th>trimestres</th><th>intervalo coberto</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>30</td><td>1997-T1 a 2004-T2</td></tr>
+              <tr><td>2</td><td>28</td><td>2004-T3 a 2011-T2</td></tr>
+              <tr><td>3</td><td>34</td><td>2011-T3 a 2020-T2</td></tr>
+              <tr><td>4</td><td>25</td><td>2019-T3 a 2026-T1</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Os quatro grupos são blocos de tempo. A concordância com o trimestre do calendário fica
+        em <strong>26,5%</strong>, e com quatro grupos de tamanho parecido o acaso já entrega 25%.
+        O agrupamento não sabe nada sobre o calendário.</p>
+        <p>A causa está na entrada. As cinco séries crescem ao longo de 29 anos, e esse crescimento
+        responde pela maior parte da variação de cada coluna. Depois de padronizar, dois trimestres
+        ficam próximos quando os cinco produtos estavam em níveis parecidos, e níveis parecidos
+        acontecem quando os dois trimestres são próximos no tempo. O algoritmo segmentou a linha do
+        tempo porque foi isso que a entrada perguntou.</p>
+        <div class="doc-nota">
+          <p><strong>A transição entre épocas é gradual.</strong> Os grupos 3 e 4 se sobrepõem entre
+          2019-T3 e 2020-T2: nessa janela há linhas dos dois. A coluna da direita da tabela informa
+          o intervalo que cada grupo cobre, e a passagem de um grupo para o seguinte acontece ao
+          longo de alguns trimestres em que as duas alocações convivem.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="ato2">
+        <h2>4. O ato 2 acerta 114 das 116 linhas</h2>
+        <p>A segunda execução muda uma coisa só: cada valor deixa de ser o nível absoluto e passa a
+        ser a fatia que aquele trimestre respondeu no total do próprio ano, série por série.</p>
+        <pre class="doc-codigo"><code># para cada ano, cada trimestre vira a fracao dele no total do ano
+for ano in anos_completos:
+    linhas = (anos == ano)
+    participacao[linhas] = X[linhas] / X[linhas].sum(axis=0)</code></pre>
+        <p>Um ano com os quatro trimestres medidos tem quatro frações que somam 1, em qualquer
+        nível de produção. É isso que remove a tendência: um ano de 1997 e um de 2025 passam a ser
+        comparáveis, porque cada um foi dividido pelo próprio total.</p>
+        <p>2026 sai da conta, porque tem um único trimestre publicado. A base cai para
+        <strong>116 linhas</strong>, cobrindo os anos completos de 1997 a 2025. O mesmo
+        <code>KMeans</code>, com o mesmo K e a mesma semente, recupera o trimestre do calendário em
+        <strong>114 dessas 116 linhas</strong>, uma concordância de <strong>98,3%</strong>.</p>
+        <p>Os dois atos usaram os mesmos dados, o mesmo algoritmo, o mesmo K e a mesma semente. A
+        transformação aplicada à entrada decidiu o resultado antes de o <code>KMeans</code> rodar.
+        Esse é o ponto de método que a aula quer deixar: <strong>a escolha de como representar o
+        dado pesa mais no resultado do que a escolha do algoritmo</strong>, e ela é feita por quem
+        escreve o código, não pela biblioteca.</p>
+      </section>
+
+      <section class="doc-secao" id="silhueta">
+        <h2>5. A silhueta cai de 0,4795 para 0,2853</h2>
+        <p>A silhueta de uma observação compara a distância média dela às observações do próprio
+        grupo com a distância média às observações do grupo vizinho mais próximo. O valor fica
+        entre menos um e mais um, e o número reportado é a média sobre todas as observações. Ela
+        mede <strong>separação geométrica</strong> entre os grupos, e não usa nenhuma informação
+        externa.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>execução</th><th>entrada</th><th>silhueta</th><th>concordância com o trimestre</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>ato 1</td><td>níveis padronizados, 117 linhas</td><td>0,4795</td><td>26,5%</td></tr>
+              <tr><td>ato 2</td><td>participação no ano, 116 linhas</td><td>0,2853</td><td>98,3%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>As duas colunas da direita apontam para lados opostos. O agrupamento com a silhueta mais
+        alta é o que não responde à pergunta do case, e o agrupamento que recupera o calendário tem
+        a silhueta mais baixa das duas.</p>
+        <p>Não há contradição nisso, e entender o motivo é o objetivo do dia. No ato 1, o nível de
+        produção percorre uma faixa larga ao longo de 29 anos, e os quatro blocos de tempo caem em
+        regiões distantes do espaço padronizado: grupos afastados dão silhueta alta. No ato 2, todas
+        as linhas ficam comprimidas em torno de um quarto do total anual, porque nenhum trimestre
+        deixa de produzir e nenhum trimestre dobra a produção do seguinte. Os quatro grupos ficam
+        encostados, e a silhueta desce por causa disso.</p>
+        <p><strong>A silhueta não tem como saber para que o agrupamento vai servir.</strong> Ela
+        enxerga apenas as distâncias que a entrada produziu. O número que decidiu a aula veio de
+        fora do agrupamento: a concordância usa o trimestre do calendário, um rótulo que o
+        <code>KMeans</code> nunca recebeu. Quem julgasse os dois atos apenas pela métrica interna
+        teria descartado o resultado que alimenta o Modelo 2 do TAPI.</p>
+        <div class="doc-nota">
+          <p><strong>Isso não desqualifica a silhueta.</strong> Ela responde bem à pergunta para a
+          qual foi construída: os grupos que este agrupamento produziu estão separados? Essa
+          resposta é útil quando não existe rótulo externo nenhum, que é o caso mais comum em
+          produção. O erro está em ler a resposta dela como se fosse uma medida de utilidade. A
+          Aula 08 retoma a silhueta como um dos métodos de escolha de K, e o cuidado registrado
+          aqui vale integralmente lá.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="perfil">
+        <h2>6. O leite tem mais que o triplo da amplitude sazonal do frango</h2>
+        <p>O que o agrupamento do ato 2 está recuperando fica visível na média de participação de
+        cada trimestre no total do ano, por produto. Os valores abaixo estão em porcentagem do
+        total anual da própria série, e um trimestre perfeitamente estável marcaria 25,00 nas
+        quatro linhas.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr>
+                <th>trimestre</th><th>bovinos</th><th>suínos</th><th>frangos</th><th>ovos</th><th>leite</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>T1</td><td>23,57</td><td>23,65</td><td>24,37</td><td>24,35</td><td>25,05</td></tr>
+              <tr><td>T2</td><td>24,81</td><td>24,96</td><td>24,74</td><td>24,86</td><td>23,11</td></tr>
+              <tr><td>T3</td><td>25,88</td><td>26,01</td><td>25,47</td><td>25,43</td><td>24,89</td></tr>
+              <tr><td>T4</td><td>25,74</td><td>25,38</td><td>25,41</td><td>25,36</td><td>26,95</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A figura do deck mostra esses mesmos números como desvio em relação a 25,00, porque o
+        desvio é o que separa visualmente as cinco séries numa escala legível. A tabela acima é a
+        forma absoluta, e serve para ligar as duas leituras: a barra do leite no T4, na figura, é a
+        linha de 26,95 desta tabela.</p>
+        <p>Dois padrões saem da tabela. O primeiro é a posição do pico: bovinos, suínos, frangos e
+        ovos têm a maior fatia no T3, e o leite tem a maior fatia no T4, com o menor valor da tabela
+        inteira no T2. O segundo é o tamanho da oscilação, medido como a diferença entre o maior e
+        o menor trimestre de cada série.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>série</th><th>amplitude sazonal</th><th>trimestre de pico</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>producao_leite</code></td><td>3,85 p.p.</td><td>T4</td></tr>
+              <tr><td><code>abate_suinos</code></td><td>2,35 p.p.</td><td>T3</td></tr>
+              <tr><td><code>abate_bovinos</code></td><td>2,31 p.p.</td><td>T3</td></tr>
+              <tr><td><code>abate_frangos</code></td><td>1,10 p.p.</td><td>T3</td></tr>
+              <tr><td><code>producao_ovos</code></td><td>1,08 p.p.</td><td>T3</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O leite oscila mais que o triplo do frango, com 3,85 p.p. contra 1,10 p.p. Essa é a
+        conclusão que a medição sustenta, e ela importa para o Modelo 2 do TAPI: espécies com picos
+        em trimestres diferentes e com amplitudes tão distantes produzem curvas de demanda de ração
+        que não podem ser tratadas por um único fator sazonal comum.</p>
+        <div class="doc-nota">
+          <p><strong>O que a medição não sustenta.</strong> Frango e ovos estão a 0,02 ponto
+          percentual um do outro, no piso da tabela. Uma diferença desse tamanho, sobre 29 anos de
+          média, é ruído: qualquer revisão de dado do SIDRA ou qualquer ano a mais na série pode
+          inverter a ordem entre os dois. Afirmar qual das duas séries é a menos sazonal seria ler
+          ruído como achado. O que se pode afirmar é que as duas empatam no piso, bem abaixo das
+          outras três.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="frango">
+        <h2>7. A amplitude de 1,10 p.p. do frango explica um achado da Aula 05</h2>
+        <p>A Aula 05 registrou que, sem padronizar as entradas, o número de condição da matriz de
+        regressão chega a <strong>1,08e10</strong> e o solver de mínimos quadrados descarta a
+        contribuição das colunas <code>sen</code> e <code>cos</code>, zerando os coeficientes de
+        sazonalidade em ponto flutuante. Padronizar devolve as duas colunas à solução. O efeito nas
+        métricas ficou pequeno, e naquele momento a aula não tinha como dizer por quê.</p>
+        <p>A medição de hoje fecha essa lacuna. O alvo daquele modelo era
+        <code>abate_frangos</code>, e o frango tem a menor amplitude sazonal da tabela junto com os
+        ovos: <strong>1,10 ponto percentual</strong> entre o trimestre de maior e o de menor
+        participação. A sazonalidade do frango é real, e é pequena. Um modelo que a ignora por
+        completo perde pouco em erro médio, e é por isso que a versão sem padronização, com os
+        coeficientes de sazonalidade zerados por artefato numérico, ainda produzia um MAPE
+        parecido.</p>
+        <p>A consequência de método continua valendo com força maior depois desta medição. Um
+        coeficiente zerado por corte numérico tem exatamente a mesma aparência de um coeficiente
+        que o modelo julgou irrelevante, e neste caso as duas leituras davam quase o mesmo erro. A
+        diferença entre "a sazonalidade do frango é pequena" e "o solver perdeu as colunas de
+        sazonalidade" não aparece na métrica. Ela aparece quando se mede a sazonalidade por fora do
+        modelo, que é o que a aula de hoje fez.</p>
+        <div class="doc-nota">
+          <p><strong>Uma consequência prática para a ART.6.</strong> Se a dupla trocar o alvo de
+          frango para leite, a mesma decisão passa a custar caro: com amplitude de 3,85 p.p., a
+          sazonalidade responde por uma parte bem maior da variação da série, e perder as colunas
+          <code>sen</code> e <code>cos</code> deixa de ser um detalhe. A padronização das entradas
+          continua obrigatória em qualquer caso, e a tabela da seção 6 diz quanto ela vale para
+          cada série.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="dois-mil-e-oito">
+        <h2>8. 2008 é o único ano com duas linhas fora do próprio grupo</h2>
+        <p>Das 116 linhas do ato 2, duas caem num grupo que não corresponde ao trimestre delas:
+        <strong>2008-T2</strong> e <strong>2008-T4</strong>, ambas alocadas no grupo do T3. Nenhum
+        outro ano do histórico coloca sequer uma linha fora do lugar, e 2008 coloca duas.</p>
+        <p>A leitura correta desse resultado começa por uma propriedade da transformação. A
+        participação de um trimestre é uma fração do total do próprio ano, então os quatro
+        trimestres de um ano estão amarrados: se um deles se afasta do padrão, os outros três se
+        deslocam junto, mesmo sem nada de anormal ter acontecido neles. Uma única observação
+        atípica contamina o ano inteiro na base de participação, e é por isso que as exceções
+        aparecem em pares dentro do mesmo ano em vez de espalhadas pela série.</p>
+        <p>2008 é o ano da crise financeira internacional, e essa coincidência é a hipótese óbvia.
+        Ela também é o tipo de explicação que a base não consegue testar: não existe nenhuma coluna
+        aqui que meça crédito, câmbio, preço de insumo ou exportação. O que o dado sustenta é que a
+        distribuição da produção dentro do ano de 2008 saiu do padrão dos demais anos completos do
+        histórico, e que essa saída foi suficiente para deslocar dois trimestres para o grupo vizinho.</p>
+        <div class="doc-nota">
+          <p><strong>O padrão de uso que isto exemplifica.</strong> O agrupamento funcionou aqui
+          como detector de anomalia, apontando <em>onde</em> olhar sem afirmar <em>por quê</em>.
+          Esse é um uso legítimo e frequente de método não supervisionado: reduzir 116 linhas a duas
+          que merecem investigação. Atribuir causa exige outra fonte, e registrar a lacuna vale mais
+          do que preenchê-la com a explicação plausível mais próxima.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="desafio">
+        <h2>9. Respostas do desafio do notebook</h2>
+        <p>A seção 6 de <code>notebooks/aula06.ipynb</code> deixa duas perguntas para responder
+        rodando código. As respostas ficam aqui, para conferência depois da tentativa.</p>
+
+        <h3>9.1. Por que 2026 sai da conta</h3>
+        <p>2026 entra na base com um único trimestre publicado. A conta de participação divide cada
+        valor pelo total do próprio ano, e o total do ano de 2026 é o próprio 2026-T1: a
+        participação dele vale 1 nas cinco séries, ou seja, 100% do "ano". Nenhum trimestre real
+        chega perto disso, porque os quatro trimestres de um ano completo se dividem em torno de um
+        quarto cada.</p>
+        <p>O efeito no agrupamento é grosseiro. Rodando o K-means com essa linha incluída,
+        <strong>um dos quatro grupos fica com 2026-T1 sozinho</strong>. Sobram três grupos para
+        cobrir os quatro trimestres do calendário, e dois deles se fundem: o T3 e o T4 passam a
+        dividir o mesmo grupo. A concordância com o calendário despenca em relação aos 98,3%
+        medidos com anos completos.</p>
+        <p>O detalhe que vale a viagem é o que acontece com a silhueta: ela <strong>sobe</strong>.
+        Um ponto isolado, muito distante de todos os outros, forma um grupo perfeitamente separado,
+        e a silhueta recompensa isso. O agrupamento ficou pior para o case e melhor pela métrica
+        interna, que é exatamente o achado da seção 5 reaparecendo numa situação diferente.</p>
+        <p>A lição que fica é sobre a ordem das operações. A transformação de participação só está
+        definida quando o denominador é um ano inteiro, e o filtro de anos completos existe para
+        garantir isso. Um denominador incompleto produz um valor com a mesma aparência dos outros e
+        um significado diferente, e nada no código avisa.</p>
+
+        <h3>9.2. O que K=2 produz</h3>
+        <p>Repetindo o ato 2 com <code>n_clusters=2</code> sobre a mesma base de participação, os
+        dois grupos separam <strong>a primeira metade do ano da segunda</strong>: um deles reúne
+        praticamente todas as linhas de T1 e T2, e o outro reúne praticamente todas as de T3 e T4.
+        Umas poucas linhas de T2 atravessam para o grupo do segundo semestre, e nenhuma outra
+        fronteira é cruzada.</p>
+        <p>O resultado é coerente com a tabela da seção 6: nas cinco séries, T1 e T2 ficam abaixo
+        ou perto de 25,00, e T3 e T4 ficam acima. Com dois grupos disponíveis, o corte que o
+        algoritmo encontra é o corte que a estrutura oferece, e ele é o semestre.</p>
+        <p>O que se perde é a distinção que o Modelo 2 do TAPI precisa. A diferença entre o pico do
+        leite no T4 e o pico das carnes no T3 desaparece dentro do mesmo grupo, e a curva de demanda
+        de ração fica com dois patamares no lugar de quatro. A silhueta, de novo, sobe em relação ao
+        K = 4 do ato 2: menos grupos, cada um mais compacto e mais afastado do outro. Pela métrica
+        interna, K = 2 parece a melhor escolha das três leituras feitas hoje, e é a que menos serve
+        ao case.</p>
+        <div class="doc-nota">
+          <p>As três leituras desta aula (ato 1, ato 2 e as duas variações do desafio) apontam na
+          mesma direção: a silhueta premiou, em todas elas, o agrupamento com menos utilidade para o
+          parceiro. Isso é uma propriedade da métrica, e não um acidente desta base. A Aula 08, que
+          usa Elbow Plot e Silhouette Analysis para escolher K, começa desse ponto.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="divergencia">
+        <h2>10. A aula não entrega os perfis de dieta que o roteiro previa</h2>
+        <p>O roteiro em <code>PLANEJAMENTO_AULA_A_AULA.md</code> descreve, para a janela das 11h30,
+        uma discussão dirigida de interpretação dos clusters, com o exemplo explícito de
+        "trimestres de maior demanda de milho versus de farelo de soja" e o que isso sugeriria sobre
+        sazonalidade de dieta. A amarração com a sprint, na janela seguinte, fala em "perfis de
+        dieta e de trimestre clusterizados hoje".</p>
+        <p><strong>Essa entrega não está nesta aula, e o motivo é o dado.</strong> As cinco séries
+        do SIDRA medem abate de bovinos, de suínos e de frangos, produção de ovos e produção de
+        leite. Nenhuma delas mede consumo de milho, de farelo de soja ou de qualquer outro
+        macroingrediente. A conversão de produção animal em composição de ração é justamente o
+        Modelo 3 do TAPI, que depende de coeficientes técnicos de formulação que o case não tem em
+        fonte aberta. Um cluster construído sobre estas cinco colunas não pode revelar perfil de
+        dieta, porque dieta não é uma das dimensões da entrada.</p>
+        <p>O que o agrupamento entrega, e que serve ao mesmo destino, é o <strong>perfil sazonal por
+        espécie</strong> da seção 6: em que trimestre cada produto concentra a produção e com que
+        amplitude. O Modelo 2 do TAPI converte produção prevista em demanda de ração, e ele precisa
+        saber que o leite concentra a maior fatia no T4 enquanto as três carnes concentram no T3. Essa é uma entrada real
+        para o Modelo 2, medida em dado aberto, e é ela que a ART.6 recebe no lugar do perfil de
+        dieta.</p>
+        <div class="doc-nota">
+          <p><strong>Por que isto está escrito aqui.</strong> A Aula 05 abriu o precedente na seção
+          9 do material dela, ao registrar que uma afirmação da Aula 04 sobre padronização não se
+          confirmou na medição. O acervo registra por escrito a divergência entre o
+          planejado e o medido, e a trata como conteúdo da aula. Um roteiro escrito antes de o dado ser explorado
+          descreve uma expectativa, e a expectativa é revisada quando a medição chega. O custo
+          dessa revisão, e a decisão de reduzir o escopo desta aula, estão registrados em
+          <code>docs/adrs/ADR-009</code>.</p>
+        </div>
+        <p>Duas outras reduções de escopo vieram junto, pela mesma decisão. Elbow Plot e Silhouette
+        Analysis, previstos como método de escolha de K nas janelas das 11h00 e 11h15, migraram para
+        a <strong>Aula 08</strong>: K fica fixo em 4 hoje. E as janelas das 10h15 às 10h50, que o
+        roteiro reservava para resgate curto e teoria nova, viraram diagnóstico e revisão dirigida
+        das Aulas 01 a 05. Quem procurar nesta aula o método de escolher K encontra aqui a
+        justificativa da mudança, com o método na Aula 08.</p>
+      </section>
+
+      <section class="doc-secao" id="art6">
+        <h2>11. O que levar para a ART.6</h2>
+        <p>A Sprint 3 abriu em 31/08 e fecha com review em 11/09. A matriz de rastreabilidade do
+        <code>PLANO_DE_ENSINO.md</code> (seção 5) amarra esta aula a uma única entrega, e o peso vem
+        da seção 4 do mesmo documento.</p>
+        <p><strong>ART.6 Preparação dos Dados e Modelagem (peso 6).</strong> A entrega cobre o
+        caminho inteiro, da base preparada ao modelo avaliado. Três frentes já estão prontas nas
+        aulas anteriores, e cada uma tem uma pendência de escrita que só a dupla pode fechar.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>o que a entrega pede</th><th>o que já existe</th><th>o que falta escrever</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Base preparada e documentada</td>
+                <td>As 113 linhas da Aula 04, de 1998-T1 a 2026-T1, com junção das cinco séries,
+                defasagens, sazonalidade codificada e padronização</td>
+                <td>A decisão de granularidade trimestral e o motivo das quatro linhas descartadas
+                no topo da série</td>
+              </tr>
+              <tr>
+                <td>Modelo treinado com protocolo de avaliação declarado</td>
+                <td>A regressão do abate de frangos, com 105 linhas de treino e 8 de teste, 1,60%
+                de MAPE contra 1,69% da baseline e 2,18% contra 3,14% na média de doze janelas</td>
+                <td>O mesmo ciclo repetido para a série que a dupla escolheu, com o horizonte em
+                que o número foi medido</td>
+              </tr>
+              <tr>
+                <td>Exploração do dado sem rótulo</td>
+                <td>Os dois agrupamentos de hoje, com silhueta e concordância medidas nas duas
+                execuções</td>
+                <td>O que o perfil sazonal da seção 6 implica para o Modelo 2, espécie por
+                espécie</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Um cuidado sobre o número que vai para o relatório da ART.6. O MAPE de 1,60% mede oito
+        previsões de um trimestre à frente, cada uma partindo de um passado inteiramente conhecido.
+        Prevendo os oito de uma vez, realimentando a própria saída, o erro sobe para
+        <strong>2,85%</strong>. O horizonte em que um número foi medido faz parte do número, e a
+        entrega precisa dizer qual dos dois regimes está reportando.</p>
+        <p>Os cinco autoestudos que esta aula pressupõe, e a leitura complementar, estão em
+        <a href="../referencias/aula06.html">referencias/aula06.html</a>. O laboratório executável é
+        <code>notebooks/aula06.ipynb</code>, cuja primeira célula é autocontida e reconstrói a base
+        da Aula 05 do zero, para quem chega com o ambiente ainda sem funcionar. A Aula 07 volta ao
+        aprendizado supervisionado com árvores e ensembles, comparando contra os mesmos números
+        medidos na Aula 05.</p>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula06.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../referencias/aula06.html"><span class="material-symbols-outlined" aria-hidden="true">list_alt</span>Referências</a>
+  </nav>
+</body>
+</html>
