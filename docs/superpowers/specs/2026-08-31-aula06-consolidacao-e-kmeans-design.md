@@ -161,7 +161,7 @@ Cada pergunta cobre uma aula e tem resposta medida e verificável no acervo. Nen
 | 3 | 04 | Por que a base analítica tem 113 linhas e não 117? | As quatro primeiras saem porque `lag4` não existe para elas. |
 | 4 | 05 | Por que o corte treino/teste é por data e não aleatório? | Sorteio usa o futuro para prever o passado. A LDC extrapola, não interpola. |
 | 5 | 05 | O modelo ganha da baseline de coeficiente fixo por quanto? | 0,10 ponto percentual de MAPE, 1,60% contra 1,69%, na última janela. |
-| 6 | 05 | Por que padronizar mudou as previsões, se a Aula 04 disse que não mudaria? | Ponto flutuante. Número de condição de 1,08e10 zera os coeficientes de sazonalidade. |
+| 6 | 05 | No pipeline da Aula 05, o `fit` do `StandardScaler` viu quais linhas da base? | As 105 de treino. O teste passa só pelo `transform`, para não vazar média nem desvio do teste para dentro do treino. |
 
 ### 5.2 Módulos de revisão dirigida
 

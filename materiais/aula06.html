@@ -159,7 +159,11 @@ modelo.inertia_   # soma das distancias ao quadrado dentro dos grupos</code></pr
         <pre class="doc-codigo"><code># para cada ano, cada trimestre vira a fracao dele no total do ano
 for ano in anos_completos:
     linhas = (anos == ano)
-    participacao[linhas] = X[linhas] / X[linhas].sum(axis=0)</code></pre>
+    participacao[linhas] = X[linhas] / X[linhas].sum(axis=0)
+
+# a matriz de participacao e padronizada de novo, antes do KMeans
+participacao_padronizada = StandardScaler().fit_transform(participacao)
+modelo = KMeans(n_clusters=4, n_init=50, random_state=42).fit(participacao_padronizada)</code></pre>
         <p>Um ano com os quatro trimestres medidos tem quatro frações que somam 1, em qualquer
         nível de produção. É isso que remove a tendência: um ano de 1997 e um de 2025 passam a ser
         comparáveis, porque cada um foi dividido pelo próprio total.</p>
@@ -172,6 +176,21 @@ for ano in anos_completos:
         Esse é o ponto de método que a aula quer deixar: <strong>a escolha de como representar o
         dado pesa mais no resultado do que a escolha do algoritmo</strong>, e ela é feita por quem
         escreve o código, não pela biblioteca.</p>
+        <div class="doc-nota">
+          <p><strong>Por que padronizar de novo, se a participação já está toda perto de 0,25?</strong>
+          A justificativa da seção 2, "a série de maior magnitude domina a distância", não se aplica
+          aqui: as cinco colunas de participação estão todas na mesma faixa, em torno de um quarto do
+          total anual. O que ainda difere entre elas é a <strong>dispersão</strong>: a amplitude do
+          leite é 3,85 p.p. e a do frango é 1,10 p.p. (seção 6), então a coluna do leite varia mais em
+          torno da própria média do que a do frango, mesmo com as duas centradas perto de 0,25. Sem
+          padronizar essa segunda vez, o <code>KMeans</code> pesa mais a coluna de maior dispersão,
+          exatamente como pesava mais a de maior nível no ato 1. Medido sobre estes mesmos dados:
+          sem a segunda padronização a silhueta sobe para <strong>0,3715</strong> e a concordância
+          cai para <strong>96,6%</strong> (112 das 116 linhas), contra 0,2853 e 98,3% com a
+          padronização. O que a padronização iguala é a <em>dispersão</em> das cinco colunas de
+          participação; a magnitude delas já estava parecida antes disso, e as duas propriedades
+          podem divergir mesmo quando os valores brutos já ocupam a mesma escala.</p>
+        </div>
       </section>
 
       <section class="doc-secao" id="silhueta">

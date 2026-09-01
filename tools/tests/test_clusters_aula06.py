@@ -18,7 +18,10 @@ Como em `test_modelo_aula05.py`, o que se trava aqui sao as conclusoes:
 6. a amplitude sazonal do leite e mais que o triplo da do frango;
 7. incluir o ano incompleto (2026, so tem o T1) na conta de participacao sobe
    a silhueta e derruba a concordancia com o calendario;
-8. K=2 tem silhueta maior que K=4 sobre a mesma base de participacao.
+8. K=2 tem silhueta maior que K=4 sobre a mesma base de participacao;
+9. no ato 2, deixar de padronizar a matriz de participacao (mesmo com as cinco
+   colunas ja perto de 0,25) tambem sobe a silhueta e derruba a concordancia,
+   porque o KMeans passa a pesar mais a coluna de maior dispersao.
 
 Os itens 7 e 8 sao as duas perguntas do desafio da secao 6 do notebook, e as
 respostas ficam na secao 9 de `materiais/aula06.html`. Os dois casos repetem o
@@ -172,6 +175,34 @@ def test_agrupar_participacao_no_ano_recupera_o_trimestre(base):
     assert len(periodos) == 116
     rotulos, _ = _kmeans(X)
     assert _concordancia(rotulos, tris) > 0.95
+
+
+def test_sem_padronizar_a_participacao_a_silhueta_sobe_e_a_concordancia_cai(base):
+    """Material (secao 4) e notas do professor (bloco das 11h20): por que padronizar de novo.
+
+    A justificativa da secao 2 ("a serie de maior magnitude domina a distancia")
+    nao se aplica aqui: as cinco colunas de participacao ja estao todas perto de
+    0,25. O que ainda difere entre elas e a dispersao (amplitude do leite 3,85
+    p.p., do frango 1,10 p.p.), e sem a segunda padronizacao o KMeans pesa mais
+    a coluna de maior dispersao, do mesmo jeito que pesava mais a de maior nivel
+    no ato 1.
+
+    Medido: sem padronizar a participacao, a silhueta sobe de 0,2853 para
+    0,3715 e a concordancia cai de 98,3% para 96,6% (112 das 116 linhas).
+    """
+    X, _, tris, _ = _participacao_no_ano(base)
+
+    rotulos_cru = KMeans(n_clusters=K, n_init=50, random_state=SEMENTE).fit_predict(X)
+    silhueta_cru = silhouette_score(X, rotulos_cru)
+    concordancia_cru = _concordancia(rotulos_cru, tris)
+
+    rotulos_padronizado, silhueta_padronizada = _kmeans(X)
+    concordancia_padronizada = _concordancia(rotulos_padronizado, tris)
+
+    assert silhueta_cru > silhueta_padronizada
+    assert concordancia_cru < concordancia_padronizada
+    assert 0.35 < silhueta_cru < 0.40
+    assert 0.94 < concordancia_cru < 0.98
 
 
 def test_a_silhueta_premia_o_agrupamento_menos_util(base):

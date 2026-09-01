@@ -312,7 +312,7 @@
         </div>
         <table class="data-table">
           <thead>
-            <tr><th>Pergunta</th><th>Tópico</th><th>Slide</th></tr>
+            <tr><th>Pergunta</th><th>Tópico</th><th>Atalho (G + nº + Enter)</th></tr>
           </thead>
           <tbody>
             <tr>
@@ -601,8 +601,8 @@ analitica.shape   # (113, 8) neste recorte</code></pre>
             <p><code>shift(4)</code> copia o valor de quatro linhas atrás, e as quatro primeiras
             não têm de onde copiar: ficam ausentes e saem no <code>dropna</code>. Restam
             <strong>113 linhas</strong>, de 1998-T1 a 2026-T1. Com <code>trimestre</code>,
-            <code>sen</code>, <code>cos</code> e as demais defasagens da Aula 04, a base chega a
-            15 colunas.</p>
+            <code>sen</code>, <code>cos</code>, <code>ano</code> e <code>tri_2</code>/<code>tri_3</code>/<code>tri_4</code>
+            da Aula 04, a base chega a 15 colunas.</p>
           </div>
         </div>
         <div class="slide-footer">
@@ -860,6 +860,9 @@ modelo.inertia_   # dispersao dentro dos grupos</code></pre>
           Cada linha passa a dizer que fatia do ano aquele trimestre respondeu.</li>
           <li>Descartem 2026, que tem um trimestre publicado só. Sobram <strong>116 linhas</strong>,
           de 1997-T1 a 2025-T4.</li>
+          <li>Padronizem de novo essa matriz de participação com <code>StandardScaler</code>, antes
+          de agrupar: mesmo com os valores em torno de 0,25, as cinco colunas têm dispersões
+          diferentes.</li>
           <li>Rodem o mesmo <code>KMeans</code>, com os mesmos hiperparâmetros do ato 1, e meçam de
           novo a concordância com o trimestre do calendário.</li>
         </ol>
@@ -933,6 +936,9 @@ modelo.inertia_   # dispersao dentro dos grupos</code></pre>
           <h2>O leite tem pico um trimestre após as carnes</h2>
         </div>
         <img src="../assets/img/aula06-perfil-sazonal.png" alt="Gráfico de barras agrupadas com o desvio da participação de cada trimestre em relação a 25%, em pontos percentuais, para as cinco séries. Bovinos, suínos, frangos e ovos têm o maior desvio positivo no T3; o leite tem o maior desvio positivo no T4, destacado em coral, e o maior desvio negativo no T2" style="width: 100%; max-width: 680px; display: block; margin: 0 auto 6px;">
+        <p>O eixo mostra o desvio da participação em relação a 25% (a fatia de um trimestre sem
+        nenhuma sazonalidade); a forma absoluta de cada barra está na tabela do material de apoio
+        [5].</p>
         <p>A amplitude entre o trimestre de maior e o de menor participação é de 3,85 p.p. para o
         leite, 2,35 para os suínos, 2,31 para os bovinos, 1,10 para os frangos e 1,08 para os ovos.
         O Modelo 2 do TAPI converte produção em ração, e picos em trimestres diferentes mudam a

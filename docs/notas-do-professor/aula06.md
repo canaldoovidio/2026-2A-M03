@@ -231,6 +231,21 @@ mesmos dados.
 **O que registrar:** a escolha de como representar o dado pesou mais no resultado do que a escolha
 do algoritmo, e essa escolha é de quem escreve o código.
 
+**Sobre a figura do slide 28, e vale narrar em voz alta:** o painel direito, visto à distância de
+projeção, lê como um salpico colorido. A imagem sozinha não deixa claro que a alternância de cor
+segue a sequência do calendário, T1, T2, T3, T4; de longe, a leitura natural é apenas de cores
+misturadas. Cabe ao professor nomear a sequência em voz alta.
+
+**Pergunta que vai aparecer, e não pode ceder:** "Se a participação já está toda perto de 0,25,
+por que padronizar de novo antes do `KMeans`?" O argumento da seção 2 ("a série de maior magnitude
+domina a distância") não serve aqui, porque as cinco colunas já estão na mesma faixa de valor. O
+que ainda difere é a **dispersão**: a amplitude do leite é 3,85 p.p. e a do frango é 1,10 p.p., e
+sem a segunda padronização o `KMeans` pesa mais a coluna de maior dispersão, do mesmo jeito que
+pesava mais a de maior nível no ato 1. Medido: sem padronizar a participação, a silhueta sobe para
+0,3715 e a concordância cai para 96,6% (112 das 116 linhas), contra 0,2853 e 98,3% com a
+padronização. O que a padronização iguala é a dispersão das cinco colunas; a magnitude delas já
+estava parecida antes disso. A seção 4 do material de apoio traz a mesma resposta por escrito.
+
 ### O slide 29, que é o núcleo da aula
 
 **Pergunta antes de mostrar a tabela:** "Qual dos dois agrupamentos vocês acham que tem a melhor
@@ -303,6 +318,11 @@ trimestre à frente. Prevendo os oito de uma vez, realimentando a própria saíd
 **Ponte para a Aula 07:** o alvo volta a existir, e o protocolo continua o mesmo. Árvores e
 ensembles serão comparados contra 1,60% e 1,69%, no mesmo corte temporal, e é por isso que as
 perguntas 4 e 5 do quiz de hoje têm prioridade na revisão.
+
+**Mande a tabela do slide 33 por escrito à turma antes da aula.** Este bloco é o primeiro da ordem
+de corte, no início destas notas, e "amarração com a entrega" é um dos quatro problemas que
+motivaram esta aula. O envio antecipado da tabela das três frentes da ART.6 garante que a
+pendência de cada dupla sobreviva mesmo se o bloco for cortado em sala.
 
 ---
 

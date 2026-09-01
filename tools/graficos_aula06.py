@@ -73,7 +73,10 @@ dessa paleta de proposito: ele marca so a barra do T4 do leite na Figura 2,
 nunca uma categoria comum, porque usa-lo como uma entre quatro cores
 equivalentes faria a barra destacada colar visualmente na vizinha da mesma cor
 e o destaque desapareceria (foi exatamente o defeito da primeira versao desta
-figura, corrigido nesta rodada). Submetida ao validador de paletas categoricas
+figura, corrigido nesta rodada). A legenda da Figura 2 traz uma quinta entrada
+so para essa cor ("Leite no T4, destaque"), separada das quatro entradas T1 a
+T4: e a barra mais importante da figura, e a legenda original nao a
+mencionava. Submetida ao validador de paletas categoricas
 da skill `dataviz` (`node scripts/validate_palette.js
 "#2e2640,#89cea5,#3d6cb3,#a05a2c" --mode light --surface "#ffffff" --pairs
 all`), a paleta separa bem sob daltonismo considerando TODOS os pares, nao so
@@ -357,8 +360,13 @@ def perfil_sazonal(base, destino):
     eixo.set_ylim(-limite, limite)
 
     manejadores = [plt.Rectangle((0, 0), 1, 1, color=cores_tri[i]) for i in range(4)]
-    eixo.legend(manejadores, ["T1", "T2", "T3", "T4"], fontsize=18, frameon=False,
-                loc="upper left", ncol=4, handletextpad=0.5, columnspacing=1.2)
+    legenda_trimestre = eixo.legend(manejadores, ["T1", "T2", "T3", "T4"], fontsize=18,
+                                     frameon=False, loc="upper left", ncol=4,
+                                     handletextpad=0.5, columnspacing=1.2)
+    eixo.add_artist(legenda_trimestre)
+    manejador_destaque = plt.Rectangle((0, 0), 1, 1, color=DESTAQUE)
+    eixo.legend([manejador_destaque], ["Leite no T4 (destaque)"], fontsize=18, frameon=False,
+                loc="upper left", bbox_to_anchor=(0.0, 0.90), handletextpad=0.5)
 
     fig.tight_layout()
     fig.savefig(destino, dpi=160, facecolor=FUNDO)
