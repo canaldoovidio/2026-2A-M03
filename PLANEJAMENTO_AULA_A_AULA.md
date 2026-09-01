@@ -385,27 +385,37 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 
 10h15 - 12h00  Instrução em metodologia ativa
 
-  10h15 - 10h30  Resgate: o modelo de regressão de frango e a comparação com a baseline da Aula
-    05. Hoje: buscar padrões sem rótulo nos trimestres e nas dietas. Pergunta disparada: "quais
-    meses vocês acham que se parecem entre si na demanda de ração?"
+  10h15 - 10h30  Diagnóstico: seis perguntas de quiz sobre as Aulas 01 a 05, cada uma sobre uma
+    decisão do case com número medido (granularidade, base analítica, corte treino/teste,
+    comparação com a baseline, padronização).
 
-  10h30 - 10h45  Teoria: K-means, distância euclidiana entre observações padronizadas. Exercício:
-    cada dupla padroniza as colunas de produção das cinco categorias antes de agrupar.
+  10h30 - 10h50  Revisão dirigida: o professor entra só nos módulos que o quiz reprovou. Cinco
+    módulos disponíveis (Aula 01 a Aula 05), dois ou três visitados.
 
-  10h45 - 11h00  Prática: cada dupla roda K-means sobre os trimestres, usando as colunas de
-    produção das cinco categorias como features, agrupando "perfis de trimestre".
+  10h50 - 11h05  Retomada com as mãos: cada dupla roda o notebook até reproduzir o MAPE de 1,60%
+    da Aula 05.
 
-  11h00 - 11h15  Teoria: como escolher K, com Elbow Plot e Silhouette Analysis.
+  11h05 - 11h20  K-means, o conceito: agrupar sem rótulo, distância euclidiana, por que
+    padronizar.
 
-  11h15 - 11h30  Prática: cada dupla plota o próprio Elbow Plot e decide o valor de K a usar.
+  11h20 - 11h40  Prática, ato 1 e ato 2: K=4 sobre os níveis das cinco séries, depois K=4 sobre a
+    participação de cada trimestre no total do ano.
 
-  11h30 - 11h45  Discussão dirigida: interpretar os clusters encontrados (por exemplo, trimestres
-    de maior demanda de milho versus de farelo de soja) e o que isso sugere sobre sazonalidade de
-    dieta.
+  11h40 - 11h50  Interpretação: os quatro perfis, o pico do leite deslocado, e a silhueta que
+    piora no agrupamento melhor.
 
-  11h45 - 12h00  Amarração com a sprint: os perfis de dieta e de trimestre clusterizados hoje
-    entram na preparação de dados do Modelo 2, alimentando **ART.6 Preparação dos Dados e
-    Modelagem** (peso 6).
+  11h50 - 12h00  Amarração com a sprint: o que a ART.6 pede, o que já existe e o que falta,
+    alimentando **ART.6 Preparação dos Dados e Modelagem** (peso 6).
+
+    **Redução de escopo decidida em 31/08/2026, registrada em `docs/adrs/ADR-009`.** O roteiro
+    original tinha seis blocos de K-means, Elbow Plot e Silhouette Analysis, terminando em
+    "interpretar os clusters e o que isso sugere sobre sazonalidade de dieta". A medição feita
+    antes do primeiro slide mostrou que agrupar os níveis das cinco séries não revela perfis de
+    dieta: revela épocas (concordância de 26,5% com o trimestre do calendário, o acaso de quatro
+    grupos). K passou a ser fixo em 4, Elbow Plot e Silhouette Analysis migraram para a Aula 08, e
+    metade do encontro (os três primeiros blocos) virou retomada diagnóstica das Aulas 01 a 05,
+    por avaliação do professor sobre o nível da turma em mecânica de Python, conceitos de
+    modelagem, densidade e amarração com a entrega.
 
 ---
 
@@ -426,8 +436,8 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
   Árvore de Decisão na prática
 
 10h00 - 10h15  Daily da equipe
-  O que fiz, o que vou fazer, impedimentos. Cada dupla relata o K escolhido na Aula 06 para os
-  próprios clusters.
+  O que fiz, o que vou fazer, impedimentos. Cada dupla relata os perfis encontrados no
+  agrupamento da Aula 06.
 
 10h15 - 12h00  Instrução em metodologia ativa
 
@@ -497,6 +507,15 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
   11h45 - 12h00  Amarração com a sprint: os componentes principais dos drivers macroeconômicos
     entram como features de menor dimensionalidade no Modelo 3, alimentando **ART.6 Preparação
     dos Dados e Modelagem** (peso 6). Fecha a Sprint 3 (review em 11/09).
+
+    **Escopo ampliado em 31/08/2026, por causa da ADR-009.** Elbow Plot e Silhouette Analysis, que
+    estavam roteirizados na Aula 06, migram para a Aula 08: a Aula 06 fixou K em 4 e usou a
+    silhueta só como número lido em dois agrupamentos, sem ensinar o método de escolha de K. A
+    Aula 08 herda o exemplo concreto da Aula 06, em que a silhueta piora (de 0,4795 para 0,2853)
+    justamente no agrupamento que recupera o trimestre do calendário, e ensina Elbow Plot e
+    Silhouette Analysis a partir desse contraste, antes do bloco de PCA. Isso soma dois assuntos
+    novos ao escopo já previsto (PCA e sistemas de recomendação), e a Aula 08 vai precisar de um
+    corte compensatório. O corte é decidido quando a aula for construída, não hoje.
 
 ---
 

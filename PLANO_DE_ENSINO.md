@@ -73,9 +73,9 @@ capturar antes que ela vire um modelo entregue no compasso errado.
 | 03 | 11/08 | 1 | Introdução ao Pandas, Numpy e bibliotecas gráficas - Exploração de Dados | EDA das 5 séries de proteína animal |
 | 04 | 19/08 | 2 | Pré Processamento e Feature Engineering | unir as cinco séries do SIDRA; defasagens e sazonalidade |
 | 05 | 24/08 | 2 | Aprendizado Supervisionado parte I | regressão da produção de frango; corte temporal treino/teste |
-| 06 | 01/09 | 3 | Aprendizado Não Supervisionado - parte I | clusterização de perfis de dieta e de meses |
+| 06 | 01/09 | 3 | Aprendizado Não Supervisionado - parte I | retomada das Aulas 01 a 05; agrupamento dos trimestres com K-means |
 | 07 | 04/09 | 3 | Aprendizado Supervisionado - parte II | árvores e ensembles no Modelo 1; RMSE e MAPE |
-| 08 | 10/09 | 3 | Aprendizado Não Supervisionado Parte II | PCA nos drivers macroeconômicos |
+| 08 | 10/09 | 3 | Aprendizado Não Supervisionado Parte II | PCA nos drivers macroeconômicos; escolha de K com Elbow Plot e Silhouette Analysis |
 | 09 | 15/09 | 4 | Problemas Comuns com Modelagem de IA e mais Feature Engineering | vazamento temporal, dimensionalidade, nulos do IBGE |
 | 10 | 17/09 | 4 | Hiperparâmetros e Explicabilidade do Modelo | GridSearch, validação cruzada, SHAP, partial dependence |
 | 11 | 24/09 | 4 | AutoML - Pycaret | comparar candidatos para os 3 modelos |
@@ -139,8 +139,8 @@ pronto sobre o case da LDC, antes de avançar.
 | 04 | Pré Processamento e Feature Engineering | A Aula 03 deixou pronto a EDA das cinco séries de proteína animal, com padrões, sazonalidade e problemas de qualidade já identificados. |
 | 05 | Aprendizado Supervisionado parte I | A Aula 04 deixou pronto a base analítica com as cinco séries do SIDRA unidas por trimestre, com features de defasagem e de sazonalidade, pronta para alimentar o primeiro modelo. |
 | 06 | Aprendizado Não Supervisionado - parte I | A Aula 05 deixou pronto o primeiro modelo de regressão da produção de frango, com corte temporal treino/teste validado. |
-| 07 | Aprendizado Supervisionado - parte II | A Aula 06 deixou pronto os perfis de clusterização de dieta e de meses, que revelam agrupamentos a testar como features. |
-| 08 | Aprendizado Não Supervisionado Parte II | A Aula 07 deixou pronto os modelos de árvore e ensemble do Modelo 1, com RMSE e MAPE medidos contra a baseline de coeficientes estáticos da LDC. |
+| 07 | Aprendizado Supervisionado - parte II | A Aula 06 deixou pronto os quatro perfis de trimestre do calendário agrupados por K-means (K=4) sobre a participação de cada série no total do ano, e o ambiente de cada dupla com o modelo da Aula 05 reproduzido. |
+| 08 | Aprendizado Não Supervisionado Parte II | A Aula 07 deixou pronto os modelos de árvore e ensemble do Modelo 1, com RMSE e MAPE medidos contra a baseline de coeficientes estáticos da LDC, mais o exemplo de silhueta da Aula 06 (0,4795 contra 0,2853), que a ADR-009 reservou para motivar Elbow Plot e Silhouette Analysis nesta aula. |
 | 09 | Problemas Comuns com Modelagem de IA e mais Feature Engineering | A Aula 08 deixou pronto os componentes principais dos drivers macroeconômicos via PCA, prontos para entrar como features de menor dimensionalidade. |
 | 10 | Hiperparâmetros e Explicabilidade do Modelo | A Aula 09 deixou pronto o diagnóstico e a correção de vazamento temporal, dimensionalidade excessiva e nulos do IBGE. |
 | 11 | AutoML - Pycaret | A Aula 10 deixou pronto os melhores hiperparâmetros e as explicações via SHAP e partial dependence dos modelos ajustados manualmente. |

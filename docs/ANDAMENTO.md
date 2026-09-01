@@ -78,6 +78,23 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
   nunca falha (seção 8.2 da `inteli-course-design`), o teste passou a travar a invariância, e o
   material declara que a disciplina de `fit` só no treino vale por causa de KNN, SVM, regressão
   regularizada e PCA, que aparecem entre as Aulas 06 e 08.
+- **Aula 06 completa, os quatro artefatos** (`aulas/aula06.html`, `materiais/aula06.html`,
+  `referencias/aula06.html`, `notebooks/aula06.ipynb`) mais as notas do professor
+  (`docs/notas-do-professor/aula06.md`), a `docs/adrs/ADR-009` e a suíte
+  `tools/tests/test_clusters_aula06.py`. Os quatro botões do card no portal estão habilitados. A
+  aula deixou de ser conteúdo novo e virou retomada das Aulas 01 a 05 (diagnóstico por quiz,
+  revisão dirigida e reprodução do MAPE de 1,60% da Aula 05), seguida de K-means com K fixo em 4,
+  motivo registrado na `docs/adrs/ADR-009`.
+- **A medição que motivou a redução de escopo da Aula 06, feita antes do primeiro slide.**
+  Agrupando os níveis das cinco séries (117 linhas, 1997-T1 a 2026-T1), K=4 produz silhueta 0,4795
+  e concordância de **26,5%** com o trimestre do calendário, que é o acaso de quatro grupos
+  equilibrados: os clusters são blocos contíguos de tempo, não perfis de dieta. Convertendo cada
+  trimestre em participação no total do próprio ano, o que remove a tendência, K=4 sobre as 116
+  linhas de anos completos recupera o trimestre do calendário em **114 das 116 linhas (98,3%)**,
+  com exceção de **2008-T2 e 2008-T4**, mas a silhueta cai para **0,2853**. O agrupamento mais útil
+  é o que a métrica de qualidade reprova, e esse contraste é o conteúdo central da aula. O perfil
+  sazonal resultante mostra o leite com pico no T4 e as carnes no T3, e amplitude sazonal de 3,85
+  pontos percentuais contra 1,10 do frango.
 - **A estatística da Aula 04 fecha o ciclo completo** (hipótese declarada, teste escolhido,
   decisão, consequência no projeto), com quatro testes sobre os CSVs reais: Shapiro-Wilk,
   Pearson, Kruskal-Wallis e teste t pareado. O achado que sustenta o bloco: a sazonalidade do
@@ -85,10 +102,12 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
   ordem de 1e-06 depois de remover a tendência, porque a variação entre anos infla a variação
   dentro dos grupos. `tools/tests/test_hipoteses_aula04.py` trava as decisões, não só os números,
   e se pula sozinho onde não houver scipy.
-- **ADRs** (`docs/adrs/ADR-001` a `ADR-007`): as sete decisões de arquitetura do acervo, para o
+- **ADRs** (`docs/adrs/ADR-001` a `ADR-009`): as nove decisões de arquitetura do acervo, para o
   fan-out não relitigar nenhuma. Motor Reveal.js, Platypi no lugar da Azurio, regressão tabular em
-  base trimestral, case só com fonte aberta, os quatro artefatos por aula, as skills globais e a
-  base analítica montada a partir das cinco séries do SIDRA.
+  base trimestral, case só com fonte aberta, os quatro artefatos por aula, as skills globais, a
+  base analítica montada a partir das cinco séries do SIDRA, o protocolo de corte temporal e
+  baseline do Modelo 1, e a redução de escopo da Aula 06 (K fixo em 4, Elbow e Silhouette para a
+  Aula 08).
 - **Integração contínua** (`.github/workflows/validate.yml` e `.github/workflows/static.yml`):
   validação em push e pull_request (marca, links, layout, pytest e execução dos notebooks, mais um
   passo que reprova se a validação alterar arquivo versionado) e publicação da raiz do repositório
@@ -108,16 +127,61 @@ saída, abaixo.
   `github-pages` foi corrigida pelo professor em 07/08/2026, e o `static.yml` passou a
   publicar normalmente a cada push em `main` (run 31142595526, 22s).
 
-- **Aulas 06 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
-  `aria-disabled="true"`. As Aulas 01 a 05 já existem. A **Aula 06, em 01/09**, é a próxima da
-  fila, abre a Sprint 3 e trata de aprendizado não supervisionado. O agente `construtor-aulas`
-  existe para esse fan-out, mas as cinco primeiras aulas foram escritas sem ele, à mão, seguindo
-  as mesmas skills.
+- **Aulas 07 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
+  `aria-disabled="true"`. As Aulas 01 a 06 já existem. A **Aula 07, em 04/09**, é a próxima da
+  fila, e traz árvores de decisão e ensembles para o Modelo 1. O agente `construtor-aulas` existe
+  para esse fan-out, mas as seis primeiras aulas foram escritas sem ele, à mão, seguindo as mesmas
+  skills.
 - **O que a Aula 05 deixa marcado para as aulas seguintes.** As quatro séries defasadas em um
   trimestre derrubam o MAPE de teste para 1,14%, contra 1,60% do modelo de hoje, e ficaram de
   fora de propósito: entram como candidata declarada na Aula 07. O reajuste do modelo sobre a
   base completa, depois de a avaliação terminar, fica para a Aula 12 junto com o `Pipeline`. A
   repetição em janelas feita à mão hoje vira `TimeSeriesSplit` na Aula 10.
+- **O que a Aula 06 deixa marcado para as aulas seguintes.** Os quatro perfis de trimestre do
+  calendário (K=4 sobre a participação de cada série no total do ano) ficam prontos para a Aula 07
+  relatar no daily. K deixou de ser escolhido pela dupla, então a Aula 08 herda a decisão de como
+  escolher K, com o exemplo da silhueta que piora no agrupamento útil já medido. Ver a seção
+  "Dívida herdada pela Aula 08" abaixo.
+
+## Dívida herdada pela Aula 08, por causa da ADR-009
+
+A `docs/adrs/ADR-009` moveu Elbow Plot e Silhouette Analysis da Aula 06 para a Aula 08, para quem
+construir a Aula 08 não descobrir isso tarde:
+
+- **A Aula 08 ganha dois assuntos novos em cima do escopo que já tinha** (PCA e sistemas de
+  recomendação, `PLANEJAMENTO_AULA_A_AULA.md`). Vai precisar de um corte compensatório, ainda não
+  decidido: decidir o que sai (ou encolhe) é trabalho da construção da Aula 08, não desta task.
+- **O exemplo que a Aula 08 herda já está medido**, e não precisa ser refeito: silhueta 0,4795 no
+  agrupamento que só segue o calendário do tempo (concordância de 26,5% com o trimestre, o acaso),
+  contra silhueta 0,2853 no agrupamento que recupera o trimestre do calendário em 98,3% das
+  linhas. É o caso em que a métrica de qualidade premia o agrupamento menos útil, e serve como
+  motivação de abertura para Elbow Plot e Silhouette Analysis.
+- **Descompasso entre autoestudo e aula.** Os autoestudos "Determinando K: Elbow Plot" e
+  "Determinando K: Silhouette Analysis" são da Semana 05 (lidos em 01/09, antes da Aula 06), e o
+  método só é ensinado em sala em 10/09, na Aula 08. A Aula 06 usa a silhueta como número lido nos
+  dois agrupamentos, sem ensinar o método, o que ameniza mas não fecha o descompasso.
+
+## Achados que valem para o acervo inteiro, da construção da Aula 06
+
+Três achados que apareceram construindo a Aula 06 e não são específicos dela:
+
+1. **Tratamento de erro no download dos CSVs precisa ser retroportado para as Aulas 04 e 05.** O
+   notebook da Aula 06 passou a falhar com mensagem em português quando a rede da sala cai
+   (`try`/`except` orientando a dupla a pedir a pasta `dados` para uma dupla vizinha), enquanto os
+   notebooks das Aulas 04 e 05 ainda levantam o traceback cru do `urllib`/`pandas` nesse caso.
+   Retroportar o mesmo tratamento é trabalho pendente, fora do escopo desta task.
+2. **Slide que revisa outra aula precisa ser copiado da aula original, não reescrito de
+   memória.** A revisão do deck da Aula 06 encontrou três erros de código nos módulos de revisão
+   dirigida, porque os trechos de código dos slides que revisam as Aulas 01 a 05 foram escritos de
+   memória em vez de copiados dos decks que eles revisavam. A lição vale para qualquer aula futura
+   que inclua um bloco de retomada de conteúdo já publicado: copiar o trecho do arquivo de origem,
+   nunca reconstruir de cabeça.
+3. **A Semana 05 tem dezessete autoestudos na fonte** (`docs/autoestudos-por-semana.md`), não doze
+   nem cinco isoladamente: cinco pertencem à Aula 06 (Determinando K: Elbow Plot · Determinando K:
+   Silhouette Analysis · Introdução ao aprendizado não supervisionado (IBM) · K-means · Opcional:
+   PCA) e doze à Aula 07. `referencias/aula06.html` lista os cinco da Aula 06;
+   `referencias/aula07.html`, quando construída, precisa listar os outros doze para a semana
+   fechar a conta.
 
 ## Corrigido em 18/08/2026, junto com a Aula 04
 
