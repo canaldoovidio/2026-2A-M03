@@ -17,7 +17,7 @@ Como em `test_modelo_aula05.py`, o que se trava aqui sao as conclusoes:
 5. o leite tem pico no T4 enquanto as carnes tem pico no T3;
 6. a amplitude sazonal do leite e mais que o triplo da do frango.
 
-A ordem entre frango (1,08 p.p.) e ovos (1,06 p.p.) NAO e travada: os dois
+A ordem entre frango (1,10 p.p.) e ovos (1,08 p.p.) NAO e travada: os dois
 estao a 0,02 ponto percentual um do outro, e afirmar qual e o menor seria ler
 ruido como achado.
 
@@ -191,9 +191,9 @@ def test_leite_tem_pico_no_t4_e_as_carnes_no_t3(base):
 
 
 def test_leite_e_mais_de_tres_vezes_mais_sazonal_que_frango(base):
-    """Amplitude medida: leite 3,94 p.p. e frango 1,08 p.p.
+    """Amplitude medida por trimestre do calendario: leite 3,85 p.p. e frango 1,10 p.p.
 
-    A ordem entre frango (1,08) e ovos (1,06) nao entra: 0,02 ponto percentual
+    A ordem entre frango (1,10) e ovos (1,08) nao entra: 0,02 ponto percentual
     de diferenca e ruido, e travar isso seria travar ruido.
     """
     X, _, tris, _ = _participacao_no_ano(base)
