@@ -339,40 +339,43 @@ for ano in anos_completos:
         participação dele vale 1 nas cinco séries, ou seja, 100% do "ano". Nenhum trimestre real
         chega perto disso, porque os quatro trimestres de um ano completo se dividem em torno de um
         quarto cada.</p>
-        <p>O efeito no agrupamento é grosseiro. Rodando o K-means com essa linha incluída,
-        <strong>um dos quatro grupos fica com 2026-T1 sozinho</strong>. Sobram três grupos para
-        cobrir os quatro trimestres do calendário, e dois deles se fundem: o T3 e o T4 passam a
-        dividir o mesmo grupo. A concordância com o calendário despenca em relação aos 98,3%
-        medidos com anos completos.</p>
-        <p>O detalhe que vale a viagem é o que acontece com a silhueta: ela <strong>sobe</strong>.
-        Um ponto isolado, muito distante de todos os outros, forma um grupo perfeitamente separado,
-        e a silhueta recompensa isso. O agrupamento ficou pior para o case e melhor pela métrica
-        interna, que é exatamente o achado da seção 5 reaparecendo numa situação diferente.</p>
+        <p>Rodando o K-means com essa linha incluída, nas 117 linhas em vez das 116 de anos
+        completos, a concordância com o trimestre do calendário cai de 98,3% para
+        <strong>74,4%</strong>. Um dos quatro grupos fica com <strong>2026-T1 sozinho</strong>,
+        porque sem os outros três trimestres do ano ele vale 100% do próprio ano. Sobram três
+        grupos para cobrir os quatro trimestres do calendário: 29 linhas de T1, 31 linhas
+        majoritariamente de T2 e 56 linhas em que o T3 e o T4 se fundem no mesmo grupo.</p>
+        <p>A silhueta sobe de 0,2853 para <strong>0,3830</strong>. Um ponto isolado, muito distante
+        de todos os outros, forma um grupo perfeitamente separado, e a silhueta recompensa isso.
+        Essa combinação, concordância mais baixa com silhueta mais alta, repete pela terceira vez o
+        achado da seção 5.</p>
         <p>A lição que fica é sobre a ordem das operações. A transformação de participação só está
         definida quando o denominador é um ano inteiro, e o filtro de anos completos existe para
         garantir isso. Um denominador incompleto produz um valor com a mesma aparência dos outros e
         um significado diferente, e nada no código avisa.</p>
 
         <h3>9.2. O que K=2 produz</h3>
-        <p>Repetindo o ato 2 com <code>n_clusters=2</code> sobre a mesma base de participação, os
-        dois grupos separam <strong>a primeira metade do ano da segunda</strong>: um deles reúne
-        praticamente todas as linhas de T1 e T2, e o outro reúne praticamente todas as de T3 e T4.
-        Umas poucas linhas de T2 atravessam para o grupo do segundo semestre, e nenhuma outra
-        fronteira é cruzada.</p>
+        <p>Repetindo o ato 2 com <code>n_clusters=2</code> sobre as mesmas 116 linhas de anos
+        completos, os dois grupos separam o primeiro semestre do segundo. Um cluster reúne
+        29 linhas de T1 e 27 de T2. O outro reúne 29 linhas de T3, 29 de T4 e 2 de T2 que
+        atravessam a fronteira do semestre.</p>
         <p>O resultado é coerente com a tabela da seção 6: nas cinco séries, T1 e T2 ficam abaixo
         ou perto de 25,00, e T3 e T4 ficam acima. Com dois grupos disponíveis, o corte que o
         algoritmo encontra é o corte que a estrutura oferece, e ele é o semestre.</p>
         <p>O que se perde é a distinção que o Modelo 2 do TAPI precisa. A diferença entre o pico do
         leite no T4 e o pico das carnes no T3 desaparece dentro do mesmo grupo, e a curva de demanda
-        de ração fica com dois patamares no lugar de quatro. A silhueta, de novo, sobe em relação ao
-        K = 4 do ato 2: menos grupos, cada um mais compacto e mais afastado do outro. Pela métrica
-        interna, K = 2 parece a melhor escolha das três leituras feitas hoje, e é a que menos serve
-        ao case.</p>
+        de ração fica com dois patamares no lugar de quatro. A silhueta sobe de 0,2853, o valor do
+        K = 4 do ato 2, para <strong>0,3785</strong>: menos grupos, cada um mais compacto e mais
+        afastado do outro. Pela métrica interna, K = 2 é a melhor escolha das três leituras feitas
+        hoje, e é a que menos serve ao case.</p>
         <div class="doc-nota">
-          <p>As três leituras desta aula (ato 1, ato 2 e as duas variações do desafio) apontam na
-          mesma direção: a silhueta premiou, em todas elas, o agrupamento com menos utilidade para o
-          parceiro. Isso é uma propriedade da métrica, e não um acidente desta base. A Aula 08, que
-          usa Elbow Plot e Silhouette Analysis para escolher K, começa desse ponto.</p>
+          <p>As três leituras desta aula (ato 1 e ato 2 na seção 5, mais as duas variações do
+          desafio) medem a mesma coisa três vezes: incluir 2026 sobe a silhueta de 0,2853 para
+          0,3830 e derruba a concordância de 98,3% para 74,4%; reduzir para K = 2 sobe a silhueta
+          para 0,3785 e funde os quatro trimestres em dois semestres. Nos três casos a silhueta
+          premiou o agrupamento com menos utilidade para o parceiro, o que aponta para uma
+          propriedade geral da métrica. A Aula 08, que usa Elbow Plot e Silhouette Analysis para
+          escolher K, começa desse ponto.</p>
         </div>
       </section>
 

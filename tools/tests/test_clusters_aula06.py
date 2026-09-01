@@ -15,7 +15,15 @@ Como em `test_modelo_aula05.py`, o que se trava aqui sao as conclusoes:
 3. a silhueta premia o agrupamento MENOS util, que e o achado central da aula;
 4. as duas linhas que escapam do ato 2 sao as duas de 2008;
 5. o leite tem pico no T4 enquanto as carnes tem pico no T3;
-6. a amplitude sazonal do leite e mais que o triplo da do frango.
+6. a amplitude sazonal do leite e mais que o triplo da do frango;
+7. incluir o ano incompleto (2026, so tem o T1) na conta de participacao sobe
+   a silhueta e derruba a concordancia com o calendario;
+8. K=2 tem silhueta maior que K=4 sobre a mesma base de participacao.
+
+Os itens 7 e 8 sao as duas perguntas do desafio da secao 6 do notebook, e as
+respostas ficam na secao 9 de `materiais/aula06.html`. Os dois casos repetem o
+item 3 em situacoes diferentes: a silhueta sobe e o resultado serve menos ao
+case.
 
 A ordem entre frango (1,10 p.p.) e ovos (1,08 p.p.) NAO e travada: os dois
 estao a 0,02 ponto percentual um do outro, e afirmar qual e o menor seria ler
@@ -28,6 +36,7 @@ Cada assercao foi vista falhando ao menos uma vez, contra versoes
 propositalmente quebradas do pipeline: remover a padronizacao do ato 2,
 normalizar pelo total da serie inteira em vez de por ano, e usar K=3.
 """
+import collections
 import csv
 import os
 
@@ -106,6 +115,23 @@ def _participacao_no_ano(b):
         linhas = anos == a
         saida[linhas] = X[linhas] / X[linhas].sum(axis=0)
     return saida, anos, b["tris"][mascara], [p for p, m in zip(b["periodos"], mascara) if m]
+
+
+def _participacao_no_ano_todos_anos(b):
+    """Como _participacao_no_ano, mas sem descartar o ano incompleto.
+
+    Usada so pelo teste que trava o efeito de incluir 2026 na conta: o
+    denominador de um ano com um unico trimestre iguala esse trimestre a 100%
+    do "ano", que e o que o desafio da secao 9.1 do material explora.
+    """
+    anos_unicos = set(b["anos"].tolist())
+    X = b["X"]
+    anos = b["anos"]
+    saida = np.empty_like(X)
+    for a in anos_unicos:
+        linhas = anos == a
+        saida[linhas] = X[linhas] / X[linhas].sum(axis=0)
+    return saida, anos, b["tris"], b["periodos"]
 
 
 def test_base_tem_117_trimestres_de_1997_a_2026(base):
@@ -203,3 +229,52 @@ def test_leite_e_mais_de_tres_vezes_mais_sazonal_que_frango(base):
     frango = amplitude[SERIES.index("abate_frangos")]
     assert leite > 3 * frango
     assert leite == max(amplitude)
+
+
+def test_incluir_o_ano_incompleto_piora_o_resultado_e_sobe_a_silhueta(base):
+    """Desafio da secao 9.1: incluir 2026 (so tem o T1 medido) na conta de participacao.
+
+    Sem 2026: 116 linhas, silhueta 0,2853, concordancia 98,3%. Com 2026: 117
+    linhas, silhueta sobe para 0,3830 e concordancia cai para 74,4%, porque o
+    denominador de um ano com um so trimestre iguala esse trimestre a 100% do
+    "ano" e ele forma um grupo isolado. E o mesmo achado do ato 1 contra o
+    ato 2 reaparecendo pela terceira vez: a metrica interna premia o
+    agrupamento que serve menos ao case.
+    """
+    X_sem, _, tris_sem, _ = _participacao_no_ano(base)
+    rotulos_sem, silhueta_sem = _kmeans(X_sem)
+    concordancia_sem = _concordancia(rotulos_sem, tris_sem)
+
+    X_com, _, tris_com, periodos_com = _participacao_no_ano_todos_anos(base)
+    rotulos_com, silhueta_com = _kmeans(X_com)
+    concordancia_com = _concordancia(rotulos_com, tris_com)
+
+    assert silhueta_com > silhueta_sem
+    assert concordancia_com < concordancia_sem
+    assert 0.35 < silhueta_com < 0.42
+    assert 0.68 < concordancia_com < 0.80
+
+    tamanhos = collections.Counter(rotulos_com.tolist())
+    clusters_de_uma_linha = [c for c, n in tamanhos.items() if n == 1]
+    assert len(clusters_de_uma_linha) == 1
+    (indice_sozinho,) = [i for i, r in enumerate(rotulos_com) if r == clusters_de_uma_linha[0]]
+    assert periodos_com[indice_sozinho] == "2026-T1"
+
+
+def test_k_igual_a_dois_tem_silhueta_maior_que_k_igual_a_quatro(base):
+    """Desafio da secao 9.2: repetir o ato 2 com K=2 em vez de K=4.
+
+    Sobre as mesmas 116 linhas de participacao (anos completos), K=4 tem
+    silhueta 0,2853 e K=2 tem 0,3785. Menos grupos e mais compactos sobem a
+    metrica de novo, e o corte que sobra e o semestre, nao o trimestre: K=2 e
+    o pior das tres leituras da aula para o case, e a metrica interna aponta
+    justamente para ele.
+    """
+    X, _, _, _ = _participacao_no_ano(base)
+    padronizada = StandardScaler().fit_transform(X)
+    modelo_k2 = KMeans(n_clusters=2, n_init=50, random_state=SEMENTE).fit(padronizada)
+    silhueta_k2 = silhouette_score(padronizada, modelo_k2.labels_)
+    _, silhueta_k4 = _kmeans(X)
+
+    assert silhueta_k2 > silhueta_k4
+    assert 0.34 < silhueta_k2 < 0.42
