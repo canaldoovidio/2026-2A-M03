@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referências &middot; Aula 06 &middot; Aprendizado Não Supervisionado parte I</title>
+  <meta name="description" content="Autoestudos da Semana 05 na Adalove e leitura complementar da Aula 06 do Módulo 03 IN.">
+
+  <!-- Duas secoes fixas, nesta ordem, em TODAS as 14 aulas:
+       1. Autoestudos da semana (Adalove), copiados de
+          docs/autoestudos-por-semana.md, titulo por titulo, sem inventar
+          nenhum e sem alterar caractere.
+       2. Leitura complementar do professor.
+       A segunda secao nunca e omitida, mesmo sem curadoria fechada.
+
+       ATENCAO: a Semana 05 tem dezessete autoestudos na Adalove, e apenas
+       CINCO pertencem a esta aula. Os outros doze pertencem a Aula 07, que e o
+       segundo Encontro de Instrucao da mesma semana (04/09). Os cinco listados
+       na secao 1 sao os que o roteiro da Aula 06 pressupoe. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 06 &middot; 01/09/2026 &middot; Semana 05</p>
+      <h1>Referências: Aprendizado Não Supervisionado parte I</h1>
+      <p class="doc-subtitulo">A Semana 05 tem dois Encontros de Instrução, em 01/09 e em 04/09, e
+      os dezessete autoestudos dela se dividem entre os dois. Os cinco listados abaixo são os que
+      sustentam o roteiro de hoje. Dois deles, o Elbow Plot e a Silhouette Analysis, foram lidos
+      nesta semana e são aplicados como método na Aula 08, e a nota ao fim da seção 1 registra o
+      motivo dessa distância entre a leitura e a aplicação.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#autoestudos">Autoestudos da semana (Adalove)</a></li>
+        <li><a href="#complementar">Leitura complementar do professor</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="autoestudos">
+        <h2>1. Autoestudos da semana (Adalove)</h2>
+        <p>Semana 05, os cinco itens que o roteiro do encontro de 01/09 (Aula 06) pressupõe:</p>
+        <ol class="doc-referencias">
+          <li>Determinando K: Elbow Plot
+            <span class="doc-porque">Método de escolha de K pela curva de inércia. A Aula 06 fixa
+            K em 4 por decisão de aula e não aplica o método, que é conteúdo da Aula 08. A leitura
+            desta semana continua valendo: ela explica o que a inércia mede, e é a inércia que o
+            <code>n_init=50</code> do notebook usa para escolher a melhor de cinquenta
+            execuções.</span></li>
+          <li>Determinando K: Silhouette Analysis
+            <span class="doc-porque">Fonte da métrica que sustenta o slide central da aula. A
+            silhueta aparece hoje como medida de separação dos dois agrupamentos, 0,4795 no ato 1
+            contra 0,2853 no ato 2, e o uso dela para <em>escolher</em> K é assunto da Aula
+            08.</span></li>
+          <li>Introdução ao aprendizado não supervisionado (IBM)
+            <span class="doc-porque">Enquadramento geral do bloco das 11h05: o que muda quando a
+            base não tem coluna-resposta, e por que a avaliação deixa de ser um erro medido contra
+            um valor certo.</span></li>
+          <li>K-means
+            <span class="doc-porque">A única técnica nova do encontro. Base dos dois atos da
+            prática, das 11h20 às 11h40: distância euclidiana entre observações padronizadas,
+            centros que se movem até estabilizar e o papel de <code>random_state</code> num
+            algoritmo com inicialização sorteada.</span></li>
+          <li>Opcional: PCA
+            <span class="doc-porque">Item opcional na Adalove, mantido aqui com o mesmo rótulo da
+            fonte. PCA não entra no roteiro de hoje. O vínculo com esta aula é a exigência de
+            escala comparável, a mesma do K-means: componentes principais são direções de máxima
+            variância, e sem padronizar a série de maior magnitude define sozinha a primeira
+            delas.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>Estes títulos são cópia literal de <code>docs/autoestudos-por-semana.md</code>, que é
+          gerado do <code>Turma.xlsx</code> oficial. Autoestudo que não está lá não entra aqui. O
+          acesso ao conteúdo é pela Adalove, com o login institucional.</p>
+          <p>A Semana 05 tem dezessete autoestudos, e os outros doze (matriz de confusão, Naive
+          Bayes, árvore de decisão e entropia, Random Forest, SVM, regressão logística e feature
+          engineering, entre práticas e itens opcionais) pertencem ao encontro de 04/09, que é a
+          Aula 07. Eles ficam listados na página de referências daquela aula.</p>
+        </div>
+        <div class="doc-nota">
+          <p><strong>Sobre a distância entre a leitura e a aplicação de dois destes itens.</strong>
+          Elbow Plot e Silhouette Analysis foram lidos nesta semana, e o método de escolha de K é
+          tratado na <strong>Aula 08</strong>. Esta aula usa K = 4 fixo, por decisão registrada em
+          <code>docs/adrs/ADR-009</code>: o professor avaliou que o módulo estava acima do que a
+          turma acompanhava em quatro eixos ao mesmo tempo (mecânica de Python, conceitos de
+          modelagem, densidade de conteúdo e amarração com a entrega), e a Aula 06 trocou dois
+          blocos de conteúdo novo por diagnóstico e revisão dirigida das Aulas 01 a 05.</p>
+          <p>A silhueta ainda aparece hoje, e com peso: ela é o número que mostra que uma métrica
+          interna de agrupamento mede separação geométrica sem enxergar utilidade. Quem quiser
+          aplicar o Elbow Plot ao case antes da Aula 08 tem tudo o que precisa no notebook, porque
+          <code>KMeans</code> já expõe <code>inertia_</code>.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="complementar">
+        <h2>2. Leitura complementar do professor</h2>
+        <p>A curadoria definitiva desta seção ainda será fechada pelo professor. Até lá, ficam aqui
+        as fontes efetivamente citadas no deck e no material de apoio, na mesma numeração usada no
+        slide de referências.</p>
+        <ol class="doc-referencias">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite, tabelas
+            1092, 1093, 1094, 7524 e 1086 do SIDRA.
+            <span class="doc-porque">Contrato de colunas e checagem de sanidade dos valores em
+            <code>dados/README.md</code>. As cinco séries entram inteiras no K-means de hoje, nos
+            117 trimestres em que elas existem juntas, de 1997-T1 a 2026-T1.</span></li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn: Machine Learning in Python</em>. Journal of
+            Machine Learning Research, v. 12, p. 2825-2830, 2011:
+            <a href="https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html">KMeans</a>,
+            <a href="https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html">StandardScaler</a>
+            e <a href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.silhouette_score.html">silhouette_score</a>.
+            <span class="doc-porque">As três chamadas que a prática usa. A página do
+            <code>KMeans</code> documenta <code>n_init</code>, <code>random_state</code> e
+            <code>inertia_</code>; a do <code>silhouette_score</code> traz a definição da métrica
+            e a faixa de valores que ela devolve.</span></li>
+          <li>Rousseeuw, P. J. <em>Silhouettes: a graphical aid to the interpretation and
+            validation of cluster analysis</em>. Journal of Computational and Applied Mathematics,
+            v. 20, p. 53-65, 1987.
+            <span class="doc-porque">O artigo original da silhueta. Leitura de fundo para o slide
+            mais importante da aula: a métrica compara a distância média dentro do grupo com a
+            distância média ao grupo vizinho mais próximo. O próprio título do artigo delimita o
+            alcance dela, ao apresentá-la como auxílio gráfico à interpretação e à validação de uma
+            análise de agrupamento.</span></li>
+          <li>Autoestudos da Semana 05 na Adalove, listados na seção 1 desta página.
+            <span class="doc-porque">Referência cruzada usada como citação [4] no deck.</span></li>
+          <li>Material de apoio da aula, em
+            <a href="../materiais/aula06.html">materiais/aula06.html</a>.
+            <span class="doc-porque">Onde estão as respostas do desafio do notebook, a
+            investigação das duas exceções de 2008, a relação entre a amplitude sazonal do frango e
+            os coeficientes de sazonalidade da Aula 05, e o registro da divergência entre esta aula
+            e o roteiro original.</span></li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seções 4 e 5.
+            <span class="doc-porque">A seção 5 é a matriz de rastreabilidade, que amarra a Aula 06
+            à ART.6 Preparação dos Dados e Modelagem, e só a ela. O peso 6 dessa ART e o calendário
+            da Sprint 3, com review em 11/09, estão na seção 4.</span></li>
+          <li><code>docs/adrs/ADR-009</code> e
+            <code>docs/adrs/ADR-008-corte-temporal-e-baseline-de-coeficiente-fixo.md</code>.
+            <span class="doc-porque">A primeira registra a redução de escopo desta aula, o motivo
+            medido e o custo dela, incluindo a migração do método de escolha de K para a Aula 08. A
+            segunda define o corte temporal e a baseline de coeficiente fixo, que são os números
+            que a retomada das 10h50 reproduz.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>O item 1 vai sem link de propósito: a URL de consulta da API do SIDRA, para cada
+          tabela, está documentada em <code>dados/README.md</code>, e apontar direto para ela aqui
+          duplicaria a mesma informação em dois lugares que podem divergir com o tempo.</p>
+          <p>O item 3 é leitura de fundo, dispensável como preparação para o encontro. A aula
+          demonstra o comportamento da silhueta medindo-a nos dois agrupamentos, sem exigir a
+          formulação do artigo.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula06.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../materiais/aula06.html"><span class="material-symbols-outlined" aria-hidden="true">menu_book</span>Material</a>
+  </nav>
+</body>
+</html>
