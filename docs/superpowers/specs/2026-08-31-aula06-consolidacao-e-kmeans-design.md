@@ -81,9 +81,11 @@ Dois achados que servem ao case:
 
 - **O leite tem pico no T4 e as carnes no T3.** Picos em trimestres diferentes é informação direta
   para o Modelo 2 do TAPI, que converte produção em demanda de ração.
-- **Frango é a menos sazonal das cinco séries**, com 1,08 p.p. de amplitude. É o alvo do Modelo 1,
-  treinado na Aula 05, e explica por que os coeficientes de `sen` e `cos` daquela regressão são
-  pequenos mesmo depois de padronizar.
+- **O leite tem mais que o triplo da amplitude sazonal do frango**, 3,94 p.p. contra 1,08. Frango e
+  ovos ficam empatados no piso (1,08 e 1,06, diferença de 0,02 p.p., que é ruído). Frango é o alvo
+  do Modelo 1, treinado na Aula 05, e a amplitude pequena explica por que os coeficientes de `sen`
+  e `cos` daquela regressão são pequenos mesmo depois de padronizar. O teste trava a razão entre
+  leite e frango, não a ordem entre frango e ovos, que a medição não separa.
 
 ## 2. Objetivos
 
@@ -172,7 +174,7 @@ MAPE, overfitting).
 
 | Artefato | Caminho | Observação |
 |---|---|---|
-| Deck | `aulas/aula06.html` | ~30 slides, seis deles condicionais |
+| Deck | `aulas/aula06.html` | 35 slides, dez deles condicionais |
 | Material de apoio | `materiais/aula06.html` | inclui o achado das duas exceções de 2008 |
 | Referências | `referencias/aula06.html` | os cinco autoestudos da Semana 05 com título exato |
 | Notebook | `notebooks/aula06.ipynb` | precisa rodar em Colab sem instalação |
