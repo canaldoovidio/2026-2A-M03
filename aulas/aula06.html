@@ -88,8 +88,10 @@
             sobre as cinco séries do case.</p>
           </div>
         </div>
-        <p>A aula retoma as Aulas 01 a 05 antes de acrescentar qualquer coisa. O diagnóstico das
-        próximas seis perguntas decide quais tópicos a turma revisa hoje. A única técnica nova do
+        <p>A Aula 05 deixou pronto o Modelo 1 do TAPI: a regressão do abate de frangos, com MAPE
+        de <strong>1,60% contra 1,69%</strong> da baseline de coeficiente fixo. Hoje esse modelo
+        volta a rodar na máquina de cada dupla antes de qualquer coisa nova. O diagnóstico das
+        próximas seis perguntas decide quais tópicos a turma revisa, e a única técnica nova do
         encontro é o K-means, com K fixo em 4, porque escolher K é assunto da Aula 08.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 06 &middot; Sprint 3</p>
@@ -182,17 +184,17 @@
           <ul class="quiz-options">
             <li data-correct="false"
                 data-correct-msg="Correto."
-                data-incorrect-msg="Nenhuma linha saiu por causa do valor que carrega. O corte é estrutural.">Foram descartadas por serem valores extremos</li>
+                data-incorrect-msg="Nenhuma linha saiu por causa do valor que carrega. O corte é estrutural.">Foram descartadas na limpeza, por serem valores extremos</li>
             <li data-correct="false"
                 data-correct-msg="Correto."
-                data-incorrect-msg="O conjunto de teste reserva 8 trimestres, e o corte acontece depois da base pronta.">Estão no conjunto de teste, separado antes da junção</li>
+                data-incorrect-msg="O conjunto de teste reserva 8 trimestres, e o corte acontece depois da base pronta.">Estão reservadas no conjunto de teste, separado antes da junção</li>
             <li data-correct="true"
                 data-correct-msg="Certo: shift(4) não tem de onde tirar valor nas quatro primeiras linhas, e o dropna leva as quatro embora."
                 data-incorrect-msg="Era esta: a defasagem de 4 trimestres não existe para as quatro primeiras linhas da série."
-                >A defasagem de 4 trimestres não existe para as quatro primeiras linhas</li>
+                >A defasagem de 4 trimestres não existe para elas</li>
             <li data-correct="false"
                 data-correct-msg="Correto."
-                data-incorrect-msg="2026-T1 está na base: é justamente a última linha dela.">São os trimestres de 2026, ano ainda incompleto</li>
+                data-incorrect-msg="2026-T1 está na base: é justamente a última linha dela.">São os 4 trimestres de 2026, ano ainda incompleto</li>
           </ul>
         </div>
         <div class="slide-footer">
@@ -248,17 +250,17 @@
           <ul class="quiz-options">
             <li data-correct="false"
                 data-correct-msg="Correto."
-                data-incorrect-msg="Os dois números diferem: 1,60% para o modelo e 1,69% para a baseline.">Nada: os dois empatam na janela de teste</li>
+                data-incorrect-msg="Os dois números diferem: 1,60% para o modelo e 1,69% para a baseline.">Nada, porque os dois empatam em 1,69% na janela de teste</li>
             <li data-correct="true"
-                data-correct-msg="Certo: 0,10 ponto percentual de MAPE, 1,60% contra 1,69%. É uma vantagem pequena, e foi preciso repetir a medida em doze janelas para confiar nela."
+                data-correct-msg="Certo: 0,10 ponto percentual de MAPE. É uma vantagem pequena, e foi preciso repetir a medida em doze janelas consecutivas para confiar nela."
                 data-incorrect-msg="Era esta: 1,60% contra 1,69%, uma diferença de 0,10 ponto percentual."
-                >0,10 ponto percentual de MAPE: 1,60% contra 1,69%</li>
+                >0,10 ponto percentual: 1,60% contra 1,69%</li>
             <li data-correct="false"
                 data-correct-msg="Correto."
-                data-incorrect-msg="Essa distância só aparece na média de doze janelas, 2,18% contra 3,14%. Na última janela ela é bem menor.">Mais de um ponto percentual de MAPE</li>
+                data-incorrect-msg="Nenhuma das duas medições chega a um ponto percentual de distância: 1,60% contra 1,69% na janela de teste, e 2,18% contra 3,14% na média de doze janelas.">Mais de 1 ponto percentual de MAPE na janela de teste</li>
             <li data-correct="false"
                 data-correct-msg="Correto."
-                data-incorrect-msg="O modelo fica à frente na janela de teste e nas doze janelas medidas.">A baseline ganha do modelo</li>
+                data-incorrect-msg="A atribuição está trocada: 1,60% é do modelo e 1,69% é da baseline.">A baseline ganha, com 1,60% contra 1,69% do modelo</li>
           </ul>
         </div>
         <div class="slide-footer">
@@ -276,22 +278,22 @@
           <h2>Pergunta 6 &middot; Aula 05</h2>
         </div>
         <div class="quiz-container">
-          <p class="quiz-question">A Aula 04 previu que padronizar não mudaria as previsões de uma
-          regressão linear. Na Aula 05 mudou. Por quê?</p>
+          <p class="quiz-question">No pipeline da Aula 05, o <code>fit</code> do
+          <code>StandardScaler</code> viu quais linhas da base?</p>
           <ul class="quiz-options">
             <li data-correct="false"
                 data-correct-msg="Correto."
-                data-incorrect-msg="O StandardScaler subtrai a média e divide pelo desvio. Nenhuma linha sai da base.">Porque o StandardScaler também remove valores extremos</li>
+                data-incorrect-msg="Assim a média e o desvio do teste entram na conta, e o modelo recebe informação de trimestres que ele deveria desconhecer.">As 113 linhas, para a escala ficar igual nas duas partes</li>
             <li data-correct="true"
-                data-correct-msg="Certo: as defasagens estão na casa de 1e9 e sen e cos na casa de 1. O número de condição chega a 1,08e10 e o solver perde a contribuição das colunas pequenas."
-                data-incorrect-msg="Era esta: sem padronizar, o número de condição da matriz chega a 1,08e10 e o solver zera os coeficientes de sazonalidade."
-                >Porque o número de condição de 1,08e10 zera os coeficientes de sazonalidade</li>
+                data-correct-msg="Certo: o escalador aprende média e desvio nas 105 linhas de treino, e as 8 de teste recebem só o transform."
+                data-incorrect-msg="Era esta: o fit vê as 105 linhas de treino, e o teste passa só pelo transform."
+                >As 105 de treino, e o teste só passa pelo transform</li>
             <li data-correct="false"
                 data-correct-msg="Correto."
-                data-incorrect-msg="O fit do escalador vê só o treino, e é assim que a Aula 05 evita vazamento.">Porque o escalador foi ajustado no conjunto inteiro</li>
+                data-incorrect-msg="O teste nunca ajusta nada. Ele existe para medir o que já foi decidido no treino.">As 8 de teste, que fixam a escala da previsão final</li>
             <li data-correct="false"
                 data-correct-msg="Correto."
-                data-incorrect-msg="O alvo não foi padronizado. A previsão sai na unidade original da série.">Porque a previsão passa a sair em escala padronizada</li>
+                data-incorrect-msg="LinearRegression não padroniza nada. O escalador é um passo separado, ajustado no treino.">Nenhuma, porque LinearRegression já padroniza sozinha</li>
           </ul>
         </div>
         <div class="slide-footer">
@@ -306,7 +308,7 @@
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>Índice da revisão dirigida</h2>
+          <h2>Bloco 2 &middot; Índice da revisão dirigida</h2>
         </div>
         <table class="data-table">
           <thead>
@@ -314,9 +316,9 @@
           </thead>
           <tbody>
             <tr>
-              <td>sem pergunta</td>
-              <td>Aula 01: ler o CSV e conferir os tipos das colunas</td>
-              <td>11</td>
+              <td>1</td>
+              <td>Aula 03: as cinco séries e o que a EDA procura</td>
+              <td>15</td>
             </tr>
             <tr>
               <td>2</td>
@@ -324,14 +326,14 @@
               <td>13</td>
             </tr>
             <tr>
-              <td>1</td>
-              <td>Aula 03: as cinco séries e o que a EDA procura</td>
-              <td>15</td>
-            </tr>
-            <tr>
               <td>3</td>
               <td>Aula 04: junção das cinco séries e as defasagens</td>
               <td>17</td>
+            </tr>
+            <tr>
+              <td>4 e 5</td>
+              <td>Aula 05: corte temporal, baseline e as métricas de erro</td>
+              <td>19</td>
             </tr>
             <tr>
               <td>6</td>
@@ -339,15 +341,18 @@
               <td>18</td>
             </tr>
             <tr>
-              <td>4 e 5</td>
-              <td>Aula 05: corte temporal, baseline e as métricas de erro</td>
-              <td>19</td>
+              <td>sem pergunta</td>
+              <td>Aula 01: ler o CSV e conferir os tipos das colunas</td>
+              <td>11</td>
             </tr>
           </tbody>
         </table>
-        <p>Para ir direto a um módulo, pressione <code>G</code>, digite o número do slide e
-        pressione Enter. A revisão de hoje cobre dois ou três destes seis destinos, escolhidos
-        pelo resultado do quiz.</p>
+        <p><strong>10h30 &middot; 10h50.</strong> A revisão cobre dois ou três destes seis
+        destinos. Para ir direto a um deles, pressione <code>G</code>, digite o número do slide e
+        pressione Enter.</p>
+        <p><strong>Antes de eu abrir o primeiro: qual destes seis vocês querem ver?</strong>
+        Levantem a mão no número, e a contagem entra no diagnóstico junto com o resultado do
+        quiz.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 06 &middot; Sprint 3</p>
           <p class="footer-page">9</p>
@@ -365,19 +370,21 @@
         <div class="side-by-side">
           <pre class="code-compact"><code>import pandas as pd
 
-frangos = pd.read_csv("dados/abate_frangos.csv")
+frangos = pd.read_csv("../dados/abate_frangos.csv")
 
-frangos.shape      # (117, 2)
-frangos.columns    # periodo, abate_frangos
+frangos.shape      # (117, 3)
+frangos.columns    # periodo, valor, unidade
 frangos.head(3)
 frangos.dtypes</code></pre>
           <div>
             <p>Três comandos respondem se o arquivo entrou certo: <code>shape</code> diz quantas
             linhas e colunas chegaram, <code>head</code> mostra as primeiras linhas e
             <code>dtypes</code> diz o tipo de cada coluna.</p>
-            <p>Os cinco CSVs de <code>dados/</code> já vêm com vírgula como separador e ponto como
-            decimal [1], então <code>read_csv</code> sem argumento extra funciona. Se
-            <code>shape</code> devolver uma coluna só, o separador do arquivo é outro.</p>
+            <p>Os cinco CSVs de <code>../dados/</code> têm as mesmas três colunas:
+            <code>periodo</code>, <code>valor</code> e <code>unidade</code> [1]. Todos usam vírgula
+            como separador e ponto como decimal, então <code>read_csv</code> sem argumento extra
+            funciona. Se <code>shape</code> devolver menos de três colunas, o separador do arquivo
+            é outro.</p>
           </div>
         </div>
         <div class="slide-footer">
@@ -406,17 +413,25 @@ frangos.dtypes</code></pre>
               e soma não fazem sentido aqui.</td>
             </tr>
             <tr>
-              <td><code>abate_frangos</code></td>
+              <td><code>valor</code></td>
               <td><code>float64</code></td>
-              <td>Aceita as operações numéricas: <code>mean</code>, <code>diff</code>,
-              <code>shift</code>, correlação, e entra direto no modelo.</td>
+              <td>A medida da série. Aceita <code>mean</code>, <code>diff</code>,
+              <code>shift</code> e correlação, e é a única coluna que entra no modelo.</td>
+            </tr>
+            <tr>
+              <td><code>unidade</code></td>
+              <td><code>object</code></td>
+              <td>Rótulo constante da série: <code>Quilogramas</code>, <code>Mil dúzias</code> ou
+              <code>Mil litros</code>. Não entra em conta nenhuma.</td>
             </tr>
           </tbody>
         </table>
+        <p>Os cinco arquivos chamam a medida de <code>valor</code>, então juntar os cinco sem
+        renomear faz as colunas colidirem. A Aula 04 troca <code>valor</code> pelo nome da série
+        antes do <code>merge</code>, e o slide 17 mostra esse código.</p>
         <p>Uma coluna numérica que chega como <code>object</code> costuma ter texto escondido
-        dentro (separador de milhar, sinal de ausente, espaço). <code>pd.to_numeric</code> com
-        <code>errors="coerce"</code> converte o que dá e deixa o resto como ausente, que é o
-        estado em que <code>isna().sum()</code> consegue contar o problema.</p>
+        dentro. <code>pd.to_numeric</code> com <code>errors="coerce"</code> converte o que dá e
+        deixa o resto como ausente, estado em que <code>isna().sum()</code> conta o problema.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 06 &middot; Sprint 3</p>
           <p class="footer-page">11</p>
@@ -562,25 +577,32 @@ serie.isna().sum()</code></pre>
           <h2>Aula 04 &middot; A junção e as defasagens</h2>
         </div>
         <div class="side-by-side">
-          <pre class="code-compact"><code># 5 CSVs -> 117 trimestres comuns
-base = bovinos.merge(suinos, on="periodo") \
-              .merge(frangos, on="periodo") \
-              .merge(ovos,    on="periodo") \
-              .merge(leite,   on="periodo")
+          <pre class="code-compact"><code># SERIES: os 5 nomes de arquivo de ../dados/
+base = None
+for nome in SERIES:
+    col = (pd.read_csv(f"../dados/{nome}.csv")
+             [["periodo", "valor"]]
+             .rename(columns={"valor": nome}))
+    base = col if base is None else base.merge(
+        col, on="periodo", how="inner")
+base.shape   # (117, 6)
 
 base["frangos_lag1"] = base.abate_frangos.shift(1)
 base["frangos_lag4"] = base.abate_frangos.shift(4)
 
 analitica = base.dropna()
-analitica.shape   # (113, 15)</code></pre>
+analitica.shape   # (113, 8) neste recorte</code></pre>
           <div>
-            <p>O <code>merge</code> pela chave <code>periodo</code> devolve os 117 trimestres em
+            <p>Cada arquivo entra só com <code>periodo</code> e <code>valor</code>, e o
+            <code>rename</code> troca <code>valor</code> pelo nome da série. Sem esse passo as
+            cinco colunas <code>valor</code> colidem no <code>merge</code>.</p>
+            <p>O <code>inner</code> pela chave <code>periodo</code> devolve os 117 trimestres em
             que as cinco séries existem juntas.</p>
             <p><code>shift(4)</code> copia o valor de quatro linhas atrás, e as quatro primeiras
-            linhas não têm de onde copiar: ficam ausentes e saem no <code>dropna</code>. Restam
-            <strong>113 linhas</strong>, de 1998-T1 a 2026-T1.</p>
-            <p>Toda defasagem cobra esse pedágio no topo da série, proporcional ao maior
-            <code>lag</code> usado.</p>
+            não têm de onde copiar: ficam ausentes e saem no <code>dropna</code>. Restam
+            <strong>113 linhas</strong>, de 1998-T1 a 2026-T1. Com <code>trimestre</code>,
+            <code>sen</code>, <code>cos</code> e as demais defasagens da Aula 04, a base chega a
+            15 colunas.</p>
           </div>
         </div>
         <div class="slide-footer">
@@ -600,11 +622,13 @@ analitica.shape   # (113, 15)</code></pre>
         <div class="side-by-side">
           <pre class="code-compact"><code>import numpy as np
 
+# analitica: as 113 linhas montadas no slide 17
 t = analitica["trimestre"]          # 1 a 4
 analitica["sen"] = np.sin(2*np.pi*t/4)
 analitica["cos"] = np.cos(2*np.pi*t/4)
 
 from sklearn.preprocessing import StandardScaler
+# X_treino e X_teste: o corte 105/8 do slide 19
 escalador = StandardScaler().fit(X_treino)
 X_treino = escalador.transform(X_treino)
 X_teste  = escalador.transform(X_teste)</code></pre>
@@ -634,7 +658,8 @@ X_teste  = escalador.transform(X_teste)</code></pre>
           <h2>Aula 05 &middot; Corte temporal e baseline</h2>
         </div>
         <div class="side-by-side">
-          <pre class="code-compact"><code># corte por posicao, sem sorteio
+          <pre class="code-compact"><code># analitica: as 113 linhas montadas no slide 17
+# corte por posicao, sem sorteio
 treino = analitica.iloc[:105]
 teste  = analitica.iloc[105:]   # 8 trimestres</code></pre>
           <div>
@@ -795,11 +820,11 @@ modelo.inertia_   # dispersao dentro dos grupos</code></pre>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>Os quatro grupos acertam 26,5% do trimestre</h2>
+          <h2>A concordância de 26,5% é o acaso</h2>
         </div>
         <table class="data-table">
           <thead>
-            <tr><th>Grupo</th><th>Trimestres</th><th>Intervalo coberto</th></tr>
+            <tr><th>Grupo</th><th>Linhas</th><th>Intervalo coberto</th></tr>
           </thead>
           <tbody>
             <tr><td>1</td><td>30</td><td>1997-T1 a 2004-T2</td></tr>
@@ -808,9 +833,12 @@ modelo.inertia_   # dispersao dentro dos grupos</code></pre>
             <tr><td>4</td><td>25</td><td>2019-T3 a 2026-T1</td></tr>
           </tbody>
         </table>
-        <p>Os quatro grupos são blocos contíguos de tempo, e nenhum deles corresponde a um
-        trimestre do calendário. A concordância com o trimestre fica em <strong>26,5%</strong>, e
-        com quatro grupos equilibrados o acaso já dá 25%.</p>
+        <p>Os quatro grupos são quatro faixas de tempo, e nenhuma delas corresponde a um
+        trimestre do calendário. A concordância com o trimestre do calendário fica em
+        <strong>26,5%</strong>, e com quatro grupos equilibrados o acaso já dá 25%.</p>
+        <p>As faixas 3 e 4 se intercalam na virada de 2020, e por isso os dois intervalos da
+        tabela se sobrepõem: a faixa 4 começa em 2019-T3, depois 2020-T1 e 2020-T2 voltam à faixa
+        3, e só de 2020-T3 em diante a faixa 4 fica.</p>
         <p>As cinco séries crescem ao longo de 29 anos, a tendência domina a variância da matriz,
         e o algoritmo segmentou a linha do tempo porque foi isso que a entrada perguntou.</p>
         <div class="slide-footer">
@@ -852,7 +880,7 @@ modelo.inertia_   # dispersao dentro dos grupos</code></pre>
           <div class="accent-bar"></div>
           <h2>Sem a tendência, o acerto vai a 114 das 116</h2>
         </div>
-        <img src="../assets/img/aula06-epocas-vs-trimestres.png" alt="Dois painéis sobre a série de abate de frangos de 1997 a 2026. À esquerda, os grupos que o K-means encontrou sobre os níveis padronizados, quatro faixas contíguas no tempo: 1997-T1 a 2004-T2, 2004-T3 a 2011-T2, 2011-T3 a 2020-T2 e 2019-T3 a 2026-T1. À direita, os grupos encontrados sobre a participação de cada trimestre no ano, que alternam ponto a ponto e coincidem com T1, T2, T3 e T4" style="width: 100%; max-width: 840px; display: block; margin: 0 auto 6px;">
+        <img src="../assets/img/aula06-epocas-vs-trimestres.png" alt="Dois painéis sobre a série de abate de frangos de 1997 a 2026. À esquerda, os grupos que o K-means encontrou sobre os níveis padronizados, quatro faixas de tempo: 1997-T1 a 2004-T2, 2004-T3 a 2011-T2, 2011-T3 a 2020-T2 e 2019-T3 a 2026-T1. À direita, os grupos encontrados sobre a participação de cada trimestre no ano, que alternam ponto a ponto e coincidem com T1, T2, T3 e T4" style="width: 100%; max-width: 840px; display: block; margin: 0 auto 6px;">
         <p>Concordância de <strong>98,3%</strong>, contra 26,5% do ato 1. Os dois agrupamentos
         usaram os mesmos dados, o mesmo algoritmo e o mesmo K. O que mudou foi a transformação da
         entrada, e ela decidiu o resultado antes de o <code>KMeans</code> rodar.</p>
@@ -888,6 +916,8 @@ modelo.inertia_   # dispersao dentro dos grupos</code></pre>
         o trimestre do calendário, um rótulo que o <code>KMeans</code> nunca viu. Uma métrica
         interna enxerga só as distâncias que a entrada produziu, e por isso ela não tem como saber
         para que o agrupamento vai servir.</p>
+        <p><strong>O agrupamento com a silhueta menor é o que responde à pergunta do
+        case.</strong></p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 06 &middot; Sprint 3</p>
           <p class="footer-page">26</p>
@@ -900,7 +930,7 @@ modelo.inertia_   # dispersao dentro dos grupos</code></pre>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>O leite tem pico no T4 e as carnes no T3</h2>
+          <h2>O leite tem pico um trimestre após as carnes</h2>
         </div>
         <img src="../assets/img/aula06-perfil-sazonal.png" alt="Gráfico de barras agrupadas com o desvio da participação de cada trimestre em relação a 25%, em pontos percentuais, para as cinco séries. Bovinos, suínos, frangos e ovos têm o maior desvio positivo no T3; o leite tem o maior desvio positivo no T4, destacado em coral, e o maior desvio negativo no T2" style="width: 100%; max-width: 680px; display: block; margin: 0 auto 6px;">
         <p>A amplitude entre o trimestre de maior e o de menor participação é de 3,85 p.p. para o
@@ -958,7 +988,7 @@ modelo.inertia_   # dispersao dentro dos grupos</code></pre>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>O que a ART.6 pede e o que já existe</h2>
+          <h2>O que a ART.6 pede, o que existe e o que falta</h2>
         </div>
         <table class="data-table">
           <thead>
