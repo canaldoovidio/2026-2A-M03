@@ -6,11 +6,12 @@
   <title>Aula 07 &middot; Aprendizado Supervisionado parte II &middot; Módulo 03 IN</title>
 
   <!-- Aula 07, 04/09/2026, Sprint 3. Conteudo consolidado em
-       ROTEIRO-AULA07-AGORA.md (raiz do repositorio), que substitui o roteiro
-       original de PLANEJAMENTO_AULA_A_AULA.md para esta aula: a instrucao
-       deixou de seguir arvore -> ensemble -> classificacao (matriz de
-       confusao) na ordem original e passou a ser conduzida por quatro
-       hipoteses testadas com numeros medidos, mais uma pincelada de KNN.
+       docs/adrs/ADR-010-base-mensal-e-escopo-da-aula-07.md, que documenta a
+       reducao de escopo desta aula em relacao ao roteiro original de
+       PLANEJAMENTO_AULA_A_AULA.md: a instrucao deixou de seguir arvore ->
+       ensemble -> classificacao (matriz de confusao) na ordem original e
+       passou a ser conduzida por quatro hipoteses testadas com numeros
+       medidos, mais uma pincelada de KNN.
        Numeros canonicos e definicao da base analitica em
        .superpowers/sdd/2026-09-03-aula07/global-constraints.md.
 
@@ -45,7 +46,7 @@
        da Aula 05 (padronizar iguala influencia quando nao se sabe qual
        feature importa) nao muda: aqui sabe-se, e por isso o efeito inverte.
 
-       O fecho da ART.6 (slide 26): regressao linear sobre a razao, 11
+       O fecho da ART.6 (slide 27): regressao linear sobre a razao, 11
        features (lag1, lag2, lag3, lag12, sen, cos, dias + as quatro series
        defasadas em um mes). RMSE 46.724.434 e MAPE 3,32%, contra RMSE
        54.523.588 e MAPE 3,71% da baseline C da LDC. E o unico modelo do
@@ -93,8 +94,8 @@
           <div class="concept-card">
             <h3>08h00 &middot; 10h00</h3>
             <p>Autoestudo na Adalove: Árvore de Decisão e Entropia, Árvore de Decisão na prática,
-            Random Forest, Matriz de confusão, precisão e revocação, Regressão Logística e SVM
-            [7].</p>
+            Random Forest, Matriz de confusão, precisão e revocação, Regressão Logística e SVM -
+            Support Vector Machine [7].</p>
           </div>
           <div class="concept-card">
             <h3>10h00 &middot; 10h15</h3>
@@ -107,10 +108,10 @@
             Forest e o KNN, testadas com os números medidos da própria base do TAPI.</p>
           </div>
         </div>
-        <p>A aula segue por hipóteses testadas, não por lista de técnicas: cada bloco declara uma
-        afirmação sobre o Modelo 1 do TAPI e mede se ela é verdadeira ou falsa contra o teste de 24
-        meses. A técnica nova de hoje, sem cálculo de entropia à mão, é a árvore de decisão; Random
-        Forest e KNN entram como comparação.</p>
+        <p>A aula segue por hipóteses testadas: cada bloco declara uma afirmação sobre o Modelo 1
+        do TAPI e mede se ela é verdadeira ou falsa contra o teste de 24 meses. A técnica nova de
+        hoje, sem cálculo de entropia à mão, é a árvore de decisão; Random Forest e KNN entram como
+        comparação.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
           <p class="footer-page">2</p>
@@ -231,34 +232,30 @@
         </div>
       </section>
 
-      <!-- 7 - Base mensal -->
-      <section class="content-slide">
+      <!-- 7 - Prática: montar a base mensal -->
+      <section class="exercise-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>A base analítica mensal reúne 339 linhas</h2>
+          <h2>Montar a base mensal e conferir 339 linhas</h2>
         </div>
-        <div class="side-by-side">
-          <pre class="code-compact"><code>FEATURES = ["lag1", "lag12", "sen", "cos"]
-ALVO = "abate_frangos"
-N_TESTE = 24
-
-# lag1, lag2, lag3, lag12: abate_frangos
-# deslocado em 1, 2, 3 e 12 meses
-# sen = sin(2*pi*mes/12)
-# cos = cos(2*pi*mes/12)
-# dropna(): sai a 339 linhas</code></pre>
-          <div>
-            <p>Junção interna das cinco séries mensais de <code>dados/mensal/</code> pela coluna
-            <code>periodo</code>. As colunas de defasagem (<code>lag1</code> a <code>lag12</code>)
-            não existem para os primeiros meses da série, e o <code>dropna</code> descarta essas
-            linhas [2].</p>
-            <p>O modelo de hoje usa quatro features: <code>lag1</code>, <code>lag12</code>,
-            <code>sen</code> e <code>cos</code>, o mesmo desenho de sazonalidade codificada da Aula
-            04.</p>
-          </div>
-        </div>
+        <p>Junção interna das cinco séries mensais de <code>dados/mensal/</code> pela coluna
+        <code>periodo</code>, com as colunas de defasagem <code>lag1</code> a <code>lag12</code> e
+        a sazonalidade codificada em <code>sen</code> e <code>cos</code>, o mesmo desenho da Aula
+        04. O modelo de hoje usa quatro features: <code>lag1</code>, <code>lag12</code>,
+        <code>sen</code> e <code>cos</code>.</p>
+        <ol class="exercise-steps">
+          <li>Montar a junção das cinco séries de <code>dados/mensal/</code> pela coluna
+          <code>periodo</code> e criar <code>lag1</code>, <code>lag2</code>, <code>lag3</code>,
+          <code>lag12</code>, <code>sen</code> e <code>cos</code>.</li>
+          <li>Rodar <code>dropna()</code>, que descarta os meses sem defasagem completa, e
+          conferir que restam <strong>339 linhas</strong>, de <strong>1998-01 a 2026-03</strong>
+          [2].</li>
+          <li>Escolher um trimestre qualquer e reconciliar a soma dos três meses de
+          <code>abate_frangos</code> com o valor da mesma série trimestral, como na checagem do
+          slide anterior.</li>
+        </ol>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
           <p class="footer-page">7</p>
@@ -282,11 +279,11 @@ N_TESTE = 24
             <tr><td>Teste</td><td>24 meses</td><td>2024-04 a 2026-03</td></tr>
           </tbody>
         </table>
-        <p>O corte é por data, como na Aula 05, não por sorteio de linhas: o sorteio deixaria
-        trimestres futuros no treino e mediria interpolação, não a extrapolação que a LDC
-        precisa.</p>
-        <p>Vinte e quatro meses de teste é o mesmo horizonte do TAPI, agora expresso na unidade que
-        o parceiro pediu desde o início: mês, não trimestre.</p>
+        <p>O corte é por data, como na Aula 05: um sorteio de linhas deixaria trimestres futuros no
+        treino e mediria interpolação, quando o que a LDC precisa é a extrapolação para meses
+        ainda não vistos.</p>
+        <p>Vinte e quatro meses de teste é o mesmo horizonte do TAPI, agora expresso em mês, a
+        unidade que o parceiro pediu desde o início.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
           <p class="footer-page">8</p>
@@ -308,8 +305,8 @@ N_TESTE = 24
         <p>No fim de cada ramo existe uma <strong>folha</strong>: um subconjunto de linhas de
         treino. A previsão da árvore para qualquer entrada nova é a <strong>média do alvo</strong>
         dentro da folha em que essa entrada cai. O cálculo de entropia passo a passo, que decide
-        onde cada corte acontece, está no autoestudo de hoje [7]; a aula foca no que a árvore
-        produz, não em como ela escolhe o corte.</p>
+        onde cada corte acontece, está no autoestudo de hoje [7] e no material de apoio, que
+        explica a árvore nó a nó [5]; a aula foca no que a árvore produz.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
           <p class="footer-page">9</p>
@@ -322,7 +319,7 @@ N_TESTE = 24
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2><code>max_depth=3</code> limita a árvore de hoje a no máximo 8 folhas</h2>
+          <h2>A árvore de hoje para em 8 folhas</h2>
         </div>
         <div class="side-by-side">
           <pre class="code-compact"><code>from sklearn.tree import (
@@ -336,9 +333,10 @@ arvore = DecisionTreeRegressor(
 arvore.fit(X_treino, y_treino)
 arvore.get_n_leaves()   # 8</code></pre>
           <div>
-            <p><code>max_depth</code> limita quantas perguntas seguidas a árvore pode fazer antes
-            de parar num nó folha. Com profundidade 3, o número máximo de folhas é
-            2<sup>3</sup> = 8, e a árvore treinada nesta base usa exatamente esse teto.</p>
+            <p><code>DecisionTreeRegressor</code> [3] recebe <code>max_depth</code>, que limita
+            quantas perguntas seguidas a árvore pode fazer antes de parar num nó folha. Com
+            profundidade 3, o número máximo de folhas é 2<sup>3</sup> = 8, e a árvore treinada
+            nesta base usa exatamente esse teto.</p>
             <p>Uma árvore mais profunda teria mais folhas, cada uma com menos linhas de treino, e
             se ajustaria mais ao ruído do próprio treino. <code>random_state=42</code> fixa o
             desempate quando dois cortes reduzem o erro igualmente.</p>
@@ -557,7 +555,7 @@ arvore.get_n_leaves()   # 8</code></pre>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2><code>lag1</code> e <code>lag12</code> respondem por 100% da distância sem padronizar</h2>
+          <h2>Duas features respondem por 100% da distância</h2>
         </div>
         <table class="data-table">
           <thead>
@@ -600,8 +598,7 @@ arvore.get_n_leaves()   # 8</code></pre>
         </table>
         <p>Padronizar dá peso igual a <code>sen</code>, <code>cos</code>, <code>lag1</code> e
         <code>lag12</code> na distância, e isso força o KNN a buscar o mês mais parecido em
-        posição no calendário, não em volume. Para uma série de proteína animal, volume é a
-        semelhança certa.</p>
+        posição no calendário. Para uma série de proteína animal, volume é a semelhança certa.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
           <p class="footer-page">20</p>
@@ -618,9 +615,9 @@ arvore.get_n_leaves()   # 8</code></pre>
         </div>
         <p>A regra da Aula 05 não muda: padronizar iguala a influência das features na distância,
         e isso é o comportamento certo quando não existe informação prévia sobre qual feature
-        deveria valer mais. O resultado desta seção não contradiz a regra, mostra o caso em que ela
-        não se aplica: aqui já se sabe, de antemão, que volume de produção é a semelhança que
-        importa, e igualar tudo apaga exatamente essa informação.</p>
+        deveria valer mais. O resultado desta seção mostra o caso em que essa condição deixa de
+        valer: aqui já se sabe, de antemão, que volume de produção é a semelhança que importa, e
+        igualar tudo apaga exatamente essa informação.</p>
         <p><strong>Pergunta para a sala:</strong> antes de rodar qualquer modelo, quando dá para
         saber que uma feature deve pesar mais que as outras numa distância?</p>
         <div class="slide-footer">
@@ -703,15 +700,37 @@ arvore.get_n_leaves()   # 8</code></pre>
         </div>
       </section>
 
-      <!-- 25 - Random Forest -->
+      <!-- 25 - Prática: treinar o Random Forest em razão -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; Treinar o Random Forest em razão</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Treinar <code>RandomForestRegressor(n_estimators=300, random_state=42)</code> sobre
+          <code>X_treino</code>, <code>y_treino</code> com o alvo em razão.</li>
+          <li>Prever sobre <code>X_teste</code>, converter a previsão de volta para nível
+          (multiplicar por <code>lag12</code>) e calcular RMSE e MAPE.</li>
+          <li>Comparar o MAPE obtido com os 4,48% do próximo slide e com os 5,35% do mesmo modelo
+          sobre o alvo em nível.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">25</p>
+        </div>
+      </section>
+
+      <!-- 26 - Random Forest -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
         <div class="slide-title-area">
           <div class="accent-bar"></div>
-          <h2>O Random Forest reduz a variância de uma árvore</h2>
+          <h2>O Random Forest leva a árvore a 5,35%</h2>
         </div>
-        <p>Random Forest treina muitas árvores independentes, cada uma sobre uma amostra
+        <p>Random Forest [4] treina muitas árvores independentes, cada uma sobre uma amostra
         diferente das linhas e das features, e prevê a média das 300 árvores. Cada árvore erra de
         um jeito um pouco diferente, e a média cancela parte desses erros, reduzindo a
         variância em relação a uma única árvore.</p>
@@ -727,11 +746,11 @@ arvore.get_n_leaves()   # 8</code></pre>
         média de uma folha: a média de 300 tetos continua sendo um teto, só que mais suave.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
-          <p class="footer-page">25</p>
+          <p class="footer-page">26</p>
         </div>
       </section>
 
-      <!-- 26 - O fecho -->
+      <!-- 27 - O fecho -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -755,11 +774,11 @@ arvore.get_n_leaves()   # 8</code></pre>
         que a turma aprendeu hoje: é a reta, com o alvo e as features certas.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
-          <p class="footer-page">26</p>
+          <p class="footer-page">27</p>
         </div>
       </section>
 
-      <!-- 27 - Quiz 1 -->
+      <!-- 28 - Quiz 1 -->
       <section class="quiz-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -787,11 +806,11 @@ arvore.get_n_leaves()   # 8</code></pre>
         </div>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
-          <p class="footer-page">27</p>
+          <p class="footer-page">28</p>
         </div>
       </section>
 
-      <!-- 28 - Quiz 2 -->
+      <!-- 29 - Quiz 2 -->
       <section class="quiz-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -819,11 +838,11 @@ arvore.get_n_leaves()   # 8</code></pre>
         </div>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
-          <p class="footer-page">28</p>
+          <p class="footer-page">29</p>
         </div>
       </section>
 
-      <!-- 29 - Quadro de hipóteses e ART.6 -->
+      <!-- 30 - Quadro de hipóteses e ART.6 -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -847,11 +866,11 @@ arvore.get_n_leaves()   # 8</code></pre>
         junto com o modelo treinado e a comparação contra a baseline.</p>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
-          <p class="footer-page">29</p>
+          <p class="footer-page">30</p>
         </div>
       </section>
 
-      <!-- 30 - Autoestudo da próxima aula -->
+      <!-- 31 - Autoestudo da próxima aula -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -861,8 +880,8 @@ arvore.get_n_leaves()   # 8</code></pre>
         </div>
         <p>A Aula 07 não toca em matriz de confusão, precisão, revocação, Naive Bayes, regressão
         logística nem SVM, mesmo esses temas fazendo parte do autoestudo desta semana [7]. O case é
-        de regressão, e classificar um mês como "alta" ou "baixa" demanda exigiria inventar um
-        rótulo que o dado não tem. Esses assuntos entram na Aula 09.</p>
+        de regressão, e classificar um mês como "alta" ou "baixa" exigiria inventar um rótulo que
+        o dado não tem. Esses assuntos entram na Aula 09.</p>
         <p>Para a Aula 08, o autoestudo na Adalove é sobre sistemas de recomendação [8]:</p>
         <table class="data-table">
           <tbody>
@@ -875,11 +894,11 @@ arvore.get_n_leaves()   # 8</code></pre>
         </table>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
-          <p class="footer-page">30</p>
+          <p class="footer-page">31</p>
         </div>
       </section>
 
-      <!-- 31 - Referências -->
+      <!-- 32 - Referências -->
       <section class="content-slide">
         <div class="top-bar"></div>
         <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
@@ -911,11 +930,11 @@ arvore.get_n_leaves()   # 8</code></pre>
         </ol>
         <div class="slide-footer">
           <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
-          <p class="footer-page">31</p>
+          <p class="footer-page">32</p>
         </div>
       </section>
 
-      <!-- 32 - Encerramento -->
+      <!-- 33 - Encerramento -->
       <section class="end-slide">
         <h1>Até 10/09</h1>
         <h3>Aula 08: Aprendizado Não Supervisionado Parte II, Sprint 3</h3>
