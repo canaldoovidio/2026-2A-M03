@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referências &middot; Aula 07 &middot; Aprendizado Supervisionado parte II</title>
+  <meta name="description" content="Autoestudos da Semana 05 na Adalove e leitura complementar da Aula 07 do Módulo 03 IN.">
+
+  <!-- Duas secoes fixas, nesta ordem, em TODAS as 14 aulas:
+       1. Autoestudos da semana (Adalove), copiados de
+          docs/autoestudos-por-semana.md, titulo por titulo, sem inventar
+          nenhum e sem alterar caractere.
+       2. Leitura complementar do professor.
+       A segunda secao nunca e omitida, mesmo sem curadoria fechada.
+
+       ATENCAO: a Semana 05 tem dezessete autoestudos na Adalove, e apenas
+       DOZE pertencem a esta aula. Os outros cinco (Elbow Plot, Silhouette
+       Analysis, introducao ao nao supervisionado, K-means, PCA) pertencem a
+       Aula 06, que e o primeiro Encontro de Instrucao da mesma semana
+       (01/09). Os doze listados na secao 1 sao os que faltavam. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 07 &middot; 04/09/2026 &middot; Semana 05</p>
+      <h1>Referências: Aprendizado Supervisionado parte II</h1>
+      <p class="doc-subtitulo">A Semana 05 tem dois Encontros de Instrução, em 01/09 e em 04/09, e
+      os dezessete autoestudos dela se dividem entre os dois. Os cinco que sustentam o roteiro de
+      01/09 (Aula 06) estão listados na página de referências daquela aula. Os doze abaixo são os
+      que faltavam, e a seção 1 marca quais deles a aula de hoje cobre.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#autoestudos">Autoestudos da semana (Adalove)</a></li>
+        <li><a href="#complementar">Leitura complementar do professor</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="autoestudos">
+        <h2>1. Autoestudos da semana (Adalove)</h2>
+        <p>Semana 05, os doze itens que faltavam depois da Aula 06:</p>
+        <ol class="doc-referencias">
+          <li>Matriz de confusão, precisão e revocação
+            <span class="doc-porque">Migra para a Aula 09. A aula de hoje não classifica: o case é
+            de regressão, e classificar o mês em "alta" e "baixa" demanda exigiria inventar um
+            rótulo que o dado não tem, então não há matriz de confusão para calcular hoje.</span></li>
+          <li>Naive Bayes
+            <span class="doc-porque">Migra para a Aula 09, pelo mesmo motivo: é um classificador, e
+            o case de hoje continua sendo previsão de um valor contínuo em quilogramas.</span></li>
+          <li>Opcional: Feature Engineering - Notebook com respostas
+            <span class="doc-porque">Item opcional na Adalove, mantido aqui com o mesmo rótulo da
+            fonte. A engenharia de atributos que a aula de hoje usa (<code>lag1</code>,
+            <code>lag12</code>, <code>sen</code>, <code>cos</code>) é o mesmo tipo de construção
+            deste autoestudo, aplicado à série mensal do case.</span></li>
+          <li>Opcional: Prática - Regressão Logística
+            <span class="doc-porque">Migra para a Aula 09, junto com a Regressão Logística.</span></li>
+          <li>Opcional: Prática - SVM - Support Vector Machine
+            <span class="doc-porque">Migra para a Aula 09, junto com o SVM.</span></li>
+          <li>Opcional: Random Forest - Exemplo prático
+            <span class="doc-porque">Coberto hoje. Random Forest entra na aula como o modelo de
+            300 árvores que reduz o RMSE da árvore única de 109.534.336 para 82.070.325 no teste
+            em nível, sem ainda vencer as baselines.</span></li>
+          <li>Opcional: Árvore de Decisão com cálculo de Entropia passo a passo
+            <span class="doc-porque">Coberto apenas em parte hoje. A aula usa entropia como
+            critério de corte da árvore, mas não refaz o cálculo à mão: o item completo, com o
+            passo a passo aritmético, fica como aprofundamento para quem quiser fechar o
+            raciocínio fora da sala.</span></li>
+          <li>Random Forest
+            <span class="doc-porque">Coberto hoje. É o autoestudo que sustenta o ensemble de 300
+            árvores usado na hipótese H2 do roteiro.</span></li>
+          <li>Regressão Logística
+            <span class="doc-porque">Migra para a Aula 09. É classificador, e a aula de hoje
+            trabalha regressão sobre um alvo contínuo, inclusive no modelo vencedor da baseline da
+            LDC (RMSE 46.724.434, MAPE 3,32%).</span></li>
+          <li>SVM - Support Vector Machine
+            <span class="doc-porque">Migra para a Aula 09, pelo mesmo motivo que a Regressão
+            Logística e o Naive Bayes: o case de hoje não tem rótulo de classe.</span></li>
+          <li>Árvore de Decisão e Entropia
+            <span class="doc-porque">Coberto hoje. É a base da hipótese H3: a árvore de profundidade
+            3 tem oito folhas, mas os vinte e quatro meses de teste caem todos na mesma folha, e a
+            previsão fica presa num teto que a série com tendência de alta ultrapassa em vinte e
+            três dos vinte e quatro meses.</span></li>
+          <li>Árvore de Decisão na prática
+            <span class="doc-porque">Coberto hoje, parcialmente. A aula treina a árvore no
+            notebook e lê o resultado (RMSE 109.534.336, MAPE 7,66%, pior que as três baselines),
+            mas não refaz à mão o cálculo de entropia de cada corte, que é o que o item 7 desta
+            lista cobre por completo.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>Estes títulos são cópia literal de <code>docs/autoestudos-por-semana.md</code>, que é
+          gerado do <code>Turma.xlsx</code> oficial. Autoestudo que não está lá não entra aqui. O
+          acesso ao conteúdo é pela Adalove, com o login institucional.</p>
+          <p>A Semana 05 tem dezessete autoestudos, e os outros cinco (Elbow Plot, Silhouette
+          Analysis, introdução ao aprendizado não supervisionado, K-means e PCA) pertencem ao
+          encontro de 01/09, que é a Aula 06. Eles ficam listados na página de referências daquela
+          aula.</p>
+        </div>
+        <div class="doc-nota">
+          <p><strong>Sobre os cinco itens que migram para a Aula 09.</strong> Matriz de confusão,
+          precisão e revocação; Naive Bayes; Regressão Logística; SVM - Support Vector Machine; e
+          as duas práticas opcionais correspondentes (Regressão Logística e SVM) não entram no
+          roteiro de hoje. O motivo é o mesmo em todos os cinco: o case é de regressão, e
+          classificar o mês em "alta" e "baixa" demanda exigiria inventar um rótulo que o dado não
+          tem. A aula de hoje continua no mesmo alvo contínuo em quilogramas que sustenta o módulo
+          inteiro, e a comparação entre árvore, ensemble, KNN e regressão linear acontece toda
+          sobre esse alvo, em nível e em razão.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="complementar">
+        <h2>2. Leitura complementar do professor</h2>
+        <p>A curadoria definitiva desta seção ainda será fechada pelo professor. Até lá, ficam aqui
+        as fontes efetivamente citadas no deck e no material de apoio, na mesma numeração usada no
+        slide de referências.</p>
+        <ol class="doc-referencias">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite, tabelas
+            1092, 1093, 1094, 7524 e 1086 do SIDRA, com a classificação c12716 (Referência
+            temporal) aberta em Total do trimestre, No 1º mês, No 2º mês e No 3º mês.
+            <span class="doc-porque">Contrato de colunas e checagem de sanidade dos valores em
+            <code>dados/README.md</code>. Abrir essa classificação é o que sustenta a hipótese H1
+            de hoje: a série sobe de 117 trimestres para 351 meses por série, de 1997-01 a
+            2026-03, porque a granularidade mensal já estava disponível na fonte.</span></li>
+          <li>Breiman, L. <em>Random Forests</em>. Machine Learning, v. 45, p. 5-32, 2001.
+            <span class="doc-porque">Artigo original do algoritmo por trás do ensemble de 300
+            árvores usado hoje. Fundamenta por que agregar várias árvores treinadas com
+            amostragem aleatória reduz a variância de uma árvore única.</span></li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn: Machine Learning in Python</em>. Journal of
+            Machine Learning Research, v. 12, p. 2825-2830, 2011:
+            <a href="https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeRegressor.html">DecisionTreeRegressor</a>,
+            <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html">RandomForestRegressor</a>
+            e
+            <a href="https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html">KNeighborsRegressor</a>.
+            <span class="doc-porque">As três chamadas que a prática de hoje usa. As páginas de
+            <code>DecisionTreeRegressor</code> e <code>RandomForestRegressor</code> documentam
+            <code>max_depth</code> e <code>n_estimators</code>; a de
+            <code>KNeighborsRegressor</code> documenta o parâmetro <code>n_neighbors</code> usado
+            na pincelada de KNN com k igual a 3, 5 e 10.</span></li>
+          <li>Cover, T.; Hart, P. <em>Nearest neighbor pattern classification</em>. IEEE
+            Transactions on Information Theory, v. 13, n. 1, p. 21-27, 1967.
+            <span class="doc-porque">Referência de fundo para a pincelada de KNN. A aula mede, sem
+            exigir a leitura do artigo, por que padronizar piora o KNN neste case em todo k
+            testado: sem padronizar, <code>lag1</code> e <code>lag12</code> respondem por 49,28% e
+            50,72% da distância euclidiana, e <code>sen</code> e <code>cos</code> por
+            0%.</span></li>
+          <li>Autoestudos da Semana 05 na Adalove, listados na seção 1 desta página.
+            <span class="doc-porque">Referência cruzada usada como citação no deck.</span></li>
+          <li>Material de apoio da aula, em
+            <a href="../materiais/aula07.html">materiais/aula07.html</a>.
+            <span class="doc-porque">Onde está o quadro completo das quatro hipóteses (H1 a H4)
+            com veredito e evidência, e o fecho da ART.6: o modelo vencedor, regressão linear
+            sobre a razão com onze features, RMSE 46.724.434 e MAPE 3,32% contra a baseline de
+            54.523.588 e 3,71% da LDC.</span></li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seções 4 e 5.
+            <span class="doc-porque">A seção 5 é a matriz de rastreabilidade, que amarra a Aula 07
+            à ART.6 Preparação dos Dados e Modelagem, e só a ela. O peso 6 dessa ART e o
+            calendário da Sprint 3, com review em 11/09, estão na seção 4.</span></li>
+          <li><code>dados/README.md</code>.
+            <span class="doc-porque">Documenta a classificação c12716 do SIDRA e a checagem de
+            sanidade entre a soma dos três meses e o valor trimestral, usada na hipótese H1: bate
+            exatamente nas três séries de abate, e diverge 1 unidade em 59 de 157 trimestres de
+            ovos e 39 de 117 de leite, por arredondamento mensal do IBGE.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>O item 1 vai sem link de propósito: a URL de consulta da API do SIDRA, para cada
+          tabela, está documentada em <code>dados/README.md</code>, e apontar direto para ela aqui
+          duplicaria a mesma informação em dois lugares que podem divergir com o tempo.</p>
+          <p>Os itens 2 e 4 são leitura de fundo, dispensáveis como preparação para o encontro. A
+          aula demonstra o comportamento da árvore, do ensemble e do KNN medindo-os no case, sem
+          exigir a formulação dos artigos originais.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula07.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../materiais/aula07.html"><span class="material-symbols-outlined" aria-hidden="true">menu_book</span>Material</a>
+  </nav>
+</body>
+</html>
