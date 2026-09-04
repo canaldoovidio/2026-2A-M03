@@ -146,10 +146,6 @@ def test_base_tem_o_tamanho_que_a_aula_afirma(base):
     assert base["periodo"][corte] == "2024-04"
 
 
-def test_o_teste_cobre_os_24_meses_do_horizonte_do_tapi(base):
-    assert N_TESTE == 24
-
-
 # --------------------------------------------------------------------------
 # Baselines
 
@@ -222,6 +218,34 @@ def test_a_arvore_tem_teto_e_o_teste_esta_acima_dele(base):
     assert arvore.get_n_leaves() == 8
     assert 1.05e9 < teto < 1.13e9
     assert 1.29e9 < float(yte.max()) < 1.32e9
+
+
+def test_a_arvore_preve_um_unico_valor_nos_24_meses(base):
+    """O achado que o deck, o material e as notas do professor citam como o
+    centro da aula: a arvore nao apenas tem teto, ela emite o MESMO numero do
+    primeiro ao ultimo mes do teste.
+
+    Ela tem 8 folhas, mas a janela de teste inteira cai na mesma folha. Sem
+    este teste, o numero mais citado da aula seria o unico sem fonte travada,
+    contra a regra do acervo de que todo numero de slide sai de um teste."""
+    Xtr, ytr, Xte, yte, _ = _fatiar(base, FEATURES, alvo_em_razao=False)
+    arvore = DecisionTreeRegressor(max_depth=3, random_state=SEMENTE).fit(Xtr, ytr)
+    previsto = arvore.predict(Xte)
+
+    distintos = set(previsto.round(6).tolist())
+    assert len(distintos) == 1, (
+        "a arvore deixou de emitir um unico valor no teste: %d valores "
+        "distintos. O deck, o material e as notas do professor afirmam que e "
+        "um so." % len(distintos)
+    )
+    assert len(previsto) == 24
+
+    unico = float(previsto[0])
+    assert 1.05e9 < unico < 1.13e9
+    # o valor unico fica abaixo da media real do periodo, e por isso o erro e
+    # sistematico e nao aleatorio
+    desvio = (unico - float(yte.mean())) / float(yte.mean()) * 100
+    assert -8.5 < desvio < -7.0, desvio
 
 
 def test_a_reta_nao_tem_teto(base):
