@@ -16,29 +16,42 @@ Cada CSV tem exatamente três colunas:
 - `valor`: número (float) da série, ou vazio quando o IBGE marcou o dado como ausente/suprimido;
 - `unidade`: texto com a unidade de medida do IBGE, igual em todas as linhas do arquivo.
 
-## As séries são trimestrais, não mensais
+## As duas granularidades
 
 As cinco tabelas pertencem à Pesquisa Trimestral do IBGE (abate de animais e produção de ovos e
-leite). O período devolvido pela API vem como `AAAATT` (por exemplo `202504` é o **quarto
-trimestre** de 2025, não o mês de abril). O acervo converte isso para o contrato `AAAA-TN`, então
-`202504` vira `2025-T4`.
+leite), e trazem a classificação `c12716` ("Referência temporal"), com quatro categorias: "Total
+do trimestre", "No 1º mês", "No 2º mês" e "No 3º mês". Ou seja, a mesma tabela publica o trimestre
+inteiro e cada um dos três meses que o compõem.
 
-Não existe versão mensal aberta dessas séries. O IBGE publica avanço trimestral apenas; não há
-interpolação de trimestre em mês porque inventar uma observação que não foi medida contaminaria
-qualquer métrica de erro do modelo preditivo, o que seria um péssimo exemplo justamente num módulo
-sobre isso.
+- `dados/`: série **trimestral**, período no contrato `AAAA-TN` (por exemplo `2025-T4` para o
+  quarto trimestre de 2025). Continua sendo gerada porque as Aulas 01 a 06, já publicadas, leem
+  dela e citam achados medidos nela.
+- `dados/mensal/`: série **mensal**, período no contrato `AAAA-MM` (por exemplo `2025-12` para
+  dezembro de 2025). Vale da Aula 07 em diante.
 
-## TAPI pede mensal, o dado aberto é trimestral
+O período devolvido pela API vem como `AAAATT` (por exemplo `202504` é o **quarto trimestre** de
+2025, não o mês de abril); a posição do mês dentro do trimestre vem como categoria de `c12716`. O
+acervo converte os dois códigos para o contrato de cada granularidade.
 
-O TAPI da Louis Dreyfus Company fala em "abate mensal" e pede "projeções mensais". As fontes
-abertas do IBGE que sustentam essas séries, porém, só existem em base **trimestral**. Esse
-descompasso não foi escondido nem contornado por interpolação: virou conteúdo de aula.
+A reconciliação entre as duas versões é exata nas três séries de abate (em quilogramas, sem
+arredondamento): a soma dos três meses bate com o trimestre já versionado em `dados/`, sem
+nenhuma divergência. Em produção de ovos e leite, que o IBGE publica em "Mil dúzias" e "Mil
+litros" com cada mês arredondado de forma independente, a soma dos três meses diverge do
+trimestre em 1 unidade (uma parte em um milhão) em 59 dos 157 trimestres de ovos e em 39 dos 117
+de leite. A ADR-010 registra essa decisão.
 
-Decisão do professor, tomada com esse fato confirmado na API: **o acervo trabalha em base
-trimestral, com horizonte de previsão de 8 trimestres**, o que cobre os mesmos 24 meses que o
-parceiro pediu, só que na granularidade que o dado realmente permite medir. A Aula 02 (CRISP-DM) e
-a ART.1 (Entendimento do negócio) discutem essa diferença explicitamente: negociar granularidade
-com quem encomenda o modelo é trabalho real de projeto de dados, não um detalhe técnico a esconder.
+## O horizonte de 24 meses agora é medido em meses
+
+O TAPI da Louis Dreyfus Company fala em "abate mensal" e pede "projeções mensais". Até a Aula 06,
+as fontes abertas do IBGE que sustentam essas séries só existiam, para este acervo, em base
+trimestral, e a contraproposta registrada na ART.1 (Entendimento do negócio) foi trabalhar com
+horizonte de previsão de 8 trimestres, os mesmos 24 meses do TAPI na granularidade que o dado
+permitia medir.
+
+Com a confirmação de que as tabelas trazem `c12716` e publicam os três meses de cada trimestre,
+essa contraproposta deixa de ser necessária: o acervo mede os mesmos 24 meses diretamente em
+meses, sem abrir mão de dado medido por dado interpolado. A `ADR-010` explica a mudança e revisa
+parcialmente a `ADR-003`.
 
 ## As tabelas SIDRA têm dimensões extras
 
@@ -61,6 +74,7 @@ de inspeção etc.), e a série ficaria silenciosamente errada.
 - Baixado em: 01/08/2026
 - Unidade: Quilogramas
 - Período coberto: `1997-T1` a `2026-T1` (117 registros, granularidade trimestral)
+- Período coberto (mensal): `1997-01` a `2026-03` (351 registros, `dados/mensal/abate_bovinos.csv`)
 
 ### `abate_suinos.csv`
 
@@ -70,6 +84,7 @@ de inspeção etc.), e a série ficaria silenciosamente errada.
 - Baixado em: 01/08/2026
 - Unidade: Quilogramas
 - Período coberto: `1997-T1` a `2026-T1` (117 registros, granularidade trimestral)
+- Período coberto (mensal): `1997-01` a `2026-03` (351 registros, `dados/mensal/abate_suinos.csv`)
 
 ### `abate_frangos.csv`
 
@@ -79,6 +94,7 @@ de inspeção etc.), e a série ficaria silenciosamente errada.
 - Baixado em: 01/08/2026
 - Unidade: Quilogramas
 - Período coberto: `1997-T1` a `2026-T1` (117 registros, granularidade trimestral)
+- Período coberto (mensal): `1997-01` a `2026-03` (351 registros, `dados/mensal/abate_frangos.csv`)
 
 ### `producao_ovos.csv`
 
@@ -90,6 +106,7 @@ de inspeção etc.), e a série ficaria silenciosamente errada.
 - Unidade: Mil dúzias
 - Período coberto: `1987-T1` a `2026-T1` (157 registros, granularidade trimestral, série mais
   longa das cinco)
+- Período coberto (mensal): `1987-01` a `2026-03` (471 registros, `dados/mensal/producao_ovos.csv`)
 
 ### `producao_leite.csv`
 
@@ -100,6 +117,7 @@ de inspeção etc.), e a série ficaria silenciosamente errada.
 - Baixado em: 01/08/2026
 - Unidade: Mil litros
 - Período coberto: `1997-T1` a `2026-T1` (117 registros, granularidade trimestral)
+- Período coberto (mensal): `1997-01` a `2026-03` (351 registros, `dados/mensal/producao_leite.csv`)
 
 ## Checagem de sanidade dos valores
 
@@ -128,6 +146,8 @@ ter pego "número de informantes" em vez da série física real.
 python3 tools/baixar_dados.py
 ```
 
-O script sobrescreve os cinco CSVs em `dados/`. Rodar `python3 -m pytest tools/tests/test_dados.py -v`
-depois para validar o resultado (colunas do contrato, período em `AAAA-TN`, sem período repetido,
-unidade única por arquivo, cobertura mínima de dez anos e ordem de grandeza plausível).
+O script sobrescreve os cinco CSVs trimestrais em `dados/` e os cinco CSVs mensais em
+`dados/mensal/`. Rodar `python3 -m pytest tools/tests/test_dados.py tools/tests/test_dados_mensal.py -v`
+depois para validar o resultado: colunas do contrato, período ordenado e sem período repetido,
+unidade única por arquivo, cobertura mínima de dez anos, ordem de grandeza plausível (trimestral)
+e, na base mensal, período em `AAAA-MM` sem buraco e reconciliação com o trimestre já versionado.
