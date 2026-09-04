@@ -1,8 +1,13 @@
 # ADR-003: Regressão tabular com defasagens, em base trimestral, no lugar de séries temporais
 
 **Data:** 03/08/2026
-**Status:** Aceita
+**Status:** Aceita, parcialmente revista pela ADR-010
 **Decisores:** Prof. Ovidio Lopes da Cruz Netto
+
+> **Nota de revisão (04/09/2026):** a `ADR-010` revoga a afirmação, no Contexto abaixo, de que "não
+> existe versão mensal aberta dessas séries". A decisão principal deste ADR continua de pé:
+> regressão tabular com defasagens no lugar de séries temporais, validada por corte temporal de
+> data.
 
 ## Contexto
 
