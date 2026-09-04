@@ -49,6 +49,47 @@
   margin-bottom: 16px;
 }
 
+/* Layout de exportacao do Reveal ("?print-pdf").
+
+   Ao entrar nesse modo o Reveal escreve "reveal-print print-pdf" no elemento
+   html e zera o padding de ".reveal .slides section", NA TELA. Sem o padding
+   do tema, o titulo ganha os 112px de largura util que o tema reservava,
+   deixa de quebrar onde quebrava e passa por baixo da marca, que fica fixa em
+   "right: 28px".
+
+   Esta regra mora aqui, e nao em inteli-print.css, por um motivo que custou
+   caro para descobrir: inteli-print.css e carregado com media="print" nos
+   decks, entao o arquivo inteiro fica inerte na tela, e "?print-pdf" monta o
+   layout na tela. Uma correcao escrita la nunca entra em acao, mesmo com
+   "!important" e mesmo aparecendo no CSSOM.
+
+   Especificidade alta de proposito: o CSS de impressao do Reveal e injetado
+   depois do nosso, entao empate de especificidade perde por ordem.
+
+   Medido em 04/09/2026 no PDF real: oito slides da Aula 07, dois da Aula 04 e
+   um da Aula 05 com o titulo sobre a marca, de 21px a 124px. Nenhum dos tres
+   validadores pega isso: check_slides.py mede o deck em tela sem
+   "?print-pdf". */
+html.print-pdf.reveal-print .reveal .slides section[class] {
+  padding: 44px 56px 72px !important;
+}
+
+/* A capa sangra o grafismo ate a borda e mantem o padding zero do tema. */
+html.print-pdf.reveal-print .reveal .slides section.cover-slide[class] {
+  padding: 0 !important;
+}
+
+/* "code" dentro de titulo tem de herdar o tamanho do titulo. A regra base de
+   "code" em inteli-brand.css declara font-size no proprio elemento, entao ela
+   vence o tamanho que o h2 passaria por heranca: um trecho de codigo no meio
+   de um titulo de 44px sai a 14px e parece legenda solta, nao parte da frase.
+   Medido em 04/09/2026 nos slides 10 e 19 da Aula 07. */
+.reveal h2 code,
+.reveal h3 code,
+.slide-title-area h2 code {
+  font-size: inherit;
+}
+
 .inteli-logo-header {
   position: absolute;
   top: 28px;
