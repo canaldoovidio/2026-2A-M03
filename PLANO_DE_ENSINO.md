@@ -43,26 +43,31 @@ temporais. As aulas 04 a 07 ensinam previsão de horizonte longo por regressão 
 de defasagem, janelas móveis e codificação de sazonalidade, e a Aula 09 trata vazamento temporal
 com validação por corte de data em vez de embaralhamento aleatório.
 
-### 2.1 O ajuste de granularidade: de mensal para trimestral
+### 2.1 O ajuste de granularidade: de trimestral (Aulas 01 a 06) para mensal (Aula 07)
 
-O TAPI fala em "abate mensal" e pede "projeções mensais" com horizonte de 24 meses. Ao verificar
-essa exigência contra a API do IBGE, na Fase 1 deste acervo, confirmou-se que as cinco tabelas do
-SIDRA usadas no case pertencem à **Pesquisa Trimestral** de abate de animais e de produção de ovos
-e leite: o dado publicado é trimestral (117 trimestres de 1997-T1 a 2026-T1, nas quatro séries mais
-curtas), não existe versão mensal aberta, e os boletins do Sindirações são anuais. Interpolar um
-trimestre em três meses inventaria uma observação que o IBGE nunca mediu, o que contaminaria
-qualquer métrica de erro do próprio modelo preditivo.
+O TAPI fala em "abate mensal" e pede "projeções mensais" com horizonte de 24 meses. Na Fase 1
+deste acervo, a leitura da API do IBGE parou no filtro "Total do trimestre" da classificação
+**c12716, "Referência temporal"**, presente nas cinco tabelas do SIDRA usadas no case, e produziu
+a leitura equivocada de que a Pesquisa Trimestral de abate de animais e de produção de ovos e
+leite só publica o dado em trimestre. Essa leitura incompleta sustentou as Aulas 01 a 06 em base
+trimestral (117 trimestres de 1997-T1 a 2026-T1, nas quatro séries mais curtas).
 
-Decisão do professor, tomada com esse fato confirmado: **o módulo trabalha em base trimestral, com
-horizonte de previsão de 8 trimestres**, o que cobre os mesmos 24 meses pedidos pelo parceiro, na
-granularidade que o dado realmente permite medir.
+A **Aula 07** corrige o curso, registrado na `ADR-010`: a classificação c12716 tem quatro
+categorias (Total do trimestre, No 1º mês, No 2º mês, No 3º mês), e as três categorias mensais
+entregam a série completa, 351 meses de 1997-01 a 2026-03 (471 em ovos). A soma dos três meses
+bate exatamente com o trimestre nas três séries de abate; em ovos e leite diverge uma unidade numa
+parte dos trimestres, porque o IBGE arredonda cada mês de forma independente.
 
-Esse descompasso entre o que o parceiro pediu e o que a fonte de dados aberta permite não é uma
-nota de rodapé técnica: é conteúdo do módulo. A **Aula 02** (Visão Geral de ML, IA e Ciência de
-Dados, com CRISP-DM) e a **ART.1 Entendimento do negócio** tratam essa diferença explicitamente.
-Negociar granularidade com quem encomenda o modelo é trabalho real de ciência de dados, e é
-exatamente o tipo de lacuna que a etapa de entendimento de negócio do CRISP-DM existe para
-capturar antes que ela vire um modelo entregue no compasso errado.
+A partir da Aula 07, o módulo passa a trabalhar em **base mensal, com horizonte de previsão de 24
+meses**, o mesmo horizonte pedido pelo parceiro, sem o descompasso de granularidade que sustentava
+a decisão anterior.
+
+Esse ajuste integra o conteúdo do módulo. A **Aula 02** (Visão Geral de ML, IA e Ciência de Dados,
+com CRISP-DM) e a **ART.1 Entendimento do negócio** tratam a hipótese inicial de granularidade
+explicitamente, e a **Aula 07** volta ao tema com o dado corrigido. Ler a fonte inteira antes de
+aceitar um limite dela é trabalho real de ciência de dados, e é exatamente o tipo de verificação
+que a etapa de entendimento de negócio do CRISP-DM existe para forçar antes que um pressuposto
+errado vire um modelo entregue no compasso errado.
 
 ## 3. Cronograma das 14 aulas
 
@@ -139,7 +144,7 @@ pronto sobre o case da LDC, antes de avançar.
 | 04 | Pré Processamento e Feature Engineering | A Aula 03 deixou pronto a EDA das cinco séries de proteína animal, com padrões, sazonalidade e problemas de qualidade já identificados. |
 | 05 | Aprendizado Supervisionado parte I | A Aula 04 deixou pronto a base analítica com as cinco séries do SIDRA unidas por trimestre, com features de defasagem e de sazonalidade, pronta para alimentar o primeiro modelo. |
 | 06 | Aprendizado Não Supervisionado - parte I | A Aula 05 deixou pronto o primeiro modelo de regressão da produção de frango, com corte temporal treino/teste validado. |
-| 07 | Aprendizado Supervisionado - parte II | A Aula 06 deixou pronto os quatro perfis de trimestre do calendário agrupados por K-means (K=4) sobre a participação de cada série no total do ano, e o ambiente de cada dupla com o modelo da Aula 05 reproduzido. |
+| 07 | Aprendizado Supervisionado - parte II | A Aula 06 deixou pronto os quatro perfis de trimestre do calendário agrupados por K-means (K=4) sobre a participação de cada série no total do ano, o ambiente de cada dupla com o modelo da Aula 05 reproduzido, e a base mensal das cinco séries do SIDRA (351 linhas por série, recuperada da classificação c12716 pela `ADR-010`), pronta para a prática de reconciliação com o trimestral. |
 | 08 | Aprendizado Não Supervisionado Parte II | A Aula 07 deixou pronto os modelos de árvore e ensemble do Modelo 1, com RMSE e MAPE medidos contra a baseline de coeficientes estáticos da LDC, mais o exemplo de silhueta da Aula 06 (0,4795 contra 0,2853), que a ADR-009 reservou para motivar Elbow Plot e Silhouette Analysis nesta aula. |
 | 09 | Problemas Comuns com Modelagem de IA e mais Feature Engineering | A Aula 08 deixou pronto os componentes principais dos drivers macroeconômicos via PCA, prontos para entrar como features de menor dimensionalidade. |
 | 10 | Hiperparâmetros e Explicabilidade do Modelo | A Aula 09 deixou pronto o diagnóstico e a correção de vazamento temporal, dimensionalidade excessiva e nulos do IBGE. |

@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material de apoio &middot; Aula 07 &middot; Aprendizado Supervisionado parte II</title>
+  <meta name="description" content="Material de apoio da Aula 07 do Módulo 03 IN: a classificação c12716 do SIDRA que devolve a série em meses, a base analítica mensal de 339 linhas, o teto que a árvore de decisão não ultrapassa, a regra de padronização do KNN revisitada e o modelo em razão que bate a baseline da LDC.">
+
+  <!-- Este material NAO e o roteiro do deck em prosa. Ele aprofunda o que o
+       slide so pode apontar, e e o lugar onde a dupla confere cada numero com
+       calma. Todo numero citado aqui sai de notebooks/aula07.ipynb e de
+       tools/tests/test_modelos_aula07.py sobre os cinco CSVs de
+       dados/mensal/, ou vem medido nas Aulas 04 e 05 sobre a base
+       trimestral. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 07 &middot; 04/09/2026 &middot; Sprint 3</p>
+      <h1>Material de apoio: Aprendizado Supervisionado parte II</h1>
+      <p class="doc-subtitulo">A Aula 05 fechou o primeiro ciclo de modelagem sobre a base trimestral,
+      com uma regressão linear e uma baseline de coeficiente fixo. Esta aula volta ao mesmo problema,
+      o Modelo 1 do TAPI, sobre uma base mensal nova de 339 linhas, e testa se árvore de decisão,
+      random forest e KNN batem a regressão e a baseline. Nenhum bate em nível. A árvore perde por
+      não conseguir prever acima do maior valor médio que viu no treino, o KNN piora quando padronizado
+      porque as duas colunas mais informativas são justamente as de maior escala, e só a mudança do
+      alvo para uma razão devolve a árvore e o KNN à disputa, sem generalizar para a regressão linear.
+      Esta página fecha com o modelo que efetivamente bate a baseline da LDC.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#aula06">O que a Aula 06 deixou pronto</a></li>
+        <li><a href="#c12716">A classificação c12716 devolve 351 meses por série</a></li>
+        <li><a href="#base-mensal">A base analítica mensal soma 339 linhas</a></li>
+        <li><a href="#arvore">Como a árvore de decisão particiona o espaço</a></li>
+        <li><a href="#rmse-mape">A árvore erra mais que as três baselines</a></li>
+        <li><a href="#teto">A árvore emite um único valor nos 24 meses de teste</a></li>
+        <li><a href="#knn">Sem padronizar, o KNN cai de 9,37% para 5,62% de MAPE</a></li>
+        <li><a href="#razao">O alvo em razão reduz o MAPE da árvore de 7,66% para 3,86%</a></li>
+        <li><a href="#fecho">O modelo do fecho bate a baseline da LDC com 3,32% de MAPE</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="aula06">
+        <h2>1. O que a Aula 06 deixou pronto</h2>
+        <p>A Aula 06 tirou o alvo da mesa: o K-means agrupou os cinco produtos do SIDRA sem nenhuma
+        coluna-resposta e devolveu, entre outras leituras, o perfil sazonal por espécie que alimenta o
+        Modelo 2 do TAPI. Duas reduções de escopo ficaram registradas em <code>docs/adrs/ADR-009</code>
+        naquela aula: os perfis de dieta que o roteiro original previa não saíram, porque nenhuma das
+        cinco séries mede consumo de macroingrediente, e a escolha de K por Elbow Plot e Silhouette
+        Analysis migrou para a Aula 08.</p>
+        <p>Esta aula devolve o alvo à base e retoma o aprendizado supervisionado, mas sobre uma base
+        diferente da que a Aula 05 usou. As Aulas 04 e 05 trabalharam com a base trimestral de 113
+        linhas, junção das cinco séries por trimestre. Os números que servem de referência para hoje são
+        os medidos ali: regressão linear com MAPE de 4,25% e baseline de coeficiente fixo da LDC com
+        3,71%, ambos em nível, sobre o corte de treino e teste por data. A comparação de hoje troca a
+        base e os modelos, e mantém o mesmo protocolo de avaliação: corte por data, nunca por sorteio, e
+        erro medido contra a mesma baseline.</p>
+        <div class="doc-nota">
+          <p>O primeiro bloco desta aula (10h15 às 10h50) não é conteúdo novo: é diagnóstico e revisão
+          dirigida das Aulas 01 a 05, preparando a turma para a Ponderada 1 de Computação, que consta
+          dos autoestudos da semana e é aplicada em sala. Nenhum enunciado nem gabarito da prova entra
+          em artefato do acervo, pelo mesmo motivo que mantém <code>Turma.xlsx</code> fora do git: o
+          repositório inteiro é publicado no GitHub Pages.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="c12716">
+        <h2>2. A classificação c12716 devolve 351 meses por série, contra 117 trimestres</h2>
+        <p>As cinco tabelas do SIDRA que sustentam o case (1092, 1093, 1094, 7524 e 1086) têm uma
+        classificação chamada <strong>c12716, "Referência temporal"</strong>, com quatro categorias:
+        Total do trimestre, No 1º mês, No 2º mês e No 3º mês. O acervo pedia a série sem declarar essa
+        classificação, e a API do SIDRA respondia com a categoria padrão, "Total do trimestre", em
+        silêncio.</p>
+        <p>Isso não era um limite da fonte. Era uma leitura incompleta dela. Pedindo explicitamente as
+        três categorias mensais, a mesma tabela que vinha entregando 117 trimestres por série passa a
+        entregar <strong>351 meses por série</strong>, de 1997-01 a 2026-03: o mesmo intervalo de tempo,
+        na resolução que o TAPI pede desde o início.</p>
+        <p>A checagem de sanidade que confirma que os dois regimes descrevem o mesmo dado é somar os três
+        meses de cada trimestre e comparar com o valor trimestral já publicado. Nas três séries de abate
+        (bovinos, suínos, frangos) a soma bate exatamente, sem nenhum trimestre divergente. Em ovos e
+        leite a soma diverge em 1 unidade em 59 dos 157 trimestres e em 39 dos 117, porque a unidade
+        publicada é "Mil dúzias" e "Mil litros" e o IBGE arredonda cada mês de forma independente antes
+        de publicar o trimestre.</p>
+        <div class="doc-nota">
+          <p><strong>A pergunta que fica.</strong> A decisão de trabalhar em trimestre nas Aulas 04 e 05
+          não foi um acidente: está registrada em ADR, com o motivo de que o TAPI original também previa
+          entrega trimestral naquele momento do projeto. O que este achado corrige é a crença de que não
+          havia alternativa. Havia, e estava na mesma tabela, atrás de um parâmetro que ninguém tinha
+          declarado.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="base-mensal">
+        <h2>3. A base analítica mensal soma 339 linhas, com 24 meses de teste</h2>
+        <p>A base mensal usa a mesma lógica de construção da base trimestral da Aula 04, com a
+        granularidade nova. A definição é única, e é a mesma em teste, figura e notebook:</p>
+        <ul>
+          <li>Junção interna das cinco séries de <code>dados/mensal/</code> pela coluna
+          <code>periodo</code>, em ordem cronológica.</li>
+          <li><code>mes</code> é o inteiro dos dois últimos caracteres de <code>periodo</code>;
+          <code>dias</code> é o número de dias do mês civil correspondente.</li>
+          <li><code>sen = sin(2*pi*mes/12)</code> e <code>cos = cos(2*pi*mes/12)</code>, o mesmo par de
+          sazonalidade contínua da Aula 04.</li>
+          <li><code>lag1</code>, <code>lag2</code>, <code>lag3</code> e <code>lag12</code>:
+          <code>abate_frangos</code> deslocado em 1, 2, 3 e 12 meses.</li>
+          <li><code>&lt;serie&gt;_lag1</code> para as outras quatro séries, cada uma deslocada em 1 mês.</li>
+          <li>Linhas com qualquer valor ausente são descartadas.</li>
+        </ul>
+        <p>O resultado tem <strong>339 linhas</strong>, de 1998-01 a 2026-03. Os doze primeiros meses do
+        dado bruto (todo o ano de 1997) saem porque <code>lag12</code> só existe a partir do décimo
+        terceiro mês da série, o mesmo papel que o <code>shift(4)</code> cumpria na base trimestral.</p>
+        <p>O corte de treino e teste é por data, como em toda a Aula 05: <strong>315 meses de treino</strong>
+        (1998-01 a 2024-03) e <strong>24 meses de teste</strong> (2024-04 a 2026-03). Os 24 meses não são
+        um número arbitrário: é o horizonte de previsão mensal que o TAPI pede, o mesmo horizonte que a
+        base trimestral nunca conseguiu representar diretamente. Os quatro modelos comparados nas seções
+        5 a 8 usam <code>FEATURES = [lag1, lag12, sen, cos]</code> como conjunto padrão, e todo modelo
+        com aleatoriedade fixa <code>random_state=42</code>.</p>
+      </section>
+
+      <section class="doc-secao" id="arvore">
+        <h2>4. Como a árvore de decisão particiona o espaço</h2>
+        <p>Uma árvore de decisão para regressão escolhe, em cada nó, uma coluna e um limiar que dividem
+        as observações em dois grupos, de forma a reduzir o máximo possível a variância do alvo dentro de
+        cada grupo. O processo se repete dentro de cada grupo, formando novos nós, até um critério de
+        parada. Em <code>max_depth=3</code>, a árvore para depois de três divisões sucessivas a partir da
+        raiz, o que limita o número de folhas a no máximo <code>2³ = 8</code>.</p>
+        <pre class="doc-codigo"><code>from sklearn.tree import DecisionTreeRegressor
+
+arvore = DecisionTreeRegressor(max_depth=3, random_state=42)
+arvore.fit(X_treino, y_treino)
+
+arvore.get_n_leaves()      # numero de folhas formadas
+arvore.predict(X_teste)    # previsao: a media da folha de cada linha</code></pre>
+        <p>Cada folha guarda um único número: a média do alvo entre as observações de treino que caíram
+        ali. Prever uma linha nova é encontrar a folha correspondente e devolver essa média. É esse
+        mecanismo, e não nenhum defeito de implementação, que explica os resultados das seções 5 e 6: a
+        árvore nunca pode prever um valor fora do intervalo de médias que suas folhas guardam, porque não
+        existe operação na árvore que produza um número diferente de uma dessas médias.</p>
+        <p>A regressão linear funciona de outro jeito. Ela ajusta um coeficiente para cada coluna e soma
+        as contribuições, e essa soma não tem teto: para um valor de entrada maior que qualquer um visto
+        no treino, a reta continua produzindo uma saída proporcionalmente maior. É essa diferença de
+        mecanismo, extrapolar por soma contra prever a média de um grupo fechado, que decide boa parte do
+        que a seção 6 mede.</p>
+      </section>
+
+      <section class="doc-secao" id="rmse-mape">
+        <h2>5. A árvore erra mais que as três baselines, com MAPE de 7,66%</h2>
+        <p>Sobre a base mensal, com os quatro modelos e as três baselines já usadas na Aula 05, a tabela
+        completa de erro no período de teste (24 meses) fica assim:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>modelo</th><th>RMSE</th><th>MAPE</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>A. repete o mês anterior</td><td>88.925.206</td><td>6,73%</td></tr>
+              <tr><td>B. repete o mesmo mês do ano anterior</td><td>75.627.562</td><td>5,10%</td></tr>
+              <tr><td><strong>C. coeficiente fixo da LDC</strong></td><td><strong>54.523.588</strong></td><td><strong>3,71%</strong></td></tr>
+              <tr><td>regressão linear</td><td>63.225.293</td><td>4,25%</td></tr>
+              <tr><td><strong>árvore de decisão, <code>max_depth=3</code></strong></td><td><strong>109.534.336</strong></td><td><strong>7,66%</strong></td></tr>
+              <tr><td>random forest, 300 árvores</td><td>82.070.325</td><td>5,35%</td></tr>
+              <tr><td>KNN k=5, padronizado</td><td>128.029.380</td><td>9,37%</td></tr>
+              <tr><td>KNN k=5, sem padronizar</td><td>83.496.528</td><td>5,62%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A árvore é o pior modelo da tabela, tirando o KNN padronizado. Ela perde das três baselines,
+        inclusive da mais simples delas, que apenas repete o mês anterior. O random forest, uma média de
+        300 árvores independentes, melhora sobre a árvore isolada mas ainda fica atrás da baseline C e da
+        regressão linear. Nenhum dos quatro modelos supervisionados bate a baseline de coeficiente fixo da
+        LDC nesta base, em nível. As seções 6 e 7 medem por que a árvore e o KNN padronizado ficam tão
+        atrás, e a seção 8 muda uma única coisa, o alvo, e recupera parte dessa distância.</p>
+      </section>
+
+      <section class="doc-secao" id="teto">
+        <h2>6. A árvore emite um único valor nos 24 meses de teste, 7,77% abaixo da média real</h2>
+        <p><strong>Ver <code>assets/img/aula07-teto-da-arvore.png</code>.</strong> Antes de qualquer
+        explicação, vale olhar a coluna de previsões da árvore mês a mês. A árvore de
+        <code>max_depth=3</code> forma <strong>8 folhas</strong> no treino, mas os <strong>24 meses de
+        teste caem todos na mesma folha</strong>. O resultado é que a árvore emite
+        <strong>um único valor, 1.090.166.234 kg, nos 24 meses</strong>, de abril de 2024 a março de
+        2026: a mesma previsão de ponto flutuante se repete linha a linha, sem nenhum arredondamento de
+        exibição envolvido.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>medida</th><th>valor</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>máximo do alvo no treino</td><td>1.226.709.256 (2023-03)</td></tr>
+              <tr><td>teto da árvore (maior previsão possível)</td><td>1.090.166.234</td></tr>
+              <tr><td>máximo real no teste</td><td>1.301.022.625 (2026-03)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O teto é a média da folha mais alta que a árvore conseguiu formar dentro do treino, e nenhuma
+        previsão pode ficar acima disso: toda saída da árvore é a média de alguma das oito folhas, e a
+        maior delas é esse número. Esse único valor fica <strong>7,77% abaixo da média real</strong> do
+        período de teste, e <strong>23 dos 24 meses</strong> de teste ficam acima do teto. A série de
+        abate de frangos continua crescendo depois de 2024, e cinco dos 24 meses de teste já superam até
+        o máximo que a árvore tinha visto no treino, o que reforça que não é um problema de faixa curta
+        de dados, é a tendência de alta continuando além do que o treino registrou.</p>
+        <p>Verificação de uma linha, que qualquer dupla pode rodar sobre o próprio notebook:
+        <code>arvore.predict(X_teste).max()</code> devolve exatamente o teto acima. Uma árvore prevê a
+        média da folha. Numa série com tendência de alta sustentada, o futuro tende a ficar acima de
+        qualquer média que o passado tenha produzido, e é isso, e não ruído, ou aleatoriedade do ajuste,
+        que faz a árvore perder da baseline mais simples da tabela da seção 5.</p>
+        <div class="doc-nota">
+          <p><strong>O random forest sofre da mesma limitação, atenuada.</strong> Cada uma das 300
+          árvores do ensemble tem o próprio teto, formado sobre uma amostra diferente do treino (bootstrap
+          aggregating). A previsão final é a média dessas 300 previsões, o que produz mais valores
+          distintos do que uma árvore só, mas o teto do conjunto continua sendo uma combinação de médias
+          de folha: nenhuma árvore do ensemble extrapola tendência, e a combinação delas também não.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="knn">
+        <h2>7. Sem padronizar, o KNN cai de 9,37% para 5,62% de MAPE</h2>
+        <p>KNN decide por semelhança: para cada linha de teste, procura os <code>k</code> meses de treino
+        mais parecidos e devolve a média do alvo entre eles. A pergunta que decide o resultado é o que
+        "parecido" significa, e quem responde isso é a escala de cada coluna na distância euclidiana.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th><code>k</code></th><th>MAPE padronizado</th><th>MAPE sem padronizar</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>3</td><td>8,14%</td><td>5,82%</td></tr>
+              <tr><td>5</td><td>9,37%</td><td>5,62%</td></tr>
+              <tr><td>10</td><td>10,09%</td><td>6,10%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Nos três valores de <code>k</code>, padronizar piora o KNN sobre esta base. O motivo aparece
+        medindo quanto cada coluna contribui para a distância euclidiana sem padronização:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>feature</th><th>participação na distância</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>lag1</code></td><td>49,2775%</td></tr>
+              <tr><td><code>lag12</code></td><td>50,7225%</td></tr>
+              <tr><td><code>sen</code></td><td>0,0000%</td></tr>
+              <tr><td><code>cos</code></td><td>0,0000%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><code>lag1</code> e <code>lag12</code> são produção em quilogramas, na casa das centenas de
+        milhões, e <code>sen</code> e <code>cos</code> variam entre -1 e 1. Sem padronizar, a distância
+        euclidiana é dominada quase inteiramente pelas duas colunas de produção, e o KNN encontra os
+        meses mais parecidos <strong>em volume recente</strong>. Padronizar dá o mesmo peso às quatro
+        colunas, o que aqui força a busca a considerar posição no calendário tanto quanto produção
+        recente, e a posição no calendário carrega pouca informação: a Aula 06 mediu que a amplitude
+        sazonal do frango é a menor entre as cinco séries do case, 1,10 ponto percentual.</p>
+        <div class="doc-nota">
+          <p><strong>Isto não revoga a regra da Aula 05.</strong> A seção 9 do material da Aula 05
+          (<a href="aula05.html#condicionamento">materiais/aula05.html#condicionamento</a>) registrou que
+          padronizar é a prática correta quando as escalas das colunas diferem por ordens de grandeza,
+          tanto para o condicionamento numérico da regressão linear quanto para a distância do KNN.
+          Padronizar <strong>iguala a influência de cada feature na distância</strong>. Isso é o
+          comportamento certo quando não se sabe de antemão qual feature importa mais para o alvo, que é
+          a situação padrão. Aqui a dupla já sabe, porque mediu: <code>lag1</code> e <code>lag12</code>
+          carregam a informação mais relevante para prever produção, e <code>sen</code> e <code>cos</code>
+          carregam pouca. Igualar a influência de features desiguais em relevância piora o modelo, e é
+          exatamente isso que a tabela de <code>k</code> mostra. A regra continua correta; o que muda é
+          que, desta vez, existe uma medição prévia que diz qual exceção se aplica.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="razao">
+        <h2>8. O alvo em razão reduz o MAPE da árvore de 7,66% para 3,86%</h2>
+        <p><strong>Ver <code>assets/img/aula07-nivel-versus-razao.png</code>.</strong> Em vez de treinar
+        para prever <code>abate_frangos</code> diretamente, os mesmos modelos podem treinar para prever a
+        razão <code>abate_frangos / lag12</code>, uma série sem tendência de alta porque cada valor já
+        está expresso como múltiplo do mesmo mês do ano anterior. A previsão final volta a quilogramas
+        multiplicando a saída do modelo pelo <code>lag12</code> de cada linha de teste.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>modelo</th><th>MAPE em nível</th><th>MAPE em razão</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>árvore de decisão, <code>max_depth=3</code></td><td>7,66%</td><td><strong>3,86%</strong></td></tr>
+              <tr><td>random forest, 300 árvores</td><td>5,35%</td><td>4,48%</td></tr>
+              <tr><td>KNN k=5, padronizado</td><td>9,37%</td><td>4,59%</td></tr>
+              <tr><td>KNN k=5, sem padronizar</td><td>5,62%</td><td><strong>3,71%</strong></td></tr>
+              <tr><td>regressão linear</td><td>4,25%</td><td>4,73%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A árvore ganha o máximo desta mudança: o MAPE cai de 7,66% para 3,86%, praticamente pela
+        metade, e o motivo é o mesmo mecanismo da seção 6. Uma razão em torno de 1 não tem o mesmo tipo de
+        tendência de alta sustentada que o nível tinha, então o teto de cada folha deixa de ser o
+        problema que era. O random forest e o KNN sem padronizar também melhoram.</p>
+        <p><strong>A regressão linear piora, de 4,25% para 4,73%.</strong> Isso não é um resultado
+        menor, é o contraponto que evita a leitura errada da seção. A reta não tinha o problema do teto:
+        ela já extrapolava tendência em nível, porque soma coeficientes sem limite superior. Trocar o
+        alvo para razão tira dela justamente a informação de nível que ela já usava bem, sem entregar
+        nada que ela não conseguisse capturar sozinha. O ganho de treinar sobre uma razão depende de o
+        modelo ter, antes, um problema de teto ou de escala que a razão resolve. A árvore tinha; a reta
+        não tinha, e por isso a mesma transformação que resgata a árvore prejudica a reta. Alvo em razão
+        não é uma prática superior em geral: é a correção certa para o defeito específico de um modelo
+        que não extrapola.</p>
+      </section>
+
+      <section class="doc-secao" id="fecho">
+        <h2>9. O modelo do fecho bate a baseline da LDC com MAPE de 3,32%</h2>
+        <p>O random forest usado nas seções anteriores treina 300 árvores de decisão independentes, cada
+        uma sobre uma amostra com reposição (bootstrap) do treino e sobre um subconjunto aleatório das
+        colunas em cada divisão, e prevê a média das 300 saídas. Cada árvore individual continua sujeita
+        ao mesmo teto de folha descrito na seção 6, mas o teto de cada uma se forma sobre uma amostra
+        diferente do treino, então os tetos das 300 árvores não coincidem no mesmo valor.</p>
+        <p>Essa diversidade é o que reduz a variância do ensemble em relação a uma árvore isolada: uma
+        árvore única pode acertar a estrutura de um subconjunto do treino e errar feio fora dele, e a
+        média de 300 árvores treinadas em amostras diferentes tende a cancelar parte desses erros
+        individuais. É por isso que o random forest fica sistematicamente melhor que a árvore única em
+        toda a aula, 5,35% contra 7,66% em nível e 4,48% contra 3,86% em razão, mesmo sem resolver o
+        problema de extrapolação de tendência da árvore isolada.</p>
+        <p>Nenhum dos modelos das seções 5 a 8, sozinho, bate a baseline de coeficiente fixo da LDC em
+        nível. O modelo que bate combina as duas descobertas da aula com mais informação: uma regressão
+        linear, treinada sobre o alvo em razão, com onze features (<code>lag1, lag2, lag3, lag12, sen,
+        cos, dias</code>, mais a defasagem de 1 mês das outras quatro séries do case). O resultado:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>modelo</th><th>RMSE</th><th>MAPE</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>baseline C (coeficiente fixo da LDC)</td><td>54.523.588</td><td>3,71%</td></tr>
+              <tr><td><strong>modelo do fecho (11 features, alvo em razão)</strong></td><td><strong>46.724.434</strong></td><td><strong>3,32%</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O vencedor não é o modelo mais novo que a turma aprendeu hoje: é a regressão linear da Aula 05,
+        aplicada sobre o alvo em razão com mais colunas de entrada. A árvore e o random forest, apesar de
+        toda a atenção que a seção 6 dedicou ao teto delas, ficam atrás desse modelo tanto em nível quanto
+        em razão.</p>
+        <p>O quadro completo das quatro hipóteses da aula, com veredito e evidência, vai para a
+        <strong>ART.6 Preparação dos Dados e Modelagem (peso 6, review em 11/09)</strong>, na mesma sprint
+        que abriu com a Aula 06. As referências completas desta aula estão em
+        <a href="../referencias/aula07.html">referencias/aula07.html</a>, e o laboratório executável, com
+        as 339 linhas reconstruídas do zero e as seis hipóteses medidas célula a célula, é
+        <code>notebooks/aula07.ipynb</code>.</p>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula07.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../referencias/aula07.html"><span class="material-symbols-outlined" aria-hidden="true">list_alt</span>Referências</a>
+  </nav>
+</body>
+</html>

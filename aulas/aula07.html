@@ -1,0 +1,939 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 07 &middot; Aprendizado Supervisionado parte II &middot; Módulo 03 IN</title>
+
+  <!-- Aula 07, 04/09/2026, Sprint 3. Conteudo consolidado em
+       ROTEIRO-AULA07-AGORA.md (raiz do repositorio), que substitui o roteiro
+       original de PLANEJAMENTO_AULA_A_AULA.md para esta aula: a instrucao
+       deixou de seguir arvore -> ensemble -> classificacao (matriz de
+       confusao) na ordem original e passou a ser conduzida por quatro
+       hipoteses testadas com numeros medidos, mais uma pincelada de KNN.
+       Numeros canonicos e definicao da base analitica em
+       .superpowers/sdd/2026-09-03-aula07/global-constraints.md.
+
+       Quatro hipoteses da aula, cada uma com veredito medido:
+       H1. "A granularidade do case e trimestral porque a fonte so tem
+           trimestre." FALSA: a classificacao c12716 do SIDRA guarda meses
+           dentro do trimestre, e a leitura completa das cinco tabelas
+           devolve 351 meses por serie (1997-01 a 2026-03) em vez de 117
+           trimestres.
+       H2. "A arvore captura o que a reta nao captura, logo ganha." FALSA:
+           base analitica mensal de 339 linhas (1998-01 a 2026-03), treino de
+           315 meses, teste dos 24 meses que o TAPI pede (2024-04 a
+           2026-03). A arvore max_depth=3 erra 7,66% de MAPE e perde das
+           tres baselines (6,73%, 5,10%, 3,71%) e da regressao linear
+           (4,25%).
+       H3. "A arvore perde porque nao extrapola tendencia." VERDADEIRA: a
+           arvore tem 8 folhas, mas os 24 meses de teste caem todos na mesma
+           folha e ela emite um unico valor, 1.090.166.234 kg, do inicio ao
+           fim do teste. Esse valor e 7,77% abaixo da media real do periodo,
+           e 23 dos 24 meses de teste ficam acima dele. Achado central da
+           aula, slides 15 a 17, nao pode ser cortado ao vivo.
+       H4. "Trocar o alvo para razao (y / lag12) devolve a arvore a disputa."
+           VERDADEIRA: o MAPE da arvore cai de 7,66% para 3,86%. A regressao
+           linear piora (4,25% para 4,73%), o que impede a leitura de que
+           razao e sempre melhor.
+
+       Pincelada de KNN (slides 18 a 21): padronizar as features PIORA o KNN
+       aqui, em todo k testado. Sem padronizar, lag1 e lag12 respondem por
+       100% da distancia euclidiana (49,2775% e 50,7225%) e sen/cos por 0%,
+       que e a semelhanca certa para uma serie de volume. Padronizar da peso
+       igual a sen/cos e forca a busca a casar posicao no calendario. A regra
+       da Aula 05 (padronizar iguala influencia quando nao se sabe qual
+       feature importa) nao muda: aqui sabe-se, e por isso o efeito inverte.
+
+       O fecho da ART.6 (slide 26): regressao linear sobre a razao, 11
+       features (lag1, lag2, lag3, lag12, sen, cos, dias + as quatro series
+       defasadas em um mes). RMSE 46.724.434 e MAPE 3,32%, contra RMSE
+       54.523.588 e MAPE 3,71% da baseline C da LDC. E o unico modelo do
+       encontro que bate a baseline, e nao e o mais novo que a turma aprendeu
+       hoje.
+
+       Resgate da Aula 06 (PLANO_DE_ENSINO.md secao 6): "A Aula 06 deixou
+       pronto os quatro perfis de trimestre do calendario agrupados por
+       K-means (K=4) sobre a participacao de cada serie no total do ano, e o
+       ambiente de cada dupla com o modelo da Aula 05 reproduzido."
+
+       ART.6 Preparacao dos Dados e Modelagem, peso 6, review em 11/09
+       (PLANO_DE_ENSINO.md secao 4, matriz da secao 5). -->
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-theme.css">
+  <link rel="stylesheet" href="../assets/css/inteli-print.css" media="print">
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- 1 - Capa -->
+      <section class="cover-slide">
+        <div class="cover-panel">
+          <div class="cover-content">
+            <p class="cover-eyebrow">Módulo 03 IN &middot; Aula 07 &middot; 04/09/2026</p>
+            <h1>Aprendizado Supervisionado parte II</h1>
+            <h3>Árvore de decisão, Random Forest e KNN testados contra a baseline da LDC, e a
+            granularidade trimestral do case revisitada</h3>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 - Agenda -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Agenda do encontro</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>08h00 &middot; 10h00</h3>
+            <p>Autoestudo na Adalove: Árvore de Decisão e Entropia, Árvore de Decisão na prática,
+            Random Forest, Matriz de confusão, precisão e revocação, Regressão Logística e SVM
+            [7].</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h00 &middot; 10h15</h3>
+            <p>Daily. Cada dupla relata os perfis de trimestre encontrados no agrupamento da Aula
+            06.</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h15 &middot; 12h00</h3>
+            <p>Quatro hipóteses sobre a granularidade do case, a árvore de decisão, o Random
+            Forest e o KNN, testadas com os números medidos da própria base do TAPI.</p>
+          </div>
+        </div>
+        <p>A aula segue por hipóteses testadas, não por lista de técnicas: cada bloco declara uma
+        afirmação sobre o Modelo 1 do TAPI e mede se ela é verdadeira ou falsa contra o teste de 24
+        meses. A técnica nova de hoje, sem cálculo de entropia à mão, é a árvore de decisão; Random
+        Forest e KNN entram como comparação.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">2</p>
+        </div>
+      </section>
+
+      <!-- 3 - Resgate da Aula 06 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que a Aula 06 deixou pronto</h2>
+        </div>
+        <p>A Aula 06 deixou pronto os quatro perfis de trimestre do calendário agrupados por
+        K-means (K=4) sobre a participação de cada série no total do ano, e o ambiente de cada
+        dupla com o modelo da Aula 05 reproduzido.</p>
+        <p>A Aula 05 treinou uma regressão linear para o abate de frangos e mediu MAPE de 1,60%
+        contra 1,69% da baseline, sobre um corte por trimestre. Hoje o mesmo problema volta em base
+        <strong>mensal</strong>, com um horizonte de teste maior (24 meses), e a pergunta muda: um
+        modelo mais complexo que a reta ganha dessa baseline?</p>
+        <p><strong>Pergunta disparada:</strong> o que uma árvore de decisão captura que uma reta
+        não captura?</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">3</p>
+        </div>
+      </section>
+
+      <!-- 4 - H1: o que o SIDRA tem -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O SIDRA guarda o mês dentro do trimestre</h2>
+        </div>
+        <p><strong>Hipótese 1: "a granularidade do case é trimestral porque a fonte só tem
+        trimestre."</strong> As cinco tabelas do SIDRA que sustentam o case (1092, 1093, 1094, 7524
+        e 1086) têm uma classificação chamada <strong>c12716, "Referência temporal"</strong>, com
+        quatro categorias [1]:</p>
+        <table class="data-table">
+          <thead>
+            <tr><th>Categoria de c12716</th><th>O que ela entrega</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Total do trimestre</td><td>O valor agregado dos três meses</td></tr>
+            <tr><td>No 1º mês</td><td>O valor só daquele mês</td></tr>
+            <tr><td>No 2º mês</td><td>O valor só daquele mês</td></tr>
+            <tr><td>No 3º mês</td><td>O valor só daquele mês</td></tr>
+          </tbody>
+        </table>
+        <p>A construção do acervo pedia a série sem declarar essa classificação, e o filtro caía
+        sozinho em "Total do trimestre", em silêncio.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">4</p>
+        </div>
+      </section>
+
+      <!-- 5 - H1: o ganho -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A leitura completa da fonte devolve 351 meses</h2>
+        </div>
+        <p>Pedir as quatro categorias de c12716, em vez de aceitar o filtro que caía em "Total",
+        devolve <strong>351 meses por série, de 1997-01 a 2026-03</strong>, contra os 117
+        trimestres que o acervo usava até a Aula 06 [1].</p>
+        <table class="data-table">
+          <thead>
+            <tr><th></th><th>Leitura antiga (implícita)</th><th>Leitura completa de c12716</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Unidade</td><td>Trimestre</td><td>Mês</td></tr>
+            <tr><td>Linhas por série</td><td>117</td><td>351</td></tr>
+            <tr><td>Início</td><td>1997-T1</td><td>1997-01</td></tr>
+          </tbody>
+        </table>
+        <p>Não era um limite da fonte: era uma leitura incompleta dela. O horizonte de 24 meses que
+        o TAPI pede deixa de precisar de tradução, porque agora existe em mês de verdade.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">5</p>
+        </div>
+      </section>
+
+      <!-- 6 - H1: reconciliação e pergunta disparada -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Três séries batem exatamente com o trimestre</h2>
+        </div>
+        <p>Checagem de sanidade antes de confiar na série mensal: somar os três meses de cada
+        trimestre e comparar com o valor de "Total do trimestre" da mesma classificação.</p>
+        <table class="data-table">
+          <thead>
+            <tr><th>Série</th><th>Unidade</th><th>Soma dos meses bate com o trimestre</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Abate de bovinos, suínos e frangos</td><td>Cabeças</td><td>Exatamente, em 100% dos trimestres</td></tr>
+            <tr><td>Produção de ovos</td><td>Mil dúzias</td><td>Diverge 1 unidade em 59 de 157 trimestres</td></tr>
+            <tr><td>Produção de leite</td><td>Mil litros</td><td>Diverge 1 unidade em 39 de 117 trimestres</td></tr>
+          </tbody>
+        </table>
+        <p>A divergência de ovos e leite vem do arredondamento: o IBGE arredonda cada mês
+        separadamente, e a soma de três arredondamentos nem sempre bate com o arredondamento do
+        total.</p>
+        <p><strong>Pergunta para a sala:</strong> o que mais a gente aceitou como limite do dado
+        sem ter lido a fonte inteira?</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">6</p>
+        </div>
+      </section>
+
+      <!-- 7 - Base mensal -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A base analítica mensal reúne 339 linhas</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>FEATURES = ["lag1", "lag12", "sen", "cos"]
+ALVO = "abate_frangos"
+N_TESTE = 24
+
+# lag1, lag2, lag3, lag12: abate_frangos
+# deslocado em 1, 2, 3 e 12 meses
+# sen = sin(2*pi*mes/12)
+# cos = cos(2*pi*mes/12)
+# dropna(): sai a 339 linhas</code></pre>
+          <div>
+            <p>Junção interna das cinco séries mensais de <code>dados/mensal/</code> pela coluna
+            <code>periodo</code>. As colunas de defasagem (<code>lag1</code> a <code>lag12</code>)
+            não existem para os primeiros meses da série, e o <code>dropna</code> descarta essas
+            linhas [2].</p>
+            <p>O modelo de hoje usa quatro features: <code>lag1</code>, <code>lag12</code>,
+            <code>sen</code> e <code>cos</code>, o mesmo desenho de sazonalidade codificada da Aula
+            04.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">7</p>
+        </div>
+      </section>
+
+      <!-- 8 - Treino e teste -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O teste reserva os 24 meses que o TAPI pede</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Conjunto</th><th>Linhas</th><th>Intervalo</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Treino</td><td>315 meses</td><td>1998-01 a 2024-03</td></tr>
+            <tr><td>Teste</td><td>24 meses</td><td>2024-04 a 2026-03</td></tr>
+          </tbody>
+        </table>
+        <p>O corte é por data, como na Aula 05, não por sorteio de linhas: o sorteio deixaria
+        trimestres futuros no treino e mediria interpolação, não a extrapolação que a LDC
+        precisa.</p>
+        <p>Vinte e quatro meses de teste é o mesmo horizonte do TAPI, agora expresso na unidade que
+        o parceiro pediu desde o início: mês, não trimestre.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">8</p>
+        </div>
+      </section>
+
+      <!-- 9 - Como a árvore decide -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Como a árvore de decisão decide</h2>
+        </div>
+        <p>Uma árvore de regressão faz uma sequência de perguntas binárias sobre as features
+        (<code>lag1 &lt;= x?</code>, <code>lag12 &lt;= y?</code>) e, a cada resposta, divide os
+        dados de treino em dois grupos cada vez menores. Cada divisão busca o ponto de corte que
+        mais reduz o erro dentro dos dois grupos resultantes.</p>
+        <p>No fim de cada ramo existe uma <strong>folha</strong>: um subconjunto de linhas de
+        treino. A previsão da árvore para qualquer entrada nova é a <strong>média do alvo</strong>
+        dentro da folha em que essa entrada cai. O cálculo de entropia passo a passo, que decide
+        onde cada corte acontece, está no autoestudo de hoje [7]; a aula foca no que a árvore
+        produz, não em como ela escolhe o corte.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">9</p>
+        </div>
+      </section>
+
+      <!-- 10 - max_depth limita a profundidade -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2><code>max_depth=3</code> limita a árvore de hoje a no máximo 8 folhas</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>from sklearn.tree import (
+    DecisionTreeRegressor
+)
+
+arvore = DecisionTreeRegressor(
+    max_depth=3,
+    random_state=42
+)
+arvore.fit(X_treino, y_treino)
+arvore.get_n_leaves()   # 8</code></pre>
+          <div>
+            <p><code>max_depth</code> limita quantas perguntas seguidas a árvore pode fazer antes
+            de parar num nó folha. Com profundidade 3, o número máximo de folhas é
+            2<sup>3</sup> = 8, e a árvore treinada nesta base usa exatamente esse teto.</p>
+            <p>Uma árvore mais profunda teria mais folhas, cada uma com menos linhas de treino, e
+            se ajustaria mais ao ruído do próprio treino. <code>random_state=42</code> fixa o
+            desempate quando dois cortes reduzem o erro igualmente.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">10</p>
+        </div>
+      </section>
+
+      <!-- 11 - Prática: treinar a árvore -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; Treinar a árvore e comparar com a reta</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Treinar <code>DecisionTreeRegressor(max_depth=3, random_state=42)</code> sobre
+          <code>X_treino</code>, <code>y_treino</code>.</li>
+          <li>Prever sobre <code>X_teste</code> e calcular RMSE e MAPE, com a mesma função da Aula
+          05.</li>
+          <li>Comparar o MAPE da árvore com o MAPE da regressão linear (Aula 05) e com o MAPE da
+          baseline C, sem olhar ainda o resultado do próximo slide.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">11</p>
+        </div>
+      </section>
+
+      <!-- 12 - H2: baselines -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A baseline C, coeficiente fixo da LDC, erra 3,71% de MAPE</h2>
+        </div>
+        <p><strong>Hipótese 2: "a árvore captura o que a reta não captura, logo ganha."</strong>
+        Antes de testar qualquer modelo novo, as três baselines medidas nos 24 meses de teste:</p>
+        <table class="data-table">
+          <thead>
+            <tr><th>Baseline</th><th>RMSE</th><th>MAPE</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>A. Repete o mês anterior</td><td>88.925.206</td><td>6,73%</td></tr>
+            <tr><td>B. Repete o mesmo mês do ano anterior</td><td>75.627.562</td><td>5,10%</td></tr>
+            <tr><td>C. Coeficiente fixo da LDC</td><td>54.523.588</td><td>3,71%</td></tr>
+          </tbody>
+        </table>
+        <p>C é a baseline que a própria LDC usa hoje. Bater 3,71% de MAPE é a barra que qualquer
+        modelo treinado precisa passar para justificar a complexidade extra.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">12</p>
+        </div>
+      </section>
+
+      <!-- 13 - H2: modelos treinados, sem a árvore -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Nenhum modelo bate os 3,71% da baseline C</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Modelo</th><th>RMSE</th><th>MAPE</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Regressão linear</td><td>63.225.293</td><td>4,25%</td></tr>
+            <tr><td>Random Forest, 300 árvores</td><td>82.070.325</td><td>5,35%</td></tr>
+            <tr><td>KNN k=5, padronizado</td><td>128.029.380</td><td>9,37%</td></tr>
+            <tr><td>KNN k=5, sem padronizar</td><td>83.496.528</td><td>5,62%</td></tr>
+          </tbody>
+        </table>
+        <p>Os quatro perdem para a baseline C. A regressão linear chega mais perto (4,25%), mas
+        nenhum dos quatro bate 3,71%. A árvore ainda falta entrar na tabela.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">13</p>
+        </div>
+      </section>
+
+      <!-- 14 - H2: a árvore entra por último -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A árvore soma 7,66% de MAPE e perde das três baselines</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Modelo</th><th>RMSE</th><th>MAPE</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Baseline C</td><td>54.523.588</td><td>3,71%</td></tr>
+            <tr><td>Regressão linear</td><td>63.225.293</td><td>4,25%</td></tr>
+            <tr><td>Baseline B</td><td>75.627.562</td><td>5,10%</td></tr>
+            <tr><td>Random Forest</td><td>82.070.325</td><td>5,35%</td></tr>
+            <tr><td>KNN sem padronizar</td><td>83.496.528</td><td>5,62%</td></tr>
+            <tr><td>Baseline A</td><td>88.925.206</td><td>6,73%</td></tr>
+            <tr><td><strong>Árvore de decisão, max_depth=3</strong></td><td><strong>109.534.336</strong></td><td><strong>7,66%</strong></td></tr>
+            <tr><td>KNN padronizado</td><td>128.029.380</td><td>9,37%</td></tr>
+          </tbody>
+        </table>
+        <p>A hipótese 2 é <strong>falsa</strong>: entre os oito, a árvore só não perde do KNN
+        padronizado. O próximo bloco mede por quê.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">14</p>
+        </div>
+      </section>
+
+      <!-- 15 - H3: a árvore emite um único valor -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A árvore prevê o mesmo número nos 24 meses do teste</h2>
+        </div>
+        <p><strong>Hipótese 3: "a árvore perde porque não extrapola tendência."</strong> A árvore
+        tem 8 folhas, mas os 24 meses de teste (2024-04 a 2026-03) caem <strong>todos na mesma
+        folha</strong>. O resultado é um único valor previsto, do primeiro ao último mês do
+        teste.</p>
+        <img src="../assets/img/aula07-teto-da-arvore.png" alt="Gráfico de linha do abate de frangos de 1998 a 2026, com a série real subindo ao longo do tempo e a previsão da árvore de decisão nos 24 meses de teste marcada como uma linha reta horizontal em 1.090.166.234 kg, abaixo da maior parte dos pontos reais do período" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 360px;">
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">15</p>
+        </div>
+      </section>
+
+      <!-- 16 - H3: o teto em números -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>23 dos 24 meses de teste ficam acima do teto</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Medida</th><th>Valor</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Valor único previsto pela árvore, nos 24 meses</td><td>1.090.166.234 kg</td></tr>
+            <tr><td>Distância desse valor até a média real do teste</td><td>7,77% abaixo</td></tr>
+            <tr><td>Meses de teste acima desse valor</td><td>23 de 24</td></tr>
+            <tr><td>Máximo do alvo no treino (2023-03)</td><td>1.226.709.256 kg</td></tr>
+            <tr><td>Máximo real no teste (2026-03)</td><td>1.301.022.625 kg</td></tr>
+            <tr><td>Meses de teste acima do máximo do treino</td><td>5 de 24</td></tr>
+          </tbody>
+        </table>
+        <p>Verificação de uma linha, para conferir na própria máquina:
+        <code>arvore.predict(X_teste).max()</code>.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">16</p>
+        </div>
+      </section>
+
+      <!-- 17 - H3: por que isso acontece, e prática -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A folha mais alta da árvore é um teto que a série ultrapassa</h2>
+        </div>
+        <p>A árvore prevê a média da folha em que a entrada cai. A maior previsão possível é a
+        média da folha com os valores mais altos do treino, e isso é um teto fixo: nenhuma
+        combinação de features leva a árvore a prever acima dele. Numa série com tendência de
+        alta, como o abate de frangos, o futuro tende a ficar acima desse teto. A regressão linear
+        não tem esse limite, porque soma coeficientes a uma entrada que pode crescer sem parar.</p>
+        <ol class="exercise-steps">
+          <li>Rodar <code>arvore.predict(X_teste).max()</code> e comparar com
+          <code>y_teste.mean()</code>.</li>
+          <li>Contar quantos meses de <code>y_teste</code> ficam acima desse valor máximo.</li>
+          <li>Repetir a mesma conta para a regressão linear da Aula 05: ela tem teto?</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">17</p>
+        </div>
+      </section>
+
+      <!-- 18 - KNN: como decide -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Como o KNN decide</h2>
+        </div>
+        <p>KNN não ajusta coeficiente nem faz pergunta binária: para cada mês novo, procura os
+        <code>k</code> meses de treino mais parecidos (menor distância euclidiana entre as
+        features) e prevê a <strong>média do alvo</strong> desses <code>k</code> vizinhos.</p>
+        <p>A decisão inteira depende do que "parecido" significa, e quem responde isso é a escala
+        de cada feature: uma feature com desvio muito maior domina a distância, mesmo que não seja
+        a mais relevante para prever o alvo.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">18</p>
+        </div>
+      </section>
+
+      <!-- 19 - KNN: participação na distância -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2><code>lag1</code> e <code>lag12</code> respondem por 100% da distância sem padronizar</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Feature</th><th>Desvio padrão, sem padronizar</th><th>Participação na distância</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>lag1</code></td><td>&asymp; 2,45e8</td><td>49,2775%</td></tr>
+            <tr><td><code>lag12</code></td><td>&asymp; 2,485e8</td><td>50,7225%</td></tr>
+            <tr><td><code>sen</code></td><td>&asymp; 0,71</td><td>0,0000%</td></tr>
+            <tr><td><code>cos</code></td><td>&asymp; 0,71</td><td>0,0000%</td></tr>
+          </tbody>
+        </table>
+        <p>Sem padronizar, o "mais parecido" que o KNN encontra é o mês com volume de produção
+        mais próximo, porque <code>lag1</code> e <code>lag12</code> estão em escala de centenas de
+        milhões e dominam a distância. <code>sen</code> e <code>cos</code> variam entre -1 e 1 e,
+        nessa escala, não pesam nada.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">19</p>
+        </div>
+      </section>
+
+      <!-- 20 - KNN: padronizar piora, em todo k -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Padronizar piora o KNN em todo k testado</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>k</th><th>MAPE, padronizado</th><th>MAPE, sem padronizar</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>3</td><td>8,14%</td><td>5,82%</td></tr>
+            <tr><td>5</td><td>9,37%</td><td>5,62%</td></tr>
+            <tr><td>10</td><td>10,09%</td><td>6,10%</td></tr>
+          </tbody>
+        </table>
+        <p>Padronizar dá peso igual a <code>sen</code>, <code>cos</code>, <code>lag1</code> e
+        <code>lag12</code> na distância, e isso força o KNN a buscar o mês mais parecido em
+        posição no calendário, não em volume. Para uma série de proteína animal, volume é a
+        semelhança certa.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">20</p>
+        </div>
+      </section>
+
+      <!-- 21 - KNN: fecho da regra da Aula 05 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A regra de padronizar da Aula 05 continua válida</h2>
+        </div>
+        <p>A regra da Aula 05 não muda: padronizar iguala a influência das features na distância,
+        e isso é o comportamento certo quando não existe informação prévia sobre qual feature
+        deveria valer mais. O resultado desta seção não contradiz a regra, mostra o caso em que ela
+        não se aplica: aqui já se sabe, de antemão, que volume de produção é a semelhança que
+        importa, e igualar tudo apaga exatamente essa informação.</p>
+        <p><strong>Pergunta para a sala:</strong> antes de rodar qualquer modelo, quando dá para
+        saber que uma feature deve pesar mais que as outras numa distância?</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">21</p>
+        </div>
+      </section>
+
+      <!-- 22 - H4: alvo em razão -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O alvo em razão leva a árvore a 3,86%</h2>
+        </div>
+        <p><strong>Hipótese 4: "trocar o alvo para razão devolve a árvore à disputa."</strong> Em
+        vez de prever <code>abate_frangos</code> diretamente, o alvo passa a ser
+        <code>abate_frangos / lag12</code>, uma razão estacionária: ela não cresce ao longo do
+        tempo do mesmo jeito que a série em nível. A previsão final volta a quilogramas
+        multiplicando o resultado de volta por <code>lag12</code>.</p>
+        <img src="../assets/img/aula07-nivel-versus-razao.png" alt="Dois painéis comparando a previsão da árvore de decisão para o abate de frangos. À esquerda, alvo em nível: a previsão é uma linha reta horizontal abaixo da maior parte da série real. À direita, alvo em razão, convertido de volta para nível: a previsão acompanha a subida e descida da série real, sem o teto fixo do painel da esquerda" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 340px;">
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">22</p>
+        </div>
+      </section>
+
+      <!-- 23 - H4: tabela nível x razão -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>KNN sem padronizar cai para 3,71% em razão e empata com a baseline C</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Modelo</th><th>MAPE, alvo em nível</th><th>MAPE, alvo em razão</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Árvore, max_depth=3</td><td>7,66%</td><td>3,86%</td></tr>
+            <tr><td>Random Forest</td><td>5,35%</td><td>4,48%</td></tr>
+            <tr><td>KNN k=5, padronizado</td><td>9,37%</td><td>4,59%</td></tr>
+            <tr><td>KNN k=5, sem padronizar</td><td>5,62%</td><td>3,71%</td></tr>
+          </tbody>
+        </table>
+        <p>Os quatro modelos melhoram com o alvo em razão, e a árvore é quem ganha mais: o teto
+        fixo em nível deixa de existir, porque a árvore agora prevê uma razão pequena e estável, em
+        vez de um volume que só cresce.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">23</p>
+        </div>
+      </section>
+
+      <!-- 24 - H4: a exceção da regressão linear -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A regressão linear piora em razão, de 4,25% para 4,73% de MAPE</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Modelo</th><th>MAPE, alvo em nível</th><th>MAPE, alvo em razão</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Regressão linear (4 features)</td><td>4,25%</td><td>4,73%</td></tr>
+          </tbody>
+        </table>
+        <p>A reta já extrapolava tendência sozinha, via os coeficientes de <code>lag1</code> e
+        <code>lag12</code>. Trocar o alvo para razão tira dela justamente a informação de nível que
+        ela sabia usar, e o erro sobe. Isso impede a leitura de que alvo em razão é sempre melhor:
+        depende de o modelo já saber, ou não, lidar com tendência.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">24</p>
+        </div>
+      </section>
+
+      <!-- 25 - Random Forest -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O Random Forest reduz a variância de uma árvore</h2>
+        </div>
+        <p>Random Forest treina muitas árvores independentes, cada uma sobre uma amostra
+        diferente das linhas e das features, e prevê a média das 300 árvores. Cada árvore erra de
+        um jeito um pouco diferente, e a média cancela parte desses erros, reduzindo a
+        variância em relação a uma única árvore.</p>
+        <table class="data-table">
+          <thead>
+            <tr><th>Random Forest, 300 árvores</th><th>MAPE, alvo em nível</th><th>MAPE, alvo em razão</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>&nbsp;</td><td>5,35%</td><td>4,48%</td></tr>
+          </tbody>
+        </table>
+        <p>Melhor que a árvore sozinha nos dois casos, mas cada árvore da floresta ainda prevê a
+        média de uma folha: a média de 300 tetos continua sendo um teto, só que mais suave.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">25</p>
+        </div>
+      </section>
+
+      <!-- 26 - O fecho -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O modelo do fecho soma 3,32% de MAPE e bate a baseline da LDC</h2>
+        </div>
+        <p>Regressão linear sobre a razão, com onze features: <code>lag1</code>, <code>lag2</code>,
+        <code>lag3</code>, <code>lag12</code>, <code>sen</code>, <code>cos</code>,
+        <code>dias</code>, mais as quatro séries do case defasadas em um mês.</p>
+        <table class="data-table">
+          <thead>
+            <tr><th>Modelo</th><th>RMSE</th><th>MAPE</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Baseline C, coeficiente fixo da LDC</td><td>54.523.588</td><td>3,71%</td></tr>
+            <tr><td><strong>Fecho: regressão linear, razão, 11 features</strong></td><td><strong>46.724.434</strong></td><td><strong>3,32%</strong></td></tr>
+          </tbody>
+        </table>
+        <p>É o único modelo do encontro que bate a baseline. O vencedor não é o modelo mais novo
+        que a turma aprendeu hoje: é a reta, com o alvo e as features certas.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">26</p>
+        </div>
+      </section>
+
+      <!-- 27 - Quiz 1 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pergunta 1 &middot; O teto da árvore</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">A árvore de decisão prevê o mesmo valor, 1.090.166.234 kg, nos
+          24 meses de teste. Por que ela faz isso?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="A árvore treinada tem 8 folhas, não 1. O problema não é a árvore ter poucas folhas, é os 24 meses de teste caírem todos na mesma folha.">Porque max_depth=3 limita a árvore a uma única folha</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: os 24 meses de teste caem na mesma folha, e a árvore prevê a média dessa folha, que é um valor fixo. Numa série com tendência de alta, o futuro tende a ficar acima desse teto."
+                data-incorrect-msg="Era esta: os 24 meses de teste caem todos na mesma folha, e a árvore prevê a média dessa folha, um teto fixo que a série real ultrapassa.">Os 24 meses de teste caem na mesma folha, e a folha prevê a própria média</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="random_state fixa o desempate entre cortes igualmente bons, não zera a variação da previsão entre meses diferentes.">Porque random_state=42 trava a previsão num valor único</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O alvo em nível é abate_frangos em quilogramas, não em razão. A conversão para razão só entra na hipótese 4, como correção do problema.">Porque o alvo já está em razão, não em nível</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">27</p>
+        </div>
+      </section>
+
+      <!-- 28 - Quiz 2 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pergunta 2 &middot; Padronização no KNN</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">Padronizar as features piora o KNN desta aula em todo k
+          testado. Por quê?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="A regra da Aula 05 continua valendo em geral. O que muda é que aqui já se sabe, de antemão, qual feature deveria pesar mais.">Porque a regra de padronizar da Aula 05 estava errada</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: sem padronizar, lag1 e lag12 respondem por 100% da distância, e o KNN acha o mês mais parecido em volume, a semelhança certa para esta série. Padronizar dá peso igual a sen e cos e desvia a busca para posição no calendário."
+                data-incorrect-msg="Era esta: sem padronizar, lag1 e lag12 dominam a distância e o KNN busca por volume, que é a semelhança certa aqui. Padronizar iguala sen e cos a lag1 e lag12 e desvia a busca para posição no calendário.">Padronizar dá peso igual a sen e cos, e a busca passa a priorizar posição no calendário em vez de volume</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O StandardScaler é ajustado só sobre o treino, do mesmo jeito nos dois cenários medidos aqui.">Porque o StandardScaler foi ajustado sobre o conjunto de teste por engano</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="k=3, k=5 e k=10 pioram igualmente com padronização. O efeito não depende do tamanho de k.">Porque k=5 é grande demais para uma base padronizada</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">28</p>
+        </div>
+      </section>
+
+      <!-- 29 - Quadro de hipóteses e ART.6 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O quadro de hipóteses entra na ART.6, peso 6</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th></th><th>Hipótese</th><th>Veredito</th><th>Evidência</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>H1</td><td>A granularidade é imposta pela fonte</td><td>Falsa</td><td>c12716 entrega 351 meses por série</td></tr>
+            <tr><td>H2</td><td>A árvore ganha da reta</td><td>Falsa</td><td>7,66% contra 4,25% e 3,71%</td></tr>
+            <tr><td>H3</td><td>A árvore perde por não extrapolar</td><td>Verdadeira</td><td>Um único valor nos 24 meses, 23 acima dele</td></tr>
+            <tr><td>H4</td><td>Alvo em razão recupera a árvore</td><td>Verdadeira</td><td>7,66% cai para 3,86%</td></tr>
+          </tbody>
+        </table>
+        <p><strong>ART. 6 Preparação dos Dados e Modelagem, peso 6</strong>, fecha na Sprint 3, com
+        review em 11/09 [6]. Cada dupla entrega este quadro preenchido com a própria série,
+        junto com o modelo treinado e a comparação contra a baseline.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">29</p>
+        </div>
+      </section>
+
+      <!-- 30 - Autoestudo da próxima aula -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Autoestudo para a Aula 08</h2>
+        </div>
+        <p>A Aula 07 não toca em matriz de confusão, precisão, revocação, Naive Bayes, regressão
+        logística nem SVM, mesmo esses temas fazendo parte do autoestudo desta semana [7]. O case é
+        de regressão, e classificar um mês como "alta" ou "baixa" demanda exigiria inventar um
+        rótulo que o dado não tem. Esses assuntos entram na Aula 09.</p>
+        <p>Para a Aula 08, o autoestudo na Adalove é sobre sistemas de recomendação [8]:</p>
+        <table class="data-table">
+          <tbody>
+            <tr><td>Implementação: Sistemas de Recomendação I</td></tr>
+            <tr><td>Kaggle: Sistemas de Recomendação II</td></tr>
+            <tr><td>Sistemas de Recomendação</td></tr>
+            <tr><td>Tipos de Sistemas de Recomendação</td></tr>
+            <tr><td>Ponderada 2 de Computação</td></tr>
+          </tbody>
+        </table>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">30</p>
+        </div>
+      </section>
+
+      <!-- 31 - Referências -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Referências</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite, tabelas
+          1092, 1093, 1094, 7524 e 1086 do SIDRA, classificação c12716 "Referência temporal".
+          Contrato de colunas mensal em <code>dados/mensal/</code> e checagem de sanidade em
+          <code>dados/README.md</code>.</li>
+          <li>Definição completa da base analítica mensal (339 linhas), do corte treino/teste e
+          dos números canônicos desta aula em
+          <code>.superpowers/sdd/2026-09-03-aula07/global-constraints.md</code>.</li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn: Machine Learning in Python</em>. JMLR, 2011:
+          <code>DecisionTreeRegressor</code>, <code>RandomForestRegressor</code>,
+          <code>KNeighborsRegressor</code> e <code>StandardScaler</code>.</li>
+          <li>Breiman, L. <em>Random Forests</em>. Machine Learning, 45, 5 a 32, 2001.</li>
+          <li>Material de apoio da aula, em
+          <a href="../materiais/aula07.html">materiais/aula07.html</a>: a árvore explicada nó a
+          nó e a derivação completa do alvo em razão.</li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seção 4 (peso 6 da ART.6 e o calendário da Sprint 3)
+          e seção 6, a espiral que amarra a Aula 06 à Aula 07.</li>
+          <li>Autoestudos da Semana 05 na Adalove, com o título exato de cada um em
+          <a href="../referencias/aula07.html">referencias/aula07.html</a>.</li>
+          <li>Autoestudos da Semana 06 na Adalove, sobre sistemas de recomendação, com o título
+          exato de cada um em <a href="../referencias/aula07.html">referencias/aula07.html</a>.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 07 &middot; Sprint 3</p>
+          <p class="footer-page">31</p>
+        </div>
+      </section>
+
+      <!-- 32 - Encerramento -->
+      <section class="end-slide">
+        <h1>Até 10/09</h1>
+        <h3>Aula 08: Aprendizado Não Supervisionado Parte II, Sprint 3</h3>
+        <p>Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot; 2026-2A</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      width: 1280, height: 720, center: false, margin: 0,
+      hash: true, slideNumber: false, transition: 'fade'
+    });
+  </script>
+  <script src="../assets/js/inteli-quiz.js"></script>
+  <script src="../assets/js/inteli-zoom.js"></script>
+  <script src="../assets/js/inteli-print.js"></script>
+</body>
+</html>

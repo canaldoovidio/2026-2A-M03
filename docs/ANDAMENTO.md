@@ -102,12 +102,31 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
   ordem de 1e-06 depois de remover a tendência, porque a variação entre anos infla a variação
   dentro dos grupos. `tools/tests/test_hipoteses_aula04.py` trava as decisões, não só os números,
   e se pula sozinho onde não houver scipy.
-- **ADRs** (`docs/adrs/ADR-001` a `ADR-009`): as nove decisões de arquitetura do acervo, para o
+- **Aula 07 completa, os quatro artefatos** (`aulas/aula07.html`, `materiais/aula07.html`,
+  `referencias/aula07.html`, `notebooks/aula07.ipynb`) mais as notas do professor
+  (`docs/notas-do-professor/aula07.md`), a `docs/adrs/ADR-010` e a suíte
+  `tools/tests/test_modelos_aula07.py`. Os quatro botões do card no portal estão habilitados. A
+  aula corrige a granularidade do case: a classificação c12716 do SIDRA entrega 351 meses por
+  série (1997-01 a 2026-03, 471 em ovos), e a base analítica mensal soma 339 linhas (1998-01 a
+  2026-03), com treino de 315 meses e teste de 24 meses (2024-04 a 2026-03), o mesmo horizonte
+  que a LDC pediu.
+- **Os achados medidos antes do primeiro slide da Aula 07.** (1) A árvore de decisão
+  (`max_depth=3`) emite um único valor nos 24 meses de teste, 1.090.166.234 kg, com 23 dos 24
+  meses reais acima desse teto: MAPE de 7,66% em nível, pior que as três baselines. (2) Trocar o
+  alvo para razão (`y / lag12`) recupera a árvore, cujo MAPE cai para 3,86%. (3) O modelo do
+  fecho, regressão linear sobre a razão com onze features, vence a baseline de coeficiente fixo da
+  LDC: MAPE de 3,32% contra 3,71%. (4) Padronizar piora o KNN em todo k testado: MAPE de 8,14%
+  contra 5,82% em k=3, 9,37% contra 5,62% em k=5, e 10,09% contra 6,10% em k=10, porque sem
+  padronizar a distância euclidiana já reparte quase igualmente entre `lag1` (49,28%) e `lag12`
+  (50,72%), e padronizar dá peso artificial a `sen` e `cos`.
+- **ADRs** (`docs/adrs/ADR-001` a `ADR-010`): as dez decisões de arquitetura do acervo, para o
   fan-out não relitigar nenhuma. Motor Reveal.js, Platypi no lugar da Azurio, regressão tabular em
   base trimestral, case só com fonte aberta, os quatro artefatos por aula, as skills globais, a
   base analítica montada a partir das cinco séries do SIDRA, o protocolo de corte temporal e
-  baseline do Modelo 1, e a redução de escopo da Aula 06 (K fixo em 4, Elbow e Silhouette para a
-  Aula 08).
+  baseline do Modelo 1, a redução de escopo da Aula 06 (K fixo em 4, Elbow e Silhouette para a
+  Aula 08), e a correção de granularidade da Aula 07 (base mensal a partir da classificação
+  c12716 do SIDRA, com matriz de confusão, precisão, revocação, Naive Bayes, regressão logística,
+  SVM e entropia calculada à mão movidos para a Aula 09).
 - **Integração contínua** (`.github/workflows/validate.yml` e `.github/workflows/static.yml`):
   validação em push e pull_request (marca, links, layout, pytest e execução dos notebooks, mais um
   passo que reprova se a validação alterar arquivo versionado) e publicação da raiz do repositório

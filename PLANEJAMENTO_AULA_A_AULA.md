@@ -436,35 +436,48 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
   Árvore de Decisão na prática
 
 10h00 - 10h15  Daily da equipe
-  O que fiz, o que vou fazer, impedimentos. Cada dupla relata os perfis encontrados no
-  agrupamento da Aula 06.
+  O que fiz, o que vou fazer, impedimentos. Cada dupla relata os perfis de cluster encontrados
+  no agrupamento da Aula 06.
 
 10h15 - 12h00  Instrução em metodologia ativa
 
-  10h15 - 10h30  Resgate: os perfis de cluster da Aula 06. Hoje: modelos mais robustos que a
-    regressão linear para o Modelo 1. Pergunta disparada: "o que uma árvore de decisão captura
-    que uma reta não captura?"
+  10h15 - 10h25  Resgate e H1: a turma abre o SIDRA e acha a classificação c12716, "Referência
+    temporal", nas cinco tabelas do case. O filtro usado até a Aula 06 selecionava apenas a
+    categoria "Total do trimestre" dessa classificação, o que produziu a leitura equivocada de
+    que a fonte só publicava dado trimestral.
 
-  10h30 - 10h45  Teoria: árvore de decisão e entropia, aplicada à produção de frango com as
-    features de defasagem da Aula 04.
+  10h25 - 10h40  Prática: cada dupla monta a base mensal (339 linhas, 1998-01 a 2026-03) e
+    reconcilia a soma dos três meses com o valor trimestral já usado até a Aula 06.
 
-  10h45 - 11h00  Prática: cada dupla treina uma `DecisionTreeRegressor` e compara RMSE e MAPE com
-    a regressão linear da Aula 05.
+  10h40 - 10h55  Teoria: árvore de decisão, como o algoritmo particiona o espaço de features e
+    prevê a média dos valores da folha em que a observação cai.
 
-  11h00 - 11h15  Teoria: ensembles e Random Forest, por que a média de várias árvores reduz
+  10h55 - 11h10  Prática, H2 e H3: cada dupla treina uma `DecisionTreeRegressor` (`max_depth=3`)
+    sobre a base mensal, mede RMSE e MAPE contra a baseline da LDC e a regressão linear, e
+    verifica com `arvore.predict(X_teste).max()` o teto da folha mais alta.
+
+  11h10 - 11h22  Teoria: KNN, a pincelada. O algoritmo decide por semelhança entre os k vizinhos
+    mais próximos, e a escala das features define o que conta como parecido.
+
+  11h22 - 11h35  Prática, H4: cada dupla treina a árvore e o KNN com o alvo trocado para razão
+    (`y / lag12`) e compara o MAPE com a versão em nível.
+
+  11h35 - 11h45  Teoria: Random Forest, a média de várias árvores, e por que essa média reduz a
     variância em relação a uma árvore só.
 
-  11h15 - 11h30  Prática: cada dupla treina um `RandomForestRegressor` sobre a mesma base e
-    registra o ganho, ou a ausência de ganho, de RMSE e MAPE.
+  11h45 - 12h00  Amarração com a sprint: o quadro das quatro hipóteses (granularidade, disputa
+    árvore contra reta, teto da árvore, recuperação em razão) e o modelo de fecho da aula, com
+    RMSE e MAPE medidos contra a baseline da LDC, alimentam **ART.6 Preparação dos Dados e
+    Modelagem** (peso 6).
 
-  11h30 - 11h45  Teoria: métricas de classificação (matriz de confusão, precisão, revocação),
-    para o caso em que uma etapa auxiliar do pipeline classifica um trimestre como "alta" ou
-    "baixa" demanda. Exercício: cada dupla monta a própria matriz de confusão de um classificador
-    simples treinado sobre essa rotulagem.
-
-  11h45 - 12h00  Amarração com a sprint: os modelos de árvore e ensemble, com RMSE e MAPE
-    medidos contra a baseline da LDC, formam o núcleo do Modelo 1 e alimentam **ART.6 Preparação
-    dos Dados e Modelagem** (peso 6).
+    **Redução de escopo decidida em 03/09/2026, registrada em `docs/adrs/ADR-010`.** O roteiro
+    original tinha um bloco de métricas de classificação (matriz de confusão, precisão,
+    revocação) para um classificador auxiliar de "alta" ou "baixa" demanda, além de Naive Bayes,
+    regressão logística, SVM e entropia calculada à mão no bloco de árvore. A medição feita antes
+    do primeiro slide mostrou que a árvore de decisão perde da baseline da LDC em nível (MAPE
+    7,66% contra 3,71%) e só volta à disputa com o alvo trocado para razão (MAPE 3,86%), o que
+    abriu as quatro hipóteses da aula e não deixou tempo de sala para classificação. Esses
+    assuntos migram para a Aula 09.
 
 ---
 
@@ -562,6 +575,15 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
   11h45 - 12h00  Amarração com a sprint: o diagnóstico e a correção de vazamento temporal,
     dimensionalidade excessiva e nulos preparam os modelos para a comparação formal, alimentando
     **ART.7 Comparação de modelos** (peso 8).
+
+    **Escopo ampliado em 03/09/2026, por causa da ADR-010.** Matriz de confusão, precisão,
+    revocação, Naive Bayes, regressão logística, SVM e entropia calculada à mão, que estavam
+    roteirizados na Aula 07, migram para a Aula 09: a Aula 07 mediu que a árvore de decisão só
+    volta a competir com a baseline da LDC com o alvo trocado para razão, e as quatro hipóteses
+    resultantes já preenchem o encontro, sem espaço de sala para um classificador auxiliar. Isso
+    soma sete assuntos ao escopo já previsto (vazamento temporal, maldição de dimensionalidade,
+    `Imputer` e domain knowledge), e a Aula 09 vai precisar de um corte compensatório. O corte é
+    decidido quando a aula for construída, não hoje.
 
 ---
 
