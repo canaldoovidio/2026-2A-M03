@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referências &middot; Aula 09 &middot; Problemas Comuns com Modelagem de IA</title>
+  <meta name="description" content="Autoestudos da Semana 07 na Adalove e leitura complementar da Aula 09 do Módulo 03 IN, com as fontes primárias de vazamento, entropia, dado ausente e dimensionalidade.">
+
+  <!-- Duas secoes fixas, nesta ordem, em TODAS as 14 aulas:
+       1. Autoestudos da semana (Adalove), copiados de
+          docs/autoestudos-por-semana.md, titulo por titulo, sem inventar
+          nenhum e sem alterar caractere.
+       2. Leitura complementar do professor.
+       A segunda secao nunca e omitida, mesmo sem curadoria fechada.
+
+       ATENCAO: a Semana 07 tem dezenove autoestudos e dois Encontros de
+       Instrucao (15/09, esta aula, e 17/09, a Aula 10). Nove itens pertencem a
+       esta aula e dez a Aula 10, que e onde a contagem da semana fecha. Dois
+       dos nove sao de PCA, ensinado em 10/09 na Aula 08: o autoestudo veio
+       cinco dias depois do encontro, e o descompasso esta declarado na secao 1.
+       "Curva ROC e AUC" e "Opcional: ROC e AUC na pratica" tambem sao da
+       Semana 07 e ficaram para a Aula 10, por decisao da ADR-012. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 09 &middot; 15/09/2026 &middot; Semana 07</p>
+      <h1>Referências: Problemas Comuns com Modelagem de IA</h1>
+      <p class="doc-subtitulo">A Semana 07 tem dois Encontros de Instrução, em 15/09 e 17/09, e
+      dezenove autoestudos na fonte. Nove pertencem a esta aula e dez à Aula 10, onde a contagem da
+      semana fecha. A seção 1 lista os nove com o título exato da fonte e declara esse rateio; a
+      seção 2 traz as fontes primárias de vazamento em mineração de dados, entropia, dado ausente e
+      dimensionalidade, que os autoestudos da semana não cobrem.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#autoestudos">Autoestudos da semana (Adalove)</a></li>
+        <li><a href="#complementar">Leitura complementar do professor</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="autoestudos">
+        <h2>1. Autoestudos da semana (Adalove)</h2>
+        <p>Semana 07, os nove itens que pertencem ao encontro de 15/09:</p>
+        <ol class="doc-referencias">
+          <li>Desbalanceamento das Classes
+            <span class="doc-porque">Sustenta o bloco de classificação da aula. O alvo binário do
+            case tem 78,1% de positivos no treino e 83,3% no teste, e a baseline que prevê sempre a
+            classe majoritária acerta 83,3% sem aprender nada. É a leitura que explica por que a
+            acurácia sozinha não distingue um classificador que decide de um que responde sempre a
+            mesma coisa.</span></li>
+          <li>Formas de lidar com o desbalanceamento de Classes
+            <span class="doc-porque">Continuação do item anterior, com as técnicas de reamostragem,
+            peso de classe e ajuste de limiar. A aula mede o problema e não aplica correção: o
+            desbalanceamento do case é característica do fenômeno, porque o abate de frangos cresceu
+            em quase quatro de cada cinco meses desde 1998, e não um defeito da amostra.</span></li>
+          <li>Maldição de dimensionalidade
+            <span class="doc-porque">Sustenta o bloco de fecho. A tabela da aula mede o efeito na
+            própria base: indo de 2 para 11 features padronizadas, a distância euclidiana média
+            entre meses de treino cresce de 1,65 para 4,31, o KNN piora de 3,71% para 5,01% de MAPE
+            e a regressão linear melhora de 4,71% para 3,32%.</span></li>
+          <li>Modelagem do problema: Domain Knowledge
+            <span class="doc-porque">Enquadramento do bloco de domain knowledge. Todas as decisões
+            de feature deste acervo vieram daí: o alvo em razão sobre <code>lag12</code> na Aula 07,
+            a saída do leite da base na Aula 04 e o horizonte de 24 meses que a LDC pediu no
+            TAPI.</span></li>
+          <li>Estudo de caso: Netflix (Learning a Personalized homepage)
+            <span class="doc-porque">Primeiro dos dois estudos de caso do tema. Mostra
+            conhecimento de domínio determinando o que entra no modelo em uma empresa com dado
+            abundante, e serve de contraponto ao case da LDC, em que a fonte aberta limita as
+            features disponíveis.</span></li>
+          <li>Opcional: Estudo de caso - Airbnb
+            <span class="doc-porque">Segundo estudo de caso, marcado como opcional na fonte. Entra
+            na aula como referência dentro do bloco de fecho, sem leitura em profundidade em sala:
+            a <code>ADR-012</code> reduziu domain knowledge de bloco próprio para parte dos quinze
+            minutos finais.</span></li>
+          <li>Tratando valores nulos com Imputer
+            <span class="doc-porque">Sustenta a demonstração de imputação. O roteiro original pedia
+            <code>SimpleImputer</code> sobre os vazios da própria série, e nenhum dos dez CSVs
+            versionados tem valor vazio: a ausência real do acervo é de período. A demonstração
+            mascara 5% dos meses de treino e mede cada estratégia contra o valor escondido, com a
+            média errando 34,53% e o mesmo mês do ano anterior corrigido pelo fator médio errando
+            4,44%.</span></li>
+          <li>PCA - Resolvendo o problema da dimensionalidade
+            <span class="doc-porque">Primeiro dos dois itens de PCA da semana. O método foi
+            ensinado em 10/09, na Aula 08, cinco dias antes desta leitura. Ele reaparece aqui como
+            revisão, e o resgate de abertura da aula usa os números daquele encontro: PC1 com 68,21%
+            da variância e o corte para quatro componentes levando o MAPE de 3,32% para
+            4,94%.</span></li>
+          <li>PCA: o que é e como usar em Python
+            <span class="doc-porque">Segundo item de PCA, com a implementação. A ligação com esta
+            aula está no gancho que a Aula 08 deixou: ajustar escalador e PCA sobre as 339 linhas em
+            vez das 315 de treino leva PC1 a 68,52% e o MAPE de quatro componentes a 4,91%, sempre
+            na direção otimista, que é o exemplo de abertura do bloco de vazamento
+            temporal.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>Estes títulos são cópia literal de <code>docs/autoestudos-por-semana.md</code>, que é
+          gerado do <code>Turma.xlsx</code> oficial. Autoestudo que não está lá não entra aqui. O
+          acesso ao conteúdo é pela Adalove, com o login institucional.</p>
+        </div>
+        <div class="doc-nota">
+          <p><strong>A Semana 07 tem dezenove autoestudos, e dez deles são da Aula 10.</strong> A
+          semana tem dois Encontros de Instrução, em 15/09 e 17/09, e uma lista única de
+          autoestudos. Os dez restantes ("Além da Transparência: Contextualizando a Necessidade de
+          Explicabilidade na IA", "Como escolher um modelo preditivo", "Curva ROC e AUC", "Exemplo
+          I: GridSearch e RandomSearch", "Exemplo II: GridSearch e RandomSearch", "Explicabilidade
+          de Modelo com SHAP", "O que é hiperparâmetro?", "Opcional: Prática com GridSearch e
+          RandomSearch", "Opcional: ROC e AUC na prática" e "Validação Cruzada") cobrem
+          hiperparâmetros, validação cruzada, curva ROC e explicabilidade, que são o escopo da Aula
+          10, em 17/09. Eles serão listados em <code>referencias/aula10.html</code>, e é lá que a
+          contagem da semana fecha.</p>
+          <p><strong>Curva ROC e AUC ficou para a Aula 10 por decisão de escopo.</strong> Os dois
+          itens de ROC são da mesma semana e conversam com o bloco de classificação de hoje, mas a
+          <code>ADR-012</code> registrou que a Aula 09 já entra com onze assuntos em 105 minutos, e
+          que a dívida de tempo se desloca para a Aula 10 em vez de desaparecer. Quem quiser ligar
+          os dois assuntos antes do encontro tem os itens na Adalove, na mesma semana.</p>
+          <p><strong>Os dois itens de PCA chegam depois do encontro que ensinou PCA.</strong> A
+          Aula 08, em 10/09, rodou PCA sobre as onze features do Modelo 1; os autoestudos "PCA -
+          Resolvendo o problema da dimensionalidade" e "PCA: o que é e como usar em Python" são
+          desta semana, lidos para 15/09. A página de referências da Aula 08
+          (<a href="aula08.html#autoestudos">referencias/aula08.html</a>) já registra o outro lado
+          do mesmo descompasso: os cinco autoestudos daquela semana eram todos de sistemas de
+          recomendação, e nenhum cobria PCA.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="complementar">
+        <h2>2. Leitura complementar do professor</h2>
+        <p>A curadoria definitiva desta seção ainda será fechada pelo professor. Até lá, ficam aqui,
+        numeradas, as fontes que sustentam o deck e o material de apoio desta aula. O slide de
+        referências do deck traz uma lista mais curta, com numeração própria, e esta página é a
+        lista completa.</p>
+        <ol class="doc-referencias">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite, tabelas
+            1092, 1093, 1094, 7524 e 1086 do SIDRA, com a classificação c12716 (Referência temporal)
+            aberta em No 1º mês, No 2º mês e No 3º mês.
+            <span class="doc-porque">Origem de todo número desta aula, com o contrato de colunas e a
+            checagem de sanidade dos valores em <code>dados/README.md</code>. A base é a mesma das
+            Aulas 07 e 08: junção interna das cinco séries de <code>dados/mensal/</code>, 339 linhas
+            de 1998-01 a 2026-03, treino de 315 meses e teste de 24 meses. O bloco de ausência usa
+            os períodos antes da junção: união de 471 meses e interseção de 351.</span></li>
+          <li>Kaufman, S.; Rosset, S.; Perlich, C.; Stitelman, O. <em>Leakage in Data Mining:
+            Formulation, Detection, and Avoidance</em>. ACM Transactions on Knowledge Discovery from
+            Data, v. 6, n. 4, artigo 15, 2012.
+            <span class="doc-porque">Fonte primária do bloco de vazamento. Formaliza vazamento como
+            a presença, entre as entradas do modelo, de informação sobre o alvo que não estaria
+            legitimamente disponível no momento da previsão, e trata separadamente o vazamento pela
+            construção do conjunto de treino, que é exatamente o caso do sorteio aleatório numa
+            série temporal medido na aula.</span></li>
+          <li>Shannon, C. E. <em>A Mathematical Theory of Communication</em>. Bell System Technical
+            Journal, v. 27, p. 379-423 e 623-656, 1948.
+            <span class="doc-porque">Origem da entropia usada no bloco da árvore. A definição em
+            bits, com o logaritmo na base 2, é a que a conta à mão da aula usa: a raiz com 246
+            positivos em 315 meses vale 0,7584 bits.</span></li>
+          <li>Quinlan, J. R. <em>Induction of Decision Trees</em>. Machine Learning, v. 1, n. 1,
+            p. 81-106, 1986.
+            <span class="doc-porque">Fonte primária do ganho de informação como critério de corte
+            de árvore, que é a conta do bloco de entropia: entropia da raiz menos a média ponderada
+            das entropias dos filhos. O artigo também discute o viés do critério a favor de
+            atributos com muitos valores distintos, o que explica por que <code>dias</code>, com
+            quatro valores, tem tão pouco a oferecer.</span></li>
+          <li>Little, R. J. A.; Rubin, D. B. <em>Statistical Analysis with Missing Data</em>.
+            3. ed. Hoboken: Wiley, 2019.
+            <span class="doc-porque">Tratado de referência sobre dado ausente, e a fonte do
+            enquadramento do bloco de imputação: o mecanismo pelo qual o dado falta determina se uma
+            estratégia de imputação é defensável. No acervo, a ausência não é aleatória, é de
+            período, porque <code>producao_ovos</code> começa dez anos antes das outras quatro
+            séries.</span></li>
+          <li>Bellman, R. <em>Adaptive Control Processes: A Guided Tour</em>. Princeton: Princeton
+            University Press, 1961.
+            <span class="doc-porque">Origem da expressão "maldição da dimensionalidade", usada por
+            Bellman para o crescimento do volume do espaço com o número de dimensões. É a leitura de
+            fundo do autoestudo de mesmo nome e da tabela de 2 a 11 features da aula.</span></li>
+          <li>Beyer, K.; Goldstein, J.; Ramakrishnan, R.; Shaft, U. <em>When Is "Nearest Neighbor"
+            Meaningful?</em>. Proceedings of the 7th International Conference on Database Theory
+            (ICDT), Lecture Notes in Computer Science, v. 1540, p. 217-235, 1999.
+            <span class="doc-porque">Trata do efeito que a aula mede no KNN: com o número de
+            dimensões crescendo, as distâncias ao vizinho mais próximo e ao mais distante se
+            aproximam, e a vizinhança perde poder de discriminação. É a explicação da coluna de
+            distância média, que sobe de 1,65 para 4,31 entre 2 e 11 features.</span></li>
+          <li>Chawla, N. V.; Bowyer, K. W.; Hall, L. O.; Kegelmeyer, W. P. <em>SMOTE: Synthetic
+            Minority Over-sampling Technique</em>. Journal of Artificial Intelligence Research,
+            v. 16, p. 321-357, 2002.
+            <span class="doc-porque">Fonte primária citada pelo autoestudo "Formas de lidar com o
+            desbalanceamento de Classes". A aula mede o problema sem aplicar a correção, e o artigo
+            é a leitura de quem quiser levar reamostragem para a ART.7. Vale a ressalva do próprio
+            método: sintetizar minoria em série temporal cria meses que nunca existiram, e dado
+            sintético é proibido no acervo.</span></li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn: Machine Learning in Python</em>. Journal of
+            Machine Learning Research, v. 12, p. 2825-2830, 2011:
+            <a href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html">confusion_matrix</a>,
+            <a href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html">LogisticRegression</a>,
+            <a href="https://scikit-learn.org/stable/modules/generated/sklearn.naive_bayes.GaussianNB.html">GaussianNB</a>,
+            <a href="https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html">SVC</a>,
+            <a href="https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html">DecisionTreeClassifier</a>
+            e
+            <a href="https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html">SimpleImputer</a>.
+            <span class="doc-porque">As chamadas que a prática usa. A página do
+            <code>DecisionTreeClassifier</code> documenta <code>criterion="entropy"</code>, e é
+            dela que sai a leitura de <code>tree_.impurity</code> usada para comparar a conta à mão
+            com o corte que a árvore escolhe. A do <code>SimpleImputer</code> documenta as
+            estratégias <code>mean</code> e <code>median</code>, que são as duas piores no
+            exercício da aula.</span></li>
+          <li>Autoestudos da Semana 07 na Adalove, listados na seção 1 desta página.
+            <span class="doc-porque">Referência cruzada usada como citação no deck, nos blocos de
+            desbalanceamento, dimensionalidade e domain knowledge.</span></li>
+          <li>Material de apoio da aula, em
+            <a href="../materiais/aula09.html">materiais/aula09.html</a>.
+            <span class="doc-porque">Onde estão as tabelas completas das cinco medições, o
+            mecanismo de cada resultado e o <strong>escopo das conclusões</strong>: "sorteio infla a
+            métrica" é falso como regra geral nesta base, a ordem das estratégias de imputação vale
+            para o mascaramento de semente 42, e a tabela de dimensionalidade não afirma que menos
+            features é melhor.</span></li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seções 4 e 5.
+            <span class="doc-porque">A seção 5 é a matriz de rastreabilidade, que amarra a Aula 09 à
+            ART.7 Comparação de modelos, e só a ela. O peso 8 dessa ART e o calendário da Sprint 4,
+            com planning em 14/09 e review em 25/09, estão na seção 4.</span></li>
+          <li><code>docs/adrs/ADR-012-escopo-e-alvo-de-classificacao-da-aula-09.md</code>,
+            <code>docs/adrs/ADR-010</code> e <code>docs/adrs/ADR-008</code>.
+            <span class="doc-porque">A primeira define o escopo desta aula: o alvo binário criado a
+            partir das séries, o vazamento medido por MAPE com a ressalva de escala do RMSE, a troca
+            do exercício de imputação e a redução de dimensionalidade e domain knowledge ao bloco de
+            fecho. A segunda moveu os sete assuntos de classificação da Aula 07 para cá e
+            estabeleceu a base mensal. A terceira fixou o corte temporal e a baseline de coeficiente
+            fixo da LDC, que aparecem aqui como referência. As conclusões estão travadas em
+            <code>tools/tests/test_problemas_aula09.py</code> e as figuras em
+            <code>tools/graficos_aula09.py</code>.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>O item 1 vai sem link de propósito: a URL de consulta da API do SIDRA, para cada
+          tabela, está documentada em <code>dados/README.md</code>, e apontar direto para ela aqui
+          duplicaria a mesma informação em dois lugares que podem divergir com o tempo.</p>
+          <p>Os itens 2 a 8 vão sem link e sem DOI de propósito: a citação traz periódico, volume,
+          número e páginas, que é o suficiente para localizar cada obra, e uma URL ou um
+          identificador digitado de memória mandaria quem for conferir procurar no lugar errado. Os
+          sete são leitura de fundo, dispensáveis como preparação para o encontro: a aula mede o
+          comportamento de cada problema sobre a base do case, sem exigir a formulação dos textos
+          originais.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula09.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../materiais/aula09.html"><span class="material-symbols-outlined" aria-hidden="true">menu_book</span>Material</a>
+  </nav>
+</body>
+</html>
