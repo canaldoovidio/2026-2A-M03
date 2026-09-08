@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material de apoio &middot; Aula 09 &middot; Problemas Comuns com Modelagem de IA</title>
+  <meta name="description" content="Material de apoio da Aula 09 do Módulo 03 IN: vazamento temporal medido por MAPE nos quatro modelos, o alvo binário do case contra a baseline majoritária, entropia passo a passo, a ausência de período das cinco séries, as cinco estratégias de imputação e a tabela de dimensionalidade.">
+
+  <!-- Este material NAO e o roteiro do deck em prosa. Ele aprofunda o que o
+       slide so pode apontar, e e o lugar onde a dupla confere cada numero com
+       calma. Todo numero citado aqui esta travado nos doze testes de
+       tools/tests/test_problemas_aula09.py e reproduzido por
+       tools/graficos_aula09.py, sobre os CSVs de dados/mensal/.
+       O escopo, o corte de conteudo e as duas correcoes de roteiro estao em
+       docs/adrs/ADR-012-escopo-e-alvo-de-classificacao-da-aula-09.md. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 09 &middot; 15/09/2026 &middot; Sprint 4</p>
+      <h1>Material de apoio: Problemas Comuns com Modelagem de IA</h1>
+      <p class="doc-subtitulo">As Aulas 04 a 08 construíram a base analítica, o primeiro modelo, os
+      agrupamentos e a redução de dimensionalidade do case. Esta aula mede cinco erros que
+      atravessam esse caminho inteiro e não aparecem na métrica que a ferramenta devolve por padrão:
+      o corte aleatório que melhora o MAPE de quem memoriza vizinho, a acurácia que premia o
+      classificador que prevê sempre a mesma classe, a entropia que separa o corte útil do
+      irrelevante, a imputação que erra 34,53% sem reclamar e a dimensionalidade que afasta os
+      vizinhos. Cada seção registra a medição, o mecanismo por trás dela e o escopo exato da
+      conclusão.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#aula08">O gancho que a Aula 08 deixou</a></li>
+        <li><a href="#vazamento">O que conta como vazamento temporal</a></li>
+        <li><a href="#rmse">O teste sorteado tem alvo médio 35% menor, e o RMSE segue essa escala</a></li>
+        <li><a href="#por-modelo">O sorteio melhora três modelos e piora a regressão em razão</a></li>
+        <li><a href="#vizinho">No sorteio, 24 dos 24 meses de teste têm vizinho no treino</a></li>
+        <li><a href="#alvo">O alvo binário do case, e por que ele existe</a></li>
+        <li><a href="#baseline">Prever sempre a classe majoritária acerta 83,3% do teste</a></li>
+        <li><a href="#classificadores">Nenhum dos cinco classificadores supera a baseline</a></li>
+        <li><a href="#entropia">A raiz vale 0,7584 bits e o melhor corte ganha 0,0632</a></li>
+        <li><a href="#arvore">O corte degenerado e o que a árvore escolhe</a></li>
+        <li><a href="#ausencia">A junção interna descarta 120 dos 471 meses</a></li>
+        <li><a href="#imputacao">A imputação sazonal erra 4,44% e a média erra 34,53%</a></li>
+        <li><a href="#dimensionalidade">De 2 para 11 features, a distância média vai de 1,65 para 4,31</a></li>
+        <li><a href="#dominio">Domain knowledge nas decisões de feature deste acervo</a></li>
+        <li><a href="#escopo">Escopo das conclusões desta aula</a></li>
+        <li><a href="#art7">O que a dupla leva para a ART.7</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="aula08">
+        <h2>1. O gancho que a Aula 08 deixou</h2>
+        <p>A Aula 08 rodou PCA sobre as onze features da base analítica mensal, com escalador e PCA
+        ajustados apenas nos <strong>315 meses de treino</strong>. PC1 ficou com <strong>68,21%</strong>
+        da variância, quatro componentes chegaram a <strong>96,07%</strong>, e cortar para esses
+        quatro componentes levou o MAPE de teste de <strong>3,32%</strong> para <strong>4,94%</strong>,
+        abaixo da baseline de coeficiente fixo da LDC, que marca 3,71%. O quadro completo está em
+        <a href="aula08.html#corte">materiais/aula08.html#corte</a>.</p>
+        <p>Aquela aula também mediu, de propósito, o que aconteceria com a disciplina invertida.
+        Ajustando escalador e PCA sobre as 339 linhas inteiras, em vez das 315 de treino, PC1 sobe
+        para <strong>68,52%</strong> e o MAPE de quatro componentes cai para <strong>4,91%</strong>.
+        O efeito é pequeno, e vai na direção otimista.</p>
+        <p>Esse é o gancho desta aula. Um erro de protocolo que <strong>melhora</strong> o resultado
+        não dispara alarme nenhum: ninguém desconfia de um número que ficou melhor. A pergunta
+        disparada de abertura de hoje é a versão radical dele: <strong>o que aconteceria com o MAPE
+        se separássemos treino e teste por sorteio aleatório nesta base?</strong></p>
+        <div class="doc-nota">
+          <p>A base é a mesma das Aulas 07 e 08, e nenhum número desta página vem de outra: junção
+          interna das cinco séries de <code>dados/mensal/</code>, <strong>339 linhas</strong> de
+          1998-01 a 2026-03, <strong>315 meses de treino</strong> (1998-01 a 2024-03) e
+          <strong>24 meses de teste</strong> (2024-04 a 2026-03), com as onze features
+          <code>lag1</code>, <code>lag2</code>, <code>lag3</code>, <code>lag12</code>,
+          <code>sen</code>, <code>cos</code>, <code>dias</code> e as outras quatro séries defasadas
+          em um mês.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="vazamento">
+        <h2>2. O que conta como vazamento temporal</h2>
+        <p>Vazamento é a presença, entre as entradas do modelo, de informação sobre o alvo que não
+        estaria legitimamente disponível no momento em que a previsão precisa ser feita. A
+        formulação está em Kaufman, Rosset, Perlich e Stitelman (2012), citado na
+        <a href="../referencias/aula09.html#complementar">página de referências</a>, e o caso desta
+        aula é o que aquele artigo chama de vazamento pela construção do conjunto de treino.</p>
+        <p>A LDC pede previsão para os 24 meses seguintes ao último dado observado. O conjunto de
+        teste que responde a essa pergunta é formado pelos 24 últimos meses, na ordem em que
+        aconteceram. Um sorteio aleatório embaralha essa ordem e coloca meses de 2025 no treino
+        enquanto manda meses de 2014 para o teste.</p>
+        <pre class="doc-codigo"><code># o protocolo do acervo, desde a ADR-008
+corte = len(base) - 24            # 315
+Xtr, Xte = X[:corte], X[corte:]
+ytr, yte = y[:corte], y[corte:]
+
+# o que a aula mede como contraexemplo
+from sklearn.model_selection import train_test_split
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=24/339, random_state=0)</code></pre>
+        <p>As duas linhas de código produzem conjuntos do mesmo tamanho, treinam o mesmo modelo e
+        devolvem métricas com o mesmo nome. O que muda é a pergunta que cada uma responde, e nada
+        na saída do scikit-learn avisa qual das duas foi usada.</p>
+      </section>
+
+      <section class="doc-secao" id="rmse">
+        <h2>3. O teste sorteado tem alvo médio 35% menor, e o RMSE segue essa escala</h2>
+        <p>O roteiro original desta aula, em <code>PLANEJAMENTO_AULA_A_AULA.md</code>, pedia uma
+        demonstração ao vivo "mostrando a queda artificial de RMSE" no sorteio aleatório. O RMSE cai
+        mesmo, e a medição mostrou que a explicação não cabe inteira em vazamento.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>medida sobre os 24 meses de teste</th><th>corte por data</th><th>sorteio, média de dez sementes</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>alvo médio, em quilogramas</td><td>1.181.946.133</td><td>765.719.266</td></tr>
+              <tr><td>RMSE da regressão linear em nível</td><td>40.695.433</td><td>35.028.744</td></tr>
+              <tr><td>RMSE do KNN k=5 em nível</td><td>104.945.482</td><td>48.382.751</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O sorteio pega uniformemente ao longo de 28 anos, e a maior parte desse período tem abate
+        muito menor que o dos últimos dois anos. O teste sorteado é <strong>35% menor em escala</strong>
+        que o teste dos 24 últimos meses, e o RMSE, que está em quilogramas, cai junto por causa
+        disso, mesmo para um modelo que não ganhou nada com o embaralhamento.</p>
+        <p>Comparar RMSE entre dois conjuntos de teste de escalas diferentes mistura duas coisas em
+        um número só. A leitura desta aula usa <strong>MAPE</strong>, que é razão entre erro e valor
+        real e por isso não depende de escala. A ressalva não é nota de rodapé: diagnosticar
+        vazamento com um instrumento que também responde a outra coisa é exatamente o tipo de erro
+        silencioso que a aula inteira trata.</p>
+        <div class="doc-nota">
+          <p>A correção do roteiro está registrada em <code>docs/adrs/ADR-012</code> e travada em
+          <code>test_rmse_nao_e_comparavel_entre_os_dois_cortes</code>, que mede as duas médias de
+          alvo antes de olhar para qualquer métrica de erro.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="por-modelo">
+        <h2>4. O sorteio melhora três modelos e piora a regressão em razão</h2>
+        <p>Medido por MAPE, com sorteio em média de dez sementes (0 a 9), o efeito aparece grande, e
+        só em parte dos modelos.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>modelo</th><th>MAPE com corte por data</th><th>MAPE com sorteio</th><th>diferença</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>KNN k=5, alvo em nível</td><td>7,64%</td><td>5,29%</td><td>2,35 pontos melhor</td></tr>
+              <tr><td>árvore de decisão <code>max_depth=3</code>, nível</td><td>8,81%</td><td>6,31%</td><td>2,50 pontos melhor</td></tr>
+              <tr><td>random forest de 300 árvores, nível</td><td>5,70%</td><td>4,04%</td><td>1,66 ponto melhor</td></tr>
+              <tr><td>regressão linear sobre a razão, o fecho da Aula 07</td><td><strong>3,32%</strong></td><td>3,60%</td><td>piora</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Os três primeiros preveem por semelhança com observações vistas no treino: o KNN pela
+        média dos cinco vizinhos mais próximos, a árvore e a floresta pela média das folhas. Ganhar
+        vizinhos temporais é ganhar exatamente o tipo de informação que eles usam.</p>
+        <p>A regressão linear sobre a razão estima onze coeficientes e não guarda observação
+        nenhuma. Para ela, o sorteio não adiciona informação útil, e ainda troca um teste
+        concentrado no regime recente por um teste espalhado por 28 anos de regimes diferentes, o
+        que piora o ajuste. Por isso ela sai de 3,32% para 3,60%.</p>
+        <div class="doc-nota">
+          <p><strong>É o contraste que impede a generalização errada.</strong> Se a aula mostrasse
+          apenas o KNN, a dupla sairia acreditando que sorteio sempre infla a métrica, e trataria o
+          corte por data como conserto de um modelo específico. Ele é disciplina de protocolo, que
+          vale antes de saber qual modelo vai ganhar.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="vizinho">
+        <h2>5. No sorteio, 24 dos 24 meses de teste têm vizinho no treino</h2>
+        <p>O mecanismo do vazamento pode ser contado mês a mês, sem estatística nenhuma: basta
+        perguntar, para cada mês do teste, se o mês imediatamente anterior ou o imediatamente
+        seguinte ficou no treino.</p>
+        <pre class="doc-codigo"><code>def com_vizinho(indices_treino, indices_teste):
+    treino = set(indices_treino.tolist())
+    return sum(1 for t in indices_teste.tolist()
+               if (t - 1) in treino or (t + 1) in treino)</code></pre>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>corte</th><th>meses de teste com vizinho no treino</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>por data, teste de 2024-04 a 2026-03</td><td>1 de 24</td></tr>
+              <tr><td>sorteio, sementes 0 e 1</td><td>24 de 24</td></tr>
+              <tr><td>sorteio, pior das dez sementes</td><td>acima de 80%</td></tr>
+              <tr><td>sorteio, média das dez sementes</td><td>acima de 95%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>No corte por data, só o primeiro mês do teste tem vizinho, porque ele encosta no fim do
+        treino. Nos outros 23, o modelo precisa <strong>extrapolar</strong>, que é o que a Aula 05
+        já havia medido como o problema difícil. Com o sorteio, quase todo mês de teste fica entre
+        dois meses conhecidos, e prever passa a ser <strong>interpolar</strong>.</p>
+        <p>Séries de abate mudam pouco de um mês para o outro, então conhecer os dois vizinhos é
+        quase conhecer a resposta. É por isso que o efeito é tão grande em modelos que decidem por
+        semelhança.</p>
+      </section>
+
+      <section class="doc-secao" id="alvo">
+        <h2>6. O alvo binário do case, e por que ele existe</h2>
+        <p>Matriz de confusão, precisão, revocação, Naive Bayes, regressão logística e SVM entraram
+        no escopo desta aula pela <code>ADR-010</code>, que os moveu da Aula 07. Todos são de
+        classificação, e os três modelos encadeados do TAPI preveem quantidade. Sem um alvo
+        categórico ancorado no dado real, esses seis assuntos não teriam sobre o que rodar, e dado
+        sintético é proibido no acervo.</p>
+        <pre class="doc-codigo"><code># o abate do mes supera o mesmo mes do ano anterior
+alvo = (base["abate_frangos"] &gt; base["lag12"]).astype(int)
+
+alvo.mean()           # 0.7847  na base inteira, 266 de 339
+alvo[:corte].mean()   # 0.7810  no treino,       246 de 315
+alvo[corte:].mean()   # 0.8333  no teste,         20 de  24</code></pre>
+        <p>O alvo acima é o mais direto que as cinco séries permitem, usa uma coluna que a base já
+        tinha (<code>lag12</code>) e não inventa nenhum valor. Ele existe para ensinar as métricas de
+        classificação sobre dado real.</p>
+        <div class="doc-nota">
+          <p><strong>É a primeira vez no acervo que um alvo não vem do TAPI, e isso precisa ficar
+          dito em sala.</strong> Os três modelos do parceiro seguem sendo de regressão, e a
+          <strong>ART.7 Comparação de modelos</strong> compara modelos de regressão. Uma dupla que
+          entregar classificação na ART.7 por causa desta aula terá entendido o exemplo como se
+          fosse o case.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="baseline">
+        <h2>7. Prever sempre a classe majoritária acerta 83,3% do teste</h2>
+        <p>O abate de frangos no Brasil cresceu em quase quatro de cada cinco meses medidos desde
+        1998. O alvo é desbalanceado por característica do fenômeno, e não por defeito de amostra,
+        que é o assunto dos autoestudos "Desbalanceamento das Classes" e "Formas de lidar com o
+        desbalanceamento de Classes".</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>métrica da baseline que responde "cresce" sempre</th><th>valor</th><th>como o número aparece</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>acurácia</td><td>83,3%</td><td>20 acertos em 24 meses</td></tr>
+              <tr><td>precisão da classe positiva</td><td>0,833</td><td>20 altas reais entre os 24 meses chamados de alta</td></tr>
+              <tr><td>revocação da classe positiva</td><td>1,000</td><td>as 20 altas reais foram todas encontradas</td></tr>
+              <tr><td>F1 da classe positiva</td><td>0,909</td><td>média harmônica das duas anteriores</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Revocação 1,000 é consequência aritmética de responder "cresce" em todos os meses: quem
+        chama tudo de alta encontra todas as altas. Um número perfeito, produzido por um modelo que
+        não olha para nenhuma feature.</p>
+        <p>É por isso que a baseline precisa ser declarada antes de qualquer comparação. Sem ela,
+        83,3% de acurácia parece um bom resultado; com ela, 83,3% é o piso.</p>
+      </section>
+
+      <section class="doc-secao" id="classificadores">
+        <h2>8. Nenhum dos cinco classificadores supera a baseline</h2>
+        <p>Os cinco modelos foram treinados nas onze features padronizadas, com o escalador ajustado
+        só nos 315 meses de treino e <code>random_state=42</code> em todo modelo com
+        aleatoriedade.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>classificador</th><th>acurácia</th><th>precisão</th><th>revocação</th><th>F1</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>baseline majoritária</td><td>83,3%</td><td>0,833</td><td>1,000</td><td>0,909</td></tr>
+              <tr><td>regressão logística</td><td>79,2%</td><td>0,895</td><td>0,850</td><td>0,872</td></tr>
+              <tr><td>SVM linear</td><td>83,3%</td><td>0,900</td><td>0,900</td><td>0,900</td></tr>
+              <tr><td>SVM RBF</td><td>83,3%</td><td>0,833</td><td>1,000</td><td>0,909</td></tr>
+              <tr><td>árvore de entropia <code>max_depth=3</code></td><td>83,3%</td><td>0,833</td><td>1,000</td><td>0,909</td></tr>
+              <tr><td>Naive Bayes gaussiano</td><td>16,7%</td><td>0,000</td><td>0,000</td><td>0,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>SVM RBF e a árvore repetem as quatro métricas da baseline porque fazem a mesma coisa que
+        ela: preveem alta nos 24 meses. O SVM linear prevê queda em quatro meses, acerta dois deles
+        e erra duas altas, o que muda precisão e revocação sem tirá-lo dos 83,3% de acurácia.</p>
+        <p>A regressão logística arrisca uma queda a mais, e a matriz de confusão mostra o
+        preço:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>real / previsto</th><th>previsto queda</th><th>previsto alta</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>queda real, 4 meses</td><td>2</td><td>2</td></tr>
+              <tr><td>alta real, 20 meses</td><td>3</td><td>17</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Ela acerta 2 dos 4 meses de queda e paga com 3 meses de alta classificados como queda,
+        um a mais que o SVM linear. A acurácia cai para 79,2%, abaixo da baseline, e a precisão
+        sobe para 0,895, atrás apenas dos 0,900 do SVM linear. Qual das duas leituras vale depende do
+        custo de cada erro para a LDC: prever queda num mês de alta deixa cliente sem entrega, e
+        prever alta num mês de queda deixa ração parada em silo.</p>
+        <p>O <code>GaussianNB</code> merece parágrafo próprio porque não empata com nada: ele prevê
+        queda nos 24 meses, acerta os quatro meses de queda e erra os vinte de alta, terminando
+        com precisão e revocação zero na classe positiva. O modelo supõe
+        independência entre as features dada a classe, e a Aula 08 mediu que 20 dos 55 pares dessas
+        onze colunas passam de 0,9 de correlação absoluta. A suposição está contradita pela própria
+        base.</p>
+        <div class="doc-nota">
+          <p>Nenhum dos cinco supera 83,3% de acurácia, e a aula não conclui daí que classificação
+          não sirva para o case. A conclusão é sobre a métrica: <strong>acurácia sozinha não
+          distingue um modelo que decide de um que responde sempre a mesma coisa</strong>, e é a
+          matriz de confusão que separa os dois.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="entropia">
+        <h2>9. A raiz vale 0,7584 bits e o melhor corte ganha 0,0632</h2>
+        <p>Entropia mede a incerteza de um nó em bits, na definição de Shannon (1948). Para um alvo
+        binário com proporção <em>p</em> de positivos:</p>
+        <pre class="doc-codigo"><code>from math import log2
+
+def entropia(p):
+    if p &lt;= 0 or p &gt;= 1:
+        return 0.0
+    return -p * log2(p) - (1 - p) * log2(1 - p)
+
+entropia(246 / 315)   # 0.7584 bits, a raiz desta arvore
+entropia(0.5)         # 1.0 bit,  incerteza maxima
+entropia(1.0)         # 0.0 bit,  no puro</code></pre>
+        <p>O <strong>ganho de informação</strong> de um corte é a entropia do nó menos a média das
+        entropias dos dois filhos, ponderada pelo número de observações de cada lado. É o critério
+        de Quinlan (1986), e é o que a árvore com <code>criterion="entropy"</code> maximiza em cada
+        nó. Varrendo todos os limiares de todas as onze features nos 315 meses de treino:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>feature, no melhor limiar dela</th><th>ganho, em bits</th><th>leitura</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>lag12</code> &le; 737.169.694</td><td><strong>0,0632</strong></td><td>o campeão, 144 contra 171 meses</td></tr>
+              <tr><td><code>abate_suinos_lag1</code></td><td>0,0544</td><td>outra série do case, no mesmo regime de tendência</td></tr>
+              <tr><td><code>producao_ovos_lag1</code></td><td>0,0519</td><td>idem</td></tr>
+              <tr><td><code>lag1</code> &le; 655.298.371</td><td>0,0449</td><td>o mês anterior, abaixo do mesmo mês do ano anterior</td></tr>
+              <tr><td><code>dias</code> &le; 28,5</td><td>0,0082</td><td>separa os fevereiros de 28 dias, 20 contra 295 meses</td></tr>
+              <tr><td><code>sen</code> &le; 0,6830</td><td>0,0043</td><td>calendário</td></tr>
+              <tr><td><code>cos</code> &le; -0,6830</td><td>0,0010</td><td>calendário</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O campeão ganha mais de catorze vezes o que <code>sen</code> ganha. Saber o nível do abate
+        doze meses atrás informa mais sobre a alta do mês do que saber em que ponto do ciclo anual o
+        mês está, o que é coerente com o que as Aulas 04 a 08 já haviam medido: a tendência de 28
+        anos é a estrutura mais forte destas séries, e a sazonalidade vem depois dela.</p>
+      </section>
+
+      <section class="doc-secao" id="arvore">
+        <h2>10. O corte degenerado e o que a árvore escolhe</h2>
+        <p>A coluna <code>dias</code> tem quatro valores distintos no treino: 28, 29, 30 e 31. Um
+        limiar acima do máximo produz um nó que não parte a amostra.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>corte candidato em <code>dias</code></th><th>divisão</th><th>ganho</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>dias</code> &le; 31</td><td>315 contra 0</td><td>não há ganho a medir</td></tr>
+              <tr><td><code>dias</code> &le; 30,5</td><td>131 contra 184</td><td>0,0032 bits</td></tr>
+              <tr><td><code>dias</code> &le; 28,5</td><td>20 contra 295</td><td>0,0082 bits</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Um nó que deixa todas as observações do mesmo lado tem a entropia do pai como entropia do
+        filho, e ganho zero por construção. Por isso a varredura só considera os pontos médios entre
+        valores distintos e consecutivos: fora deles, o corte ou repete outro limiar ou não separa
+        nada.</p>
+        <p>Rodando a árvore com o critério de entropia sobre as mesmas onze colunas, sem padronizar,
+        a raiz escolhida é a mesma da conta à mão:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>nó</th><th>meses</th><th>entropia</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>raiz</td><td>315</td><td>0,7584</td></tr>
+              <tr><td>filho da esquerda, <code>lag12</code> &le; 737.169.696</td><td>144</td><td>0,4374</td></tr>
+              <tr><td>filho da direita</td><td>171</td><td>0,9123</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A diferença entre o limiar da conta à mão (737.169.694) e o da árvore (737.169.696) é de
+        dois quilogramas, e vem de os dois códigos calcularem o ponto médio entre os mesmos dois
+        valores consecutivos com arredondamentos diferentes. A árvore fica com 6 folhas e
+        profundidade 3.</p>
+        <p>O filho da esquerda reúne os meses em que o abate de doze meses antes era baixo, o que
+        nesta série significa "anos mais antigos", quando o crescimento anual era mais consistente:
+        0,4374 bits de incerteza contra 0,9123 do outro lado. O lado direito, com os anos recentes,
+        é quase meio a meio entre alta e queda, e é ali que o problema fica difícil.</p>
+      </section>
+
+      <section class="doc-secao" id="ausencia">
+        <h2>11. A junção interna descarta 120 dos 471 meses</h2>
+        <p>O roteiro original pedia que cada dupla aplicasse <code>SimpleImputer</code> "nos vazios
+        da própria série". A medição desmentiu a premissa: <strong>nenhum dos dez CSVs versionados
+        tem valor vazio</strong>. A ausência real do acervo é de período.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>medida sobre as cinco séries mensais</th><th>valor</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>união dos períodos, de 1987-01 a 2026-03</td><td>471 meses</td></tr>
+              <tr><td>interseção, de 1997-01 a 2026-03</td><td>351 meses</td></tr>
+              <tr><td>períodos descartados pela junção interna</td><td>120, ou 25,5% da união</td></tr>
+              <tr><td>células da matriz período por série</td><td>2.355</td></tr>
+              <tr><td>células vazias</td><td>480, ou 20,4%</td></tr>
+              <tr><td>meses medidos em <code>producao_ovos</code></td><td>471</td></tr>
+              <tr><td>meses medidos em cada uma das outras quatro séries</td><td>351</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A produção de ovos começa dez anos antes das outras quatro séries. A junção interna que a
+        Aula 04 escolheu joga fora esses dez anos de ovos para manter as cinco colunas preenchidas
+        em toda linha, e essa é uma decisão de modelagem: manter os dez anos exigiria imputar quatro
+        séries inteiras, e não valores isolados.</p>
+        <p>Little e Rubin (2019) tratam o ponto que a decisão pressupõe: o mecanismo pelo qual o dado
+        falta determina se uma estratégia de imputação é defensável. Aqui a ausência não é aleatória,
+        é de período, e imputar dez anos de abate a partir de nada seria inventar história.</p>
+      </section>
+
+      <section class="doc-secao" id="imputacao">
+        <h2>12. A imputação sazonal erra 4,44% e a média erra 34,53%</h2>
+        <p>Como a base não tem vazio para imputar, o exercício foi invertido: esconder valores
+        conhecidos e medir cada estratégia contra a verdade. Dezesseis meses do treino (5% de 315)
+        foram sorteados com semente 42 e mascarados.</p>
+        <pre class="doc-codigo"><code>gerador = np.random.default_rng(42)
+indices = np.sort(gerador.choice(np.arange(1, corte - 1), size=16, replace=False))
+verdade = alvo[indices]
+com_furo = alvo.copy()
+com_furo[indices] = np.nan
+
+fator = np.nanmean(com_furo[12:] / alvo[:corte - 12])   # 1.05378
+sazonal = np.array([alvo[i - 12] * fator for i in indices])</code></pre>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>estratégia</th><th>erro médio nos 16 meses</th><th>o que ela usa</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>média da série, <code>SimpleImputer(strategy="mean")</code></td><td>34,53%</td><td>uma estatística global de 28 anos</td></tr>
+              <tr><td>mediana da série</td><td>34,38%</td><td>idem, menos sensível a extremo</td></tr>
+              <tr><td>último valor medido</td><td>7,60%</td><td>o mês anterior</td></tr>
+              <tr><td>interpolação linear</td><td>7,27%</td><td>os dois vizinhos medidos</td></tr>
+              <tr><td><strong>mesmo mês do ano anterior, com fator 1,05378</strong></td><td><strong>4,44%</strong></td><td>a estrutura sazonal e a tendência</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Média e mediana erram cerca de 34% porque a série cresce por 28 anos: a média global fica
+        entre o abate de 1998 e o de 2026 e não descreve nenhum mês em particular. As duas
+        estratégias que olham para vizinhos erram cerca de 7%. A que erra menos é a única que usa a
+        estrutura já medida nas Aulas 04 a 08, e ela não vem de graça em nenhum imputador pronto:
+        precisa ser escrita.</p>
+        <div class="doc-nota">
+          <p><strong>O que se afirma é a ordem, não o valor exato.</strong> Os cinco números
+          dependem de quais 16 meses o sorteio escolheu, e o teste
+          <code>test_estrategias_de_imputacao_ficam_nesta_ordem</code> trava a ordem e as faixas.
+          Mascarar em bloco contíguo, em vez de sorteado, muda a conclusão: sem vizinho medido, a
+          interpolação linear passa a errar como a média, e isso está registrado no cabeçalho da
+          suíte de testes.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="dimensionalidade">
+        <h2>13. De 2 para 11 features, a distância média vai de 1,65 para 4,31</h2>
+        <p>A maldição de dimensionalidade, tema do autoestudo de mesmo nome, aparece na base do case
+        sem precisar de exemplo externo. As quatro configurações abaixo usam a mesma base, o mesmo
+        alvo em razão e o escalador ajustado só no treino; a distância é a média entre todos os
+        pares de meses de treino na matriz padronizada.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>features</th><th>distância euclidiana média</th><th>KNN k=5</th><th>regressão linear</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>2: <code>lag1</code> e <code>lag12</code></td><td>1,65</td><td><strong>3,71%</strong></td><td>4,71%</td></tr>
+              <tr><td>4: mais <code>sen</code> e <code>cos</code></td><td>2,65</td><td>4,59%</td><td>4,73%</td></tr>
+              <tr><td>7: mais <code>lag2</code>, <code>lag3</code> e <code>dias</code></td><td>3,49</td><td>4,28%</td><td>3,44%</td></tr>
+              <tr><td>11: mais as quatro séries defasadas</td><td>4,31</td><td>5,01%</td><td><strong>3,32%</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Cada coluna nova soma um termo positivo dentro da raiz da distância euclidiana, então
+        toda distância cresce e os vizinhos ficam todos mais longe. Beyer e coautores (1999)
+        mostraram que, com o número de dimensões crescendo, a distância ao vizinho mais próximo e a
+        distância ao mais distante se aproximam, e a vizinhança perde poder de discriminação. O KNN
+        decide por vizinhança e piora de 3,71% para 5,01%.</p>
+        <p>A regressão linear não usa distância: ela estima um coeficiente por coluna, e cada coluna
+        nova é uma chance de explicar o alvo. Ela melhora de 4,71% para 3,32%, que é o modelo do
+        fecho da Aula 07.</p>
+        <div class="doc-nota">
+          <p>A tabela não diz que menos features é melhor, nem que mais é melhor. O que cresce
+          monotonicamente é a distância média; os dois modelos reagem em direções opostas ao mesmo
+          crescimento, e a decisão de quantas colunas usar depende de qual família de modelo está na
+          mesa. É a mesma lição da Aula 08 sobre cortar componentes, medida por outro caminho.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="dominio">
+        <h2>14. Domain knowledge nas decisões de feature deste acervo</h2>
+        <p>Nenhuma das decisões de feature deste case saiu de busca automática. Todas vieram de
+        conhecimento do domínio, e cada uma está registrada com a medição que a sustentou:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>decisão</th><th>conhecimento de domínio que a motivou</th><th>onde está registrada</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>alvo em razão sobre <code>lag12</code></td><td>o abate tem ciclo anual, e a árvore não extrapola tendência</td><td>Aula 07, <code>ADR-010</code></td></tr>
+              <tr><td>leite fora da base do Modelo 1</td><td>a dieta de bovino leiteiro não usa a mesma ração das aves</td><td>Aula 04, hipótese H2</td></tr>
+              <tr><td>horizonte de 24 meses</td><td>é o que a LDC pediu no TAPI</td><td><code>PLANO_DE_ENSINO.md</code></td></tr>
+              <tr><td>granularidade mensal</td><td>o TAPI fala em abate mensal, e a classificação c12716 do SIDRA entrega mês</td><td>Aula 07, <code>ADR-010</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Os autoestudos "Modelagem do problema: Domain Knowledge", "Estudo de caso: Netflix
+        (Learning a Personalized homepage)" e "Opcional: Estudo de caso - Airbnb" mostram o mesmo
+        movimento em empresas com dado abundante. O contraste com o case é útil: aqui a fonte aberta
+        limita as features disponíveis, e o conhecimento de domínio serve tanto para escolher o que
+        entra quanto para justificar o que não existe.</p>
+        <p>O exercício em dupla do bloco é apontar um conhecimento de domínio da LDC que já mudou
+        uma decisão de feature no projeto da própria dupla, com a medição que sustenta a mudança.</p>
+      </section>
+
+      <section class="doc-secao" id="escopo">
+        <h2>15. Escopo das conclusões desta aula</h2>
+        <p>Cada uma das cinco medições vale dentro de um recorte, e a ART.7 é o lugar onde escrever
+        além do recorte custa nota.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>o que foi medido</th><th>o que não se pode afirmar</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>três modelos melhoram com sorteio nesta base</td><td>que sorteio sempre infla a métrica: a regressão em razão piora, de 3,32% para 3,60%</td></tr>
+              <tr><td>nenhum classificador supera a baseline majoritária nos 24 meses de teste</td><td>que classificação não serve ao problema: o teste tem 24 linhas, e a conclusão é sobre a métrica, não sobre a família de modelo</td></tr>
+              <tr><td>a ordem das cinco estratégias de imputação, com semente 42 e 16 meses</td><td>o valor exato de cada estratégia em outro recorte ou com mascaramento em bloco</td></tr>
+              <tr><td><code>lag12</code> é o corte de maior ganho na raiz</td><td>que ele seja o melhor corte em todo nó da árvore: a medição é da raiz</td></tr>
+              <tr><td>o KNN piora e a regressão melhora indo de 2 para 11 features</td><td>que menos features é melhor: só a distância média cresce sempre</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O alvo binário existe para ensinar métrica de classificação sobre dado real. Os três
+        modelos do TAPI seguem sendo de regressão, e a ART.7 compara modelos de regressão.</p>
+      </section>
+
+      <section class="doc-secao" id="art7">
+        <h2>16. O que a dupla leva para a ART.7</h2>
+        <p><strong>ART.7 Comparação de modelos, peso 8</strong>, é a entrega da Sprint 4, com
+        planning em 14/09 e review em 25/09, conforme a seção 4 do
+        <code>PLANO_DE_ENSINO.md</code>. Esta aula entrega o protocolo sob o qual essa comparação
+        precisa acontecer.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>erro silencioso</th><th>como ele aparece</th><th>o que a comparação exige</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>vazamento temporal</td><td>MAPE melhor, de 7,64% para 5,29% no KNN</td><td>corte por data em todo candidato, sempre o mesmo</td></tr>
+              <tr><td>métrica que não distingue</td><td>acurácia de 83,3% em quem não decide</td><td>baseline declarada e matriz de confusão quando o alvo for categórico</td></tr>
+              <tr><td>métrica que responde à escala</td><td>RMSE menor em teste 35% menor</td><td>métrica sem dependência de escala ao comparar períodos diferentes</td></tr>
+              <tr><td>imputação sem critério</td><td>34,53% de erro no valor imputado</td><td>estratégia medida contra valor conhecido, e não escolhida por hábito</td></tr>
+              <tr><td>dimensionalidade excessiva</td><td>KNN de 3,71% para 5,01%</td><td>o número de features declarado junto com a família de modelo</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A página de referências desta aula, com os nove autoestudos da semana e as fontes
+        primárias, é <a href="../referencias/aula09.html">referencias/aula09.html</a>. O laboratório
+        executável, com as cinco medições reproduzidas do zero, é
+        <code>notebooks/aula09.ipynb</code>. As conclusões desta página estão travadas em
+        <code>tools/tests/test_problemas_aula09.py</code>, e as figuras são reproduzidas por
+        <code>tools/graficos_aula09.py</code>: se um CSV for regerado com dado novo do SIDRA e uma
+        conclusão virar, os testes reprovam antes de a aula ensinar algo que o dado não
+        sustenta.</p>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula09.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../referencias/aula09.html"><span class="material-symbols-outlined" aria-hidden="true">list_alt</span>Referências</a>
+  </nav>
+</body>
+</html>
