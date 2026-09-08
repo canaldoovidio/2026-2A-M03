@@ -251,8 +251,9 @@ alvo[corte:].mean()   # 0.8333  no teste,         20 de  24</code></pre>
         <p>Revocação 1,000 é consequência aritmética de responder "cresce" em todos os meses: quem
         chama tudo de alta encontra todas as altas. Um número perfeito, produzido por um modelo que
         não olha para nenhuma feature.</p>
-        <p>É por isso que a baseline precisa ser declarada antes de qualquer comparação. Sem ela,
-        83,3% de acurácia parece um bom resultado; com ela, 83,3% é o piso.</p>
+        <p>É por isso que a baseline precisa ser declarada antes de qualquer comparação. Ela fixa
+        o piso da métrica: com 83,3% de acurácia, o modelo apenas empata com quem prevê sempre
+        alta.</p>
       </section>
 
       <section class="doc-secao" id="classificadores">
@@ -503,8 +504,9 @@ sazonal = np.array([alvo[i - 12] * fator for i in indices])</code></pre>
 
       <section class="doc-secao" id="dominio">
         <h2>14. Domain knowledge nas decisões de feature deste acervo</h2>
-        <p>Nenhuma das decisões de feature deste case saiu de busca automática. Todas vieram de
-        conhecimento do domínio, e cada uma está registrada com a medição que a sustentou:</p>
+        <p>Nenhuma das decisões de feature deste case saiu de busca automática. Cada uma tem um
+        motivo declarado, de conhecimento do domínio ou de medição, e está registrada junto com o
+        número que a sustentou:</p>
         <div class="doc-tabela-rolagem">
           <table class="doc-tabela">
             <thead>
@@ -512,12 +514,16 @@ sazonal = np.array([alvo[i - 12] * fator for i in indices])</code></pre>
             </thead>
             <tbody>
               <tr><td>alvo em razão sobre <code>lag12</code></td><td>o abate tem ciclo anual, e a árvore não extrapola tendência</td><td>Aula 07, <code>ADR-010</code></td></tr>
-              <tr><td>leite fora da base do Modelo 1</td><td>a dieta de bovino leiteiro não usa a mesma ração das aves</td><td>Aula 04, hipótese H2</td></tr>
+              <tr><td>leite fora das entradas do Modelo 1</td><td>H2 não rejeitada na primeira diferença, apesar de r = +0,96 em nível, e MAPE de teste de 1,60% para 1,89% quando ele volta</td><td>Aula 04, hipótese H2, e Aula 05</td></tr>
               <tr><td>horizonte de 24 meses</td><td>é o que a LDC pediu no TAPI</td><td><code>PLANO_DE_ENSINO.md</code></td></tr>
               <tr><td>granularidade mensal</td><td>o TAPI fala em abate mensal, e a classificação c12716 do SIDRA entrega mês</td><td>Aula 07, <code>ADR-010</code></td></tr>
             </tbody>
           </table>
         </div>
+        <p>A linha do leite é a que mais ensina, porque mistura os dois tipos de motivo: ele
+        entrou como candidato por correlação de +0,96 em nível, saiu por hipótese declarada na
+        primeira diferença e confirmou a saída fora da amostra, piorando o MAPE de teste de 1,60%
+        para 1,89% na Aula 05.</p>
         <p>Os autoestudos "Modelagem do problema: Domain Knowledge", "Estudo de caso: Netflix
         (Learning a Personalized homepage)" e "Opcional: Estudo de caso - Airbnb" mostram o mesmo
         movimento em empresas com dado abundante. O contraste com o case é útil: aqui a fonte aberta

@@ -29,11 +29,15 @@ macroingredientes, para apoiar decisões comerciais de originação de grãos.
 3. desdobramento da demanda de ração entre macroingredientes (milho, farelo de soja, sorgo,
    trigo, DDGS).
 
-**Fontes de dados**, todas abertas e versionadas em `dados/` (ver `dados/README.md`):
+**Fontes de dados** abertas e versionadas em `dados/` (ver `dados/README.md`):
 
 - IBGE/SIDRA: tabela 1092 (abate de bovinos), 1093 (abate de suínos), 1094 (abate de frangos),
-  7524 (produção de ovos), 1086 (produção de leite);
-- Sindirações: boletins informativos do setor de rações, 2021 a 2025.
+  7524 (produção de ovos), 1086 (produção de leite), em base trimestral e mensal.
+
+Os boletins informativos do Sindirações (2021 a 2025) aparecem no TAPI como fonte do setor de
+rações, **não existem como série aberta em `dados/`** e não sustentam prática nenhuma do módulo. A
+`ADR-007` já havia corrigido a citação deles no roteiro da Aula 04, e a `ADR-011` fez o mesmo no
+roteiro da Aula 08.
 
 **Métricas.** RMSE e MAPE, comparados contra a abordagem de coeficientes estáticos que a LDC usa
 hoje. **Explicabilidade** (SHAP e partial dependence plots) é requisito do parceiro, não enfeite.
@@ -80,8 +84,8 @@ errado vire um modelo entregue no compasso errado.
 | 05 | 24/08 | 2 | Aprendizado Supervisionado parte I | regressão da produção de frango; corte temporal treino/teste |
 | 06 | 01/09 | 3 | Aprendizado Não Supervisionado - parte I | retomada das Aulas 01 a 05; agrupamento dos trimestres com K-means |
 | 07 | 04/09 | 3 | Aprendizado Supervisionado - parte II | árvores e ensembles no Modelo 1; RMSE e MAPE |
-| 08 | 10/09 | 3 | Aprendizado Não Supervisionado Parte II | PCA nos drivers macroeconômicos; escolha de K com Elbow Plot e Silhouette Analysis |
-| 09 | 15/09 | 4 | Problemas Comuns com Modelagem de IA e mais Feature Engineering | vazamento temporal, dimensionalidade, nulos do IBGE |
+| 08 | 10/09 | 3 | Aprendizado Não Supervisionado Parte II | PCA nas onze features do Modelo 1; escolha de K com Elbow Plot e Silhouette Analysis |
+| 09 | 15/09 | 4 | Problemas Comuns com Modelagem de IA e mais Feature Engineering | vazamento temporal, classificação e desbalanceamento, entropia, ausência de período e dimensionalidade |
 | 10 | 17/09 | 4 | Hiperparâmetros e Explicabilidade do Modelo | GridSearch, validação cruzada, SHAP, partial dependence |
 | 11 | 24/09 | 4 | AutoML - Pycaret | comparar candidatos para os 3 modelos |
 | 12 | 29/09 | 5 | Deploy de modelo e criação de pipeline de processamento | `Pipeline` do scikit-learn, export do modelo, MLflow |
@@ -146,8 +150,8 @@ pronto sobre o case da LDC, antes de avançar.
 | 06 | Aprendizado Não Supervisionado - parte I | A Aula 05 deixou pronto o primeiro modelo de regressão da produção de frango, com corte temporal treino/teste validado. |
 | 07 | Aprendizado Supervisionado - parte II | A Aula 06 deixou pronto os quatro perfis de trimestre do calendário agrupados por K-means (K=4) sobre a participação de cada série no total do ano, o ambiente de cada dupla com o modelo da Aula 05 reproduzido, e a base mensal das cinco séries do SIDRA (351 linhas por série, recuperada da classificação c12716 pela `ADR-010`), pronta para a prática de reconciliação com o trimestral. |
 | 08 | Aprendizado Não Supervisionado Parte II | A Aula 07 deixou pronto os modelos de árvore e ensemble do Modelo 1, com RMSE e MAPE medidos contra a baseline de coeficientes estáticos da LDC, mais o exemplo de silhueta da Aula 06 (0,4795 contra 0,2853), que a ADR-009 reservou para motivar Elbow Plot e Silhouette Analysis nesta aula. |
-| 09 | Problemas Comuns com Modelagem de IA e mais Feature Engineering | A Aula 08 deixou pronto os componentes principais dos drivers macroeconômicos via PCA, prontos para entrar como features de menor dimensionalidade. |
-| 10 | Hiperparâmetros e Explicabilidade do Modelo | A Aula 09 deixou pronto o diagnóstico e a correção de vazamento temporal, dimensionalidade excessiva e nulos do IBGE. |
+| 09 | Problemas Comuns com Modelagem de IA e mais Feature Engineering | A Aula 08 deixou pronto o PCA das onze features do Modelo 1, com a variância explicada, os loadings e o custo medido do corte de componentes, mais o gancho de vazamento: ajustar escalador e PCA na base inteira melhora a métrica. |
+| 10 | Hiperparâmetros e Explicabilidade do Modelo | A Aula 09 deixou pronto o protocolo de comparação da ART.7: corte por data em todo candidato, baseline declarada com matriz de confusão, métrica sem dependência de escala e estratégia de imputação medida. |
 | 11 | AutoML - Pycaret | A Aula 10 deixou pronto os melhores hiperparâmetros e as explicações via SHAP e partial dependence dos modelos ajustados manualmente. |
 | 12 | Deploy de modelo e criação de pipeline de processamento | A Aula 11 deixou pronto a comparação sistemática de candidatos via PyCaret para os três modelos do case, com o melhor candidato de cada etapa selecionado. |
 | 13 | Deploy de modelos de Machine Learning | A Aula 12 deixou pronto o `Pipeline` do scikit-learn exportado e rastreado no MLflow. |

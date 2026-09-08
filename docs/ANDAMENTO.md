@@ -142,7 +142,35 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
   3,32%, porque PC9 e PC10, que valem 0,21% e 0,17% da variância, recebem coeficiente 22 e 27
   vezes o do PC1. Com os onze componentes o MAPE é idêntico ao das onze features até a nona casa
   decimal, já que PCA sem descarte é rotação, o que confirma a invariância medida na Aula 05.
-- **ADRs** (`docs/adrs/ADR-001` a `ADR-011`): as onze decisões de arquitetura do acervo, para o
+- **Aula 09 completa, os quatro artefatos** (`aulas/aula09.html`, `materiais/aula09.html`,
+  `referencias/aula09.html`, `notebooks/aula09.ipynb`) mais as notas do professor
+  (`docs/notas-do-professor/aula09.md`), a `docs/adrs/ADR-012`, as três figuras
+  (`tools/graficos_aula09.py`) e a suíte `tools/tests/test_problemas_aula09.py`. O deck tem 33
+  slides e os quatro botões do card no portal estão habilitados. A aula abre a Sprint 4 com cinco
+  erros silenciosos medidos na base mensal: vazamento temporal, acurácia em alvo desbalanceado,
+  entropia, imputação e dimensionalidade.
+- **Os achados medidos antes do primeiro slide da Aula 09.** (1) O sorteio aleatório melhora o
+  MAPE de quem memoriza vizinho e piora quem não memoriza: KNN de 7,64% para 5,29%, árvore de
+  8,81% para 6,31%, random forest de 5,70% para 4,04%, e a regressão linear sobre a razão de 3,32%
+  para 3,60%. O mecanismo está contado mês a mês: no sorteio, 24 dos 24 meses de teste têm um mês
+  vizinho no treino, contra 1 dos 24 no corte por data. (2) O RMSE não pode ser comparado entre os
+  dois cortes, porque o alvo médio do teste sorteado é 35% menor (765.719.266 kg contra
+  1.181.946.133 kg), e parte da queda de RMSE é escala do período. (3) Com o alvo binário do case
+  (o abate do mês supera o mesmo mês do ano anterior, 78,1% de positivos no treino e 83,3% no
+  teste), a baseline que prevê sempre a classe majoritária acerta 83,3%, com revocação 1,000, e
+  **nenhum dos cinco classificadores supera essa acurácia**: SVM RBF e árvore de entropia repetem
+  as quatro métricas da baseline prevendo alta nos 24 meses, o SVM linear chega a 83,3% decidindo
+  quatro quedas, a regressão logística fica em 79,2% e o Naive Bayes gaussiano em 16,7%, com
+  precisão e revocação zero na classe positiva. (4) A entropia da raiz vale 0,7584 bits, o melhor
+  corte é `lag12` com 0,0632 bits, e os dois candidatos de calendário ganham 0,0082 (`dias`) e
+  0,0043 (`sen`); a árvore com critério de entropia escolhe o mesmo corte da conta à mão.
+  (5) Nenhum dos dez CSVs versionados tem valor vazio: a ausência do acervo é de período, com a
+  junção interna descartando 120 dos 471 meses da união (25,5%). Mascarando 16 meses do treino, a
+  média erra 34,53%, a mediana 34,38%, o último valor 7,60%, a interpolação linear 7,27% e o mesmo
+  mês do ano anterior corrigido pelo fator médio 4,44%. (6) De 2 para 11 features, a distância
+  euclidiana média entre meses de treino cresce de 1,65 para 4,31, o KNN piora de 3,71% para 5,01%
+  e a regressão linear melhora de 4,71% para 3,32%.
+- **ADRs** (`docs/adrs/ADR-001` a `ADR-012`): as doze decisões de arquitetura do acervo, para o
   fan-out não relitigar nenhuma. Motor Reveal.js, Platypi no lugar da Azurio, regressão tabular em
   base trimestral, case só com fonte aberta, os quatro artefatos por aula, as skills globais, a
   base analítica montada a partir das cinco séries do SIDRA, o protocolo de corte temporal e
@@ -151,7 +179,9 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
   c12716 do SIDRA, com matriz de confusão, precisão, revocação, Naive Bayes, regressão logística,
   SVM e entropia calculada à mão movidos para a Aula 09), e a base e o escopo do PCA da Aula 08
   (onze features da base mensal no lugar dos boletins do Sindirações, e sistemas de recomendação
-  reduzido a fecho conceitual de dez minutos).
+  reduzido a fecho conceitual de dez minutos), e o escopo da Aula 09 (alvo binário criado a partir
+  das séries, vazamento medido por MAPE, imputação por mascaramento e curva ROC adiada para a
+  Aula 10).
 - **Integração contínua** (`.github/workflows/validate.yml` e `.github/workflows/static.yml`):
   validação em push e pull_request (marca, links, layout, pytest e execução dos notebooks, mais um
   passo que reprova se a validação alterar arquivo versionado) e publicação da raiz do repositório
@@ -171,11 +201,11 @@ saída, abaixo.
   `github-pages` foi corrigida pelo professor em 07/08/2026, e o `static.yml` passou a
   publicar normalmente a cada push em `main` (run 31142595526, 22s).
 
-- **Aulas 09 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
-  `aria-disabled="true"`. As Aulas 01 a 08 já existem. A **Aula 09, em 15/09**, é a próxima da
-  fila, abre a Sprint 4 e junta os problemas comuns de modelagem aos sete assuntos de
-  classificação que a `ADR-010` moveu da Aula 07. O agente `construtor-aulas` existe para esse
-  fan-out, mas as oito primeiras aulas foram escritas sem ele, à mão, seguindo as mesmas skills.
+- **Aulas 10 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
+  `aria-disabled="true"`. As Aulas 01 a 09 já existem. A **Aula 10, em 17/09**, é a próxima da
+  fila, fecha a Semana 07 e traz hiperparâmetros, validação cruzada e explicabilidade, mais a
+  dívida abaixo. O agente `construtor-aulas` existe para esse fan-out, mas as nove primeiras aulas
+  foram escritas sem ele, à mão, seguindo as mesmas skills.
 - **O que a Aula 05 deixa marcado para as aulas seguintes.** As quatro séries defasadas em um
   trimestre derrubam o MAPE de teste para 1,14%, contra 1,60% do modelo de hoje, e ficaram de
   fora de propósito: entram como candidata declarada na Aula 07. O reajuste do modelo sobre a
@@ -205,6 +235,34 @@ A `docs/adrs/ADR-009` moveu Elbow Plot e Silhouette Analysis da Aula 06 para a A
   "Determinando K: Silhouette Analysis" são da Semana 05 (lidos em 01/09, antes da Aula 06), e o
   método só é ensinado em sala em 10/09, na Aula 08. A Aula 06 usa a silhueta como número lido nos
   dois agrupamentos, sem ensinar o método, o que ameniza mas não fecha o descompasso.
+
+## Dívida herdada pela Aula 10, por causa da ADR-012
+
+A `docs/adrs/ADR-012` deslocou tempo para a Aula 10, para quem construir a Aula 10 não descobrir
+isso tarde:
+
+- **Curva ROC e AUC entram na Aula 10.** "Curva ROC e AUC" e "Opcional: ROC e AUC na prática" são
+  autoestudos da Semana 07 e conversam com o bloco de classificação da Aula 09, mas a Aula 09 já
+  entrou com onze assuntos em 105 minutos. A Aula 10 recebe os dois em cima de GridSearch,
+  validação cruzada, SHAP e partial dependence, que já estavam no escopo dela.
+- **O exemplo que a Aula 10 herda já está medido**, e não precisa ser refeito: a baseline
+  majoritária acerta 83,3% dos 24 meses com revocação 1,000, e SVM RBF e árvore de entropia
+  repetem as quatro métricas dela. É um caso em que a curva ROC separa o que a acurácia não
+  separa, e serve de motivação de abertura.
+- **`TimeSeriesSplit` chega à Aula 10 com dois ganchos.** A repetição em janelas feita à mão na
+  Aula 05 e o corte único por data da Aula 09 são as duas pontas que a validação cruzada temporal
+  fecha.
+- **A Semana 07 tem dezenove autoestudos na fonte** (`docs/autoestudos-por-semana.md`), e a
+  `referencias/aula09.html` reivindica nove (Desbalanceamento das Classes · Formas de lidar com o
+  desbalanceamento de Classes · Maldição de dimensionalidade · Modelagem do problema: Domain
+  Knowledge · Estudo de caso: Netflix (Learning a Personalized homepage) · Opcional: Estudo de
+  caso - Airbnb · Tratando valores nulos com Imputer · PCA - Resolvendo o problema da
+  dimensionalidade · PCA: o que é e como usar em Python). A `referencias/aula10.html`, quando
+  construída, precisa listar os dez restantes para a semana fechar a conta: Além da Transparência:
+  Contextualizando a Necessidade de Explicabilidade na IA · Como escolher um modelo preditivo ·
+  Curva ROC e AUC · Exemplo I: GridSearch e RandomSearch · Exemplo II: GridSearch e RandomSearch ·
+  Explicabilidade de Modelo com SHAP · O que é hiperparâmetro? · Opcional: Prática com GridSearch
+  e RandomSearch · Opcional: ROC e AUC na prática · Validação Cruzada.
 
 ## Achados que valem para o acervo inteiro, da construção da Aula 06
 

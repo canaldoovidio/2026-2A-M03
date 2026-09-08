@@ -562,31 +562,41 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 
 10h15 - 12h00  Instrução em metodologia ativa
 
-  10h15 - 10h30  Resgate: o PCA da Aula 08 sobre os drivers macroeconômicos. Hoje: os erros
-    silenciosos que estragam um modelo. Pergunta disparada: "o que aconteceria se separássemos
-    treino e teste aleatoriamente numa série trimestral?"
+  10h15 - 10h25  Resgate: o PCA das onze features do Modelo 1, da Aula 08, com PC1 em 68,21% da
+    variância, quatro componentes em 96,07% e o corte levando o MAPE de 3,32% para 4,94%. O gancho
+    de hoje é o que aquela aula mediu de propósito: ajustar escalador e PCA na base inteira leva o
+    MAPE de quatro componentes a 4,91%, sempre na direção otimista. Pergunta disparada: "o que
+    aconteceria com o MAPE se separássemos treino e teste por sorteio aleatório nesta base?"
 
-  10h30 - 10h45  Teoria: vazamento temporal (temporal leakage), com demonstração ao vivo
-    comparando `train_test_split` aleatório contra corte por data na base de frango, mostrando a
-    queda artificial de RMSE no primeiro caso.
+  10h25 - 10h50  Teoria e prática: vazamento temporal. O alvo médio dos 24 meses sorteados é 35%
+    menor que o dos 24 últimos meses (765.719.266 kg contra 1.181.946.133 kg), então o RMSE não é
+    comparável entre os dois cortes. Medido por MAPE, KNN, árvore e random forest melhoram com o
+    sorteio (7,64% para 5,29%, 8,81% para 6,31% e 5,70% para 4,04%) e a regressão linear sobre a
+    razão piora (3,32% para 3,60%). Cada dupla reproduz os dois cortes e conta quantos meses de
+    teste têm vizinho no treino: 1 de 24 no corte por data, 24 de 24 no sorteio.
 
-  10h45 - 11h00  Prática: cada dupla reproduz a demonstração na própria base e mede a diferença
-    de RMSE entre os dois métodos de corte.
+  10h50 - 11h20  Teoria e prática: classificação, matriz de confusão e desbalanceamento, sobre o
+    alvo binário "o abate do mês supera o mesmo mês do ano anterior" (78,1% de positivos no
+    treino, 83,3% no teste). A baseline que prevê sempre a classe majoritária acerta 83,3%, com
+    revocação 1,000, e nenhum dos cinco classificadores supera essa acurácia. Cada dupla monta a
+    matriz de confusão dos cinco e aponta quais preveem a classe positiva nos 24 meses.
 
-  11h00 - 11h15  Teoria: maldição de dimensionalidade e `Imputer` para os nulos que o IBGE marca
-    quando suprime um dado, conforme o contrato descrito em `dados/README.md`.
+  11h20 - 11h35  Teoria: entropia passo a passo. A raiz vale 0,7584 bits, o melhor corte é `lag12`
+    com ganho de 0,0632 bits, `dias` ganha 0,0082 e `sen` ganha 0,0043, e o corte `dias <= 31`
+    deixa os 315 meses do mesmo lado. A árvore com critério de entropia escolhe o mesmo corte da
+    conta à mão.
 
-  11h15 - 11h30  Prática: cada dupla aplica `SimpleImputer` nos vazios da própria série e discute
-    se a estratégia de imputação escolhida é defensável para um dado trimestral.
+  11h35 - 11h45  Demonstração do professor: ausência e imputação. A união das cinco séries mensais
+    tem 471 meses e a interseção 351, então a junção interna descarta 25,5% dos períodos, e nenhum
+    CSV versionado tem valor vazio. Mascarando 16 meses do treino, a média erra 34,53%, a
+    interpolação linear 7,27% e o mesmo mês do ano anterior corrigido pelo fator médio 4,44%.
 
-  11h30 - 11h45  Teoria/discussão: domain knowledge na modelagem do problema, com os casos
-    Netflix e Airbnb como referência de como conhecimento de negócio evita erros de modelagem.
-    Exercício: cada dupla aponta um conhecimento de domínio da LDC que já mudou uma decisão de
-    feature.
-
-  11h45 - 12h00  Amarração com a sprint: o diagnóstico e a correção de vazamento temporal,
-    dimensionalidade excessiva e nulos preparam os modelos para a comparação formal, alimentando
-    **ART.7 Comparação de modelos** (peso 8).
+  11h45 - 12h00  Dimensionalidade, domain knowledge e amarração com a sprint. Indo de 2 para 11
+    features, a distância euclidiana média entre meses cresce de 1,65 para 4,31, o KNN piora de
+    3,71% para 5,01% e a regressão linear melhora de 4,71% para 3,32%. Domain knowledge entra com
+    as quatro decisões de feature deste acervo e os casos Netflix e Airbnb como referência, e cada
+    dupla aponta um conhecimento de domínio da LDC que já mudou uma decisão de feature. O protocolo
+    de comparação da aula alimenta **ART.7 Comparação de modelos** (peso 8), na Sprint 4.
 
     **Escopo ampliado em 03/09/2026, por causa da ADR-010.** Matriz de confusão, precisão,
     revocação, Naive Bayes, regressão logística, SVM e entropia calculada à mão, que estavam
@@ -596,6 +606,17 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
     soma sete assuntos ao escopo já previsto (vazamento temporal, maldição de dimensionalidade,
     `Imputer` e domain knowledge), e a Aula 09 vai precisar de um corte compensatório. O corte é
     decidido quando a aula for construída, não hoje.
+
+    **Roteiro corrigido em 08/09/2026, na construção da aula, pela ADR-012.** Três mudanças. A
+    primeira é de instrumento: o roteiro prometia mostrar "a queda artificial de RMSE" no sorteio
+    aleatório, e o teste sorteado tem alvo médio 35% menor, então parte da queda é escala do
+    período e não habilidade do modelo. A demonstração passa a medir por MAPE, com a ressalva de
+    escala declarada em sala. A segunda é de dado: o exercício de `SimpleImputer` "nos vazios da
+    própria série" não tem sobre o que rodar, porque nenhum dos dez CSVs versionados tem valor
+    vazio. A ausência real do acervo é de período, e o exercício passa a mascarar 5% dos meses de
+    treino e medir cada estratégia contra a verdade conhecida. A terceira é o corte compensatório:
+    maldição de dimensionalidade e domain knowledge saem de blocos próprios e entram no bloco de
+    fecho, e curva ROC e AUC, que são autoestudo desta mesma semana, ficam para a Aula 10.
 
 ---
 

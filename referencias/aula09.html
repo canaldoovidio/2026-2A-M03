@@ -68,10 +68,11 @@
             entre meses de treino cresce de 1,65 para 4,31, o KNN piora de 3,71% para 5,01% de MAPE
             e a regressão linear melhora de 4,71% para 3,32%.</span></li>
           <li>Modelagem do problema: Domain Knowledge
-            <span class="doc-porque">Enquadramento do bloco de domain knowledge. Todas as decisões
-            de feature deste acervo vieram daí: o alvo em razão sobre <code>lag12</code> na Aula 07,
-            a saída do leite da base na Aula 04 e o horizonte de 24 meses que a LDC pediu no
-            TAPI.</span></li>
+            <span class="doc-porque">Enquadramento do bloco de domain knowledge. Nenhuma decisão
+            de feature deste acervo saiu de busca automática: o alvo em razão sobre
+            <code>lag12</code> e a granularidade mensal vieram do ciclo anual do abate e do que o
+            TAPI pede (Aula 07), o horizonte de 24 meses é o que a LDC pediu, e a saída do leite
+            veio de hipótese declarada na Aula 04, confirmada fora da amostra na Aula 05.</span></li>
           <li>Estudo de caso: Netflix (Learning a Personalized homepage)
             <span class="doc-porque">Primeiro dos dois estudos de caso do tema. Mostra
             conhecimento de domínio determinando o que entra no modelo em uma empresa com dado

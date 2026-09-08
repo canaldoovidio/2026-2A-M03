@@ -1,0 +1,1012 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 09 &middot; Problemas Comuns com Modelagem de IA &middot; Módulo 03 IN</title>
+
+  <!-- Aula 09, 15/09/2026, Sprint 4 (planning em 14/09). Escopo, corte de
+       conteudo, as duas correcoes de roteiro e a divisao dos 105 minutos estao
+       em docs/adrs/ADR-012-escopo-e-alvo-de-classificacao-da-aula-09.md.
+       Numeros canonicos e definicao da base em
+       .superpowers/sdd/2026-09-08-aula09/global-constraints.md. As doze
+       conclusoes da aula estao travadas em
+       tools/tests/test_problemas_aula09.py.
+
+       Tese unica, medida nos cinco blocos: o erro que estraga um modelo nao
+       aparece na metrica que a ferramenta devolve por padrao. O corte
+       aleatorio melhora o MAPE de quem memoriza vizinho, a acuracia premia o
+       classificador que preve sempre a mesma classe, e a media imputa 34,53%
+       de erro sem reclamar.
+
+       Divisao dos 105 minutos (ADR-012):
+         10  Resgate da Aula 08 e pergunta disparada       (slides 3 e 4)
+         25  Vazamento temporal, com pratica da dupla      (slides 5 a 10)
+         30  Classificacao, matriz de confusao, desbalanc. (slides 11 a 18)
+         15  Entropia passo a passo                        (slides 19 a 22)
+         10  Ausencia e imputacao, demonstracao            (slides 23 a 25)
+         15  Dimensionalidade, domain knowledge e ART.7    (slides 26 a 31)
+
+       Base: a mesma da Aula 07 e da Aula 08. Juncao interna das cinco series
+       de dados/mensal/, 339 linhas (1998-01 a 2026-03), treino de 315 meses e
+       teste de 24 meses (2024-04 a 2026-03), 11 features.
+
+       Bloco de vazamento temporal (MAPE, sorteio com media de dez sementes):
+         KNN k=5            7,64% por data  ->  5,29% sorteado
+         arvore d=3         8,81%           ->  6,31%
+         random forest 300  5,70%           ->  4,04%
+         regressao, razao   3,32%           ->  3,60%   (piora)
+         alvo medio do teste: 1.181.946.133 kg por data contra 765.719.266 kg
+           sorteado, e por isso o RMSE nao e comparavel entre os dois cortes
+         RMSE da regressao em nivel: 40.695.433 por data, 35.028.744 sorteado
+         RMSE do KNN em nivel: 104.945.482 por data, 48.382.751 sorteado
+         meses de teste com vizinho no treino: 1 de 24 por data, 24 de 24 no
+           sorteio das sementes 0 e 1, media acima de 95%
+
+       Bloco de classificacao (alvo binario y > lag12, 11 features padronizadas
+       com escalador ajustado so no treino):
+         positivos: 246 de 315 no treino (78,1%), 20 de 24 no teste (83,3%)
+         baseline majoritaria: acuracia 83,3%, precisao 0,833, revocacao 1,000
+         logistica    79,2%  precisao 0,895  revocacao 0,850  F1 0,872
+         naive bayes  16,7%  precisao 0,000  revocacao 0,000
+         SVM linear   83,3%  precisao 0,900  revocacao 0,900  F1 0,900
+         SVM RBF      83,3%  precisao 0,833  revocacao 1,000  F1 0,909
+         arvore entr. 83,3%  precisao 0,833  revocacao 1,000  F1 0,909
+         matriz da logistica: real 0 -> 2 e 2; real 1 -> 3 e 17
+
+       Bloco de entropia (315 meses de treino, sem padronizar):
+         raiz 0,7584 bits (p = 0,7810)
+         lag12 <= 737.169.694 ganha 0,0632 bits, 144 contra 171 meses
+         abate_suinos_lag1 0,0544, producao_ovos_lag1 0,0519, lag1 0,0449
+         dias <= 28,5 ganha 0,0082 (20 contra 295), sen 0,0043, cos 0,0010
+         dias <= 31 deixa os 315 meses do mesmo lado, sem ganho a medir
+         filhos da raiz: 0,4374 com 144 meses e 0,9123 com 171 meses
+         a arvore com criterio de entropia escolhe o mesmo lag12
+
+       Bloco de ausencia e imputacao:
+         uniao 471 meses, intersecao 351, 120 descartados (25,5%)
+         2.355 celulas na matriz periodo por serie, 480 vazias (20,4%)
+         nenhum dos dez CSVs versionados tem valor vazio
+         16 meses mascarados (5% de 315), semente 42, fator medio 1,05378
+         media 34,53%  mediana 34,38%  ultimo 7,60%  interpolacao 7,27%
+         mesmo mes do ano anterior com fator 4,44%
+
+       Bloco de dimensionalidade (alvo em razao, escalador so no treino):
+          2 features  KNN 3,71%  regressao 4,71%  distancia 1,65
+          4 features  KNN 4,59%  regressao 4,73%  distancia 2,65
+          7 features  KNN 4,28%  regressao 3,44%  distancia 3,49
+         11 features  KNN 5,01%  regressao 3,32%  distancia 4,31
+
+       O resgate da Aula 08 (slides 3 e 4) copia o trecho de codigo e os
+       numeros de aulas/aula08.html, sem reescrever de memoria: achado
+       registrado da revisao da Aula 06.
+
+       Escopo da conclusao (slide 28): "sorteio infla a metrica" e falso como
+       regra geral nesta base, o alvo binario existe para ensinar metrica de
+       classificacao sobre dado real, e a ordem das estrategias de imputacao
+       vale para este mascaramento.
+
+       Resgate da Aula 08 (PLANO_DE_ENSINO.md secao 6, corrigido pela ADR-011 e
+       pela ADR-012): "A Aula 08 deixou pronto o PCA das onze features do
+       Modelo 1, com a variancia explicada, os loadings e o custo medido do
+       corte de componentes."
+
+       ART.7 Comparacao de modelos, peso 8, sprint com planning em 14/09 e
+       review em 25/09 (PLANO_DE_ENSINO.md secao 4). -->
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-theme.css">
+  <link rel="stylesheet" href="../assets/css/inteli-print.css" media="print">
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- 1 - Capa -->
+      <section class="cover-slide">
+        <div class="cover-panel">
+          <div class="cover-content">
+            <p class="cover-eyebrow">Módulo 03 IN &middot; Aula 09 &middot; 15/09/2026</p>
+            <h1>Problemas Comuns com Modelagem de IA</h1>
+            <h3>Vazamento temporal, acurácia em alvo desbalanceado, entropia passo a passo,
+            imputação medida contra a verdade e dimensionalidade</h3>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 - Agenda -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Agenda do encontro</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>08h00 &middot; 10h00</h3>
+            <p>Autoestudo na Adalove, nove itens: desbalanceamento das classes, maldição de
+            dimensionalidade, domain knowledge, PCA, Imputer e os casos Netflix e Airbnb [10].</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h00 &middot; 10h15</h3>
+            <p>Daily. O que fiz, o que vou fazer, impedimentos, com a abertura da Sprint 4, cujo
+            planning é em 14/09.</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h15 &middot; 12h00</h3>
+            <p>Vazamento temporal (25 min), classificação e desbalanceamento (30 min), entropia
+            (15 min), ausência e imputação (10 min) e a amarração com a ART.7 (15 min).</p>
+          </div>
+        </div>
+        <p>Dois dos nove autoestudos são de PCA, ensinado na Aula 08, em 10/09 [10].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">2</p>
+        </div>
+      </section>
+
+      <!-- 3 - Resgate da Aula 08, trecho copiado de aulas/aula08.html -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que a Aula 08 deixou pronto</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>corte = len(base) - 24   # 315
+
+escalador = StandardScaler()
+escalador.fit(X[:corte])
+
+Ztr = escalador.transform(
+    X[:corte])
+Zte = escalador.transform(
+    X[corte:])
+
+pca = PCA().fit(Ztr)
+pca.explained_variance_ratio_[0]
+# 0.6821</code></pre>
+          <div>
+            <p>A Aula 08 deixou pronto o PCA das onze features do Modelo 1: PC1 com 68,21% da
+            variância, quatro componentes com 96,07%, e o custo medido do corte, que leva o MAPE
+            de 3,32% para 4,94% [11].</p>
+            <p>O trecho ao lado é o da Aula 08, sem alteração: o <code>fit</code> vê só as 315
+            primeiras linhas, e os 24 meses de teste passam apenas por
+            <code>transform</code>.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">3</p>
+        </div>
+      </section>
+
+      <!-- 4 - O gancho da Aula 08 e a pergunta disparada -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A base inteira leva o MAPE de 4,94% a 4,91%</h2>
+        </div>
+        <p>A Aula 08 mediu o que acontece ao ajustar escalador e PCA sobre as 339 linhas em vez
+        das 315 de treino: PC1 sobe de 68,21% para 68,52% e o MAPE de quatro componentes cai de
+        4,94% para 4,91% [11].</p>
+        <p>O efeito é pequeno e vai sempre na direção otimista. Um erro que melhora a métrica não
+        dispara alarme nenhum: ele é encontrado por disciplina de protocolo, não por leitura do
+        resultado [3][6].</p>
+        <p><strong>Pergunta disparada:</strong> o que aconteceria com o MAPE se separássemos
+        treino e teste por sorteio aleatório nesta base?</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">4</p>
+        </div>
+      </section>
+
+      <!-- 5 - O que conta como vazamento temporal -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que conta como vazamento temporal</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code># corte por data
+corte = len(base) - 24
+Xtr, Xte = X[:corte], X[corte:]
+
+# sorteio aleatorio
+from sklearn.model_selection \
+    import train_test_split
+
+Xtr, Xte, ytr, yte = (
+    train_test_split(
+        X, y, test_size=24/339,
+        random_state=0))</code></pre>
+          <div>
+            <p>Vazamento é qualquer informação que chega ao treino e não estaria disponível no
+            momento da previsão [6]. O sorteio aleatório produz exatamente isso numa série
+            temporal: meses de 2025 ficam no treino enquanto meses de 2014 vão para o teste.</p>
+            <p>A LDC pede 24 meses à frente do último dado observado. O conjunto de teste que
+            responde a essa pergunta são os 24 últimos meses, na ordem em que aconteceram
+            [3].</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">5</p>
+        </div>
+      </section>
+
+      <!-- 6 - A ressalva de escala do RMSE -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O teste sorteado tem alvo médio 35% menor</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Medida sobre os 24 meses de teste</th><th>Corte por data</th><th>Sorteio</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Alvo médio, em quilogramas</td><td>1.181.946.133</td><td>765.719.266</td></tr>
+            <tr><td>RMSE da regressão linear em nível</td><td>40.695.433</td><td>35.028.744</td></tr>
+            <tr><td>RMSE do KNN k=5 em nível</td><td>104.945.482</td><td>48.382.751</td></tr>
+          </tbody>
+        </table>
+        <p>O sorteio pega majoritariamente anos antigos, quando o abate era menor, e o RMSE em
+        quilogramas cai junto [4]. Comparar RMSE entre os dois cortes mistura escala do período
+        com habilidade do modelo, então a leitura do bloco usa MAPE, que é razão e não depende de
+        escala.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">6</p>
+        </div>
+      </section>
+
+      <!-- 7 - Figura 1: vazamento por modelo -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O MAPE do KNN cai 2,35 pontos com sorteio</h2>
+        </div>
+        <img src="../assets/img/aula09-vazamento-por-modelo.png" alt="Dois painéis. No da esquerda, barras pareadas do MAPE de teste de quatro modelos nos dois cortes: KNN cai de 7,64% para 5,29%, árvore de 8,81% para 6,31%, random forest de 5,70% para 4,04%, e a regressão linear sobre a razão sobe de 3,32% para 3,60%. No da direita, o alvo médio do conjunto de teste, 1,18 bilhão de quilogramas no corte por data contra 0,77 bilhão no sorteio" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 370px;">
+        <p>Três modelos melhoram com o sorteio, e o quarto piora [2][4].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">7</p>
+        </div>
+      </section>
+
+      <!-- 8 - A tabela dos quatro modelos -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O sorteio melhora três modelos e piora um</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Modelo, MAPE sobre 24 meses de teste</th><th>Corte por data</th><th>Sorteio</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>KNN k=5, alvo em nível</td><td>7,64%</td><td>5,29%</td></tr>
+            <tr><td>Árvore de decisão <code>max_depth=3</code></td><td>8,81%</td><td>6,31%</td></tr>
+            <tr><td>Random Forest, 300 árvores</td><td>5,70%</td><td>4,04%</td></tr>
+            <tr><td><strong>Regressão linear em razão, o fecho da Aula 07</strong></td><td><strong>3,32%</strong></td><td><strong>3,60%</strong></td></tr>
+          </tbody>
+        </table>
+        <p>O sorteio é a média de dez sementes [2]. Os três primeiros modelos preveem por vizinho,
+        e o sorteio coloca um mês vizinho no treino de cada mês de teste. A regressão sobre a razão
+        não guarda vizinho, então nela o sorteio só troca um teste recente por um teste espalhado,
+        o que piora [4].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">8</p>
+        </div>
+      </section>
+
+      <!-- 9 - O mecanismo, contado mes a mes -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>24 dos 24 meses de teste ganham vizinho</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Meses de teste com o mês anterior ou o seguinte no treino</th><th>Quantidade</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Corte por data, teste de 2024-04 a 2026-03</td><td>1 de 24</td></tr>
+            <tr><td>Sorteio aleatório, sementes 0 e 1</td><td>24 de 24</td></tr>
+            <tr><td>Sorteio aleatório, média das dez sementes</td><td>acima de 95%</td></tr>
+          </tbody>
+        </table>
+        <p>É o mecanismo inteiro, contado mês a mês [4]. Prever fevereiro de 2014 tendo janeiro e
+        março de 2014 no treino é interpolar entre dois pontos conhecidos, e a Aula 05 já mediu
+        que interpolar é mais fácil que extrapolar. No corte por data só o primeiro mês do teste
+        tem vizinho, porque ele encosta no fim do treino.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">9</p>
+        </div>
+      </section>
+
+      <!-- 10 - Pratica do bloco de vazamento -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; Os dois cortes na mesma base</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Treinar <code>KNeighborsRegressor(n_neighbors=5)</code> com corte por data e medir
+          RMSE e MAPE nos 24 meses de teste.</li>
+          <li>Repetir com <code>train_test_split(X, y, test_size=24/339, random_state=0)</code> e
+          comparar as duas métricas: a diferença de RMSE é da mesma ordem da diferença de escala
+          entre os dois testes?</li>
+          <li>Contar quantos meses de teste têm o mês anterior ou o seguinte dentro do treino, em
+          cada corte, e conferir o 1 de 24 contra o 24 de 24 [2].</li>
+          <li>Rodar a regressão linear sobre a razão nos dois cortes e explicar por que ela é a
+          única que piora com o sorteio.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">10</p>
+        </div>
+      </section>
+
+      <!-- 11 - O alvo binario do case -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Um alvo binário criado a partir das séries</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code># cresce contra o mesmo mes
+# do ano anterior
+alvo = (base["abate_frangos"]
+        &gt; base["lag12"]).astype(int)
+
+alvo[:corte].mean()   # 0.7810
+alvo[corte:].mean()   # 0.8333</code></pre>
+          <div>
+            <p>Os três modelos do TAPI preveem quantidade, e a ART.7 compara modelos de regressão.
+            Matriz de confusão, precisão, revocação, Naive Bayes, regressão logística e SVM
+            precisam de um alvo categórico, e dado sintético é proibido no acervo [3].</p>
+            <p>O alvo acima é o mais direto que as séries permitem, e existe para ensinar as
+            métricas de classificação sobre dado real. É a primeira vez no acervo que um alvo não
+            vem do TAPI [3].</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">11</p>
+        </div>
+      </section>
+
+      <!-- 12 - Desbalanceamento -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O alvo cresce em 78,1% dos meses de treino</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Conjunto</th><th>Meses de alta</th><th>Proporção</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Base inteira, 339 meses</td><td>266</td><td>78,5%</td></tr>
+            <tr><td>Treino, 315 meses</td><td>246</td><td>78,1%</td></tr>
+            <tr><td>Teste, 24 meses</td><td>20</td><td>83,3%</td></tr>
+          </tbody>
+        </table>
+        <p>O abate de frangos no Brasil cresceu em quase quatro de cada cinco meses medidos
+        desde 1998, e o alvo herda essa característica do fenômeno [1][4]. Os autoestudos
+        "Desbalanceamento das Classes" e "Formas de lidar com o desbalanceamento de Classes"
+        tratam do assunto, e o alvo do case já é um caso dele [10].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">12</p>
+        </div>
+      </section>
+
+      <!-- 13 - A baseline majoritaria -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prever sempre alta acerta 83,3% do teste</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Métrica da baseline que prevê sempre a classe majoritária</th><th>Valor</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Acurácia</td><td>83,3%, 20 de 24</td></tr>
+            <tr><td>Precisão da classe positiva</td><td>0,833</td></tr>
+            <tr><td>Revocação da classe positiva</td><td>1,000</td></tr>
+          </tbody>
+        </table>
+        <p>Precisão é a fração de acertos entre os meses que o modelo chamou de alta; revocação é
+        a fração dos meses de alta reais que o modelo encontrou [5]. Um modelo que responde "alta"
+        sempre encontra todas as altas, por construção, e por isso tem revocação 1,000 sem ter
+        aprendido nada.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">13</p>
+        </div>
+      </section>
+
+      <!-- 14 - Figura 2: baseline majoritaria -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Nenhum dos cinco supera os 83,3%</h2>
+        </div>
+        <img src="../assets/img/aula09-baseline-majoritaria.png" alt="Barras da acurácia no teste de 24 meses. A baseline majoritária marca 83,3%, com uma linha horizontal nesse nível atravessando o gráfico. SVM linear, SVM RBF e a árvore de entropia empatam com a baseline em 83,3%, a regressão logística fica em 79,2% e o Naive Bayes gaussiano em 16,7%" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 370px;">
+        <p>Três classificadores empatam com a baseline, um fica abaixo e um despenca [2][4].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">14</p>
+        </div>
+      </section>
+
+      <!-- 15 - Os cinco classificadores em quatro metricas -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>SVM RBF e árvore repetem a baseline em tudo</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Classificador</th><th>Acurácia</th><th>Precisão</th><th>Revocação</th><th>F1</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Baseline majoritária</td><td>83,3%</td><td>0,833</td><td>1,000</td><td>0,909</td></tr>
+            <tr><td>Regressão logística</td><td>79,2%</td><td>0,895</td><td>0,850</td><td>0,872</td></tr>
+            <tr><td>SVM linear</td><td>83,3%</td><td>0,900</td><td>0,900</td><td>0,900</td></tr>
+            <tr><td>SVM RBF</td><td>83,3%</td><td>0,833</td><td>1,000</td><td>0,909</td></tr>
+            <tr><td>Árvore de entropia <code>max_depth=3</code></td><td>83,3%</td><td>0,833</td><td>1,000</td><td>0,909</td></tr>
+            <tr><td>Naive Bayes gaussiano</td><td>16,7%</td><td>0,000</td><td>0,000</td><td>0,000</td></tr>
+          </tbody>
+        </table>
+        <p>SVM RBF e a árvore têm as quatro métricas iguais às da baseline porque preveem alta nos
+        24 meses [4]. A acurácia sozinha não distingue um modelo que decide de um que responde
+        sempre a mesma coisa.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">15</p>
+        </div>
+      </section>
+
+      <!-- 16 - A matriz de confusao da logistica -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A logística acerta 17 dos 20 meses de alta</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Real / previsto</th><th>Previsto queda</th><th>Previsto alta</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Queda real, 4 meses</td><td>2</td><td>2</td></tr>
+            <tr><td>Alta real, 20 meses</td><td>3</td><td>17</td></tr>
+          </tbody>
+        </table>
+        <p>A matriz mostra o que a acurácia esconde [5]. A logística prevê queda em cinco meses
+        e acerta dois dos quatro meses de queda reais; o preço são três meses de alta
+        classificados como queda, o que derruba a acurácia para 79,2%, abaixo da baseline. O SVM
+        linear acerta os mesmos dois meses de queda errando uma alta a menos, e por isso fica em
+        83,3% [4].</p>
+        <p>Para a LDC, prever queda quando o mês sobe e prever alta quando o mês cai têm custos
+        diferentes: um deixa ração parada em silo e o outro deixa cliente sem entrega.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">16</p>
+        </div>
+      </section>
+
+      <!-- 17 - O Naive Bayes -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O Naive Bayes acerta 16,7% e erra as 20 altas</h2>
+        </div>
+        <p>O <code>GaussianNB</code> prevê queda nos 24 meses de teste: ele acerta os quatro meses
+        em que o abate caiu e erra os vinte em que subiu, terminando com precisão 0,000 e revocação
+        0,000 na classe positiva [4].</p>
+        <p>O modelo supõe que as features são independentes entre si dada a classe, e a Aula 08
+        mediu que 20 dos 55 pares dessas onze colunas passam de 0,9 de correlação absoluta [11]. A
+        suposição do modelo está contradita pela própria base.</p>
+        <p><strong>Pergunta para a sala:</strong> 16,7% de acurácia é o pior resultado possível
+        nesta base?</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">17</p>
+        </div>
+      </section>
+
+      <!-- 18 - Pratica do bloco de classificacao -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; Matriz de confusão dos cinco</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Montar o alvo binário <code>y &gt; lag12</code> e conferir os 246 positivos em 315
+          meses de treino [2].</li>
+          <li>Medir a baseline majoritária com <code>accuracy_score</code>,
+          <code>precision_score</code> e <code>recall_score</code>, e guardar os três valores como
+          referência.</li>
+          <li>Treinar os cinco classificadores nas onze features padronizadas e imprimir
+          <code>confusion_matrix</code> de cada um.</li>
+          <li>Apontar quais deles preveem a classe positiva nos 24 meses, e escrever em uma frase
+          por que a acurácia deles empata com a de um modelo que não decide nada.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">18</p>
+        </div>
+      </section>
+
+      <!-- 19 - Entropia da raiz -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A raiz do alvo binário vale 0,7584 bits</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>p = 246 / 315   # 0.7810
+
+H = -(p * log2(p)
+      + (1 - p) * log2(1 - p))
+# 0.7584 bits
+
+# nó puro (p = 1)   -> 0 bits
+# nó 50/50 (p = 0.5) -> 1 bit</code></pre>
+          <div>
+            <p>Entropia mede a incerteza de um nó em bits [7]. Um nó em que todos os meses são de
+            alta vale 0 bits, e um nó meio a meio vale 1 bit. A raiz desta árvore, com 246 altas
+            em 315 meses, vale 0,7584 bits.</p>
+            <p>O ganho de informação de um corte é a entropia da raiz menos a média das entropias
+            dos dois filhos, ponderada pelo número de meses de cada lado. A árvore escolhe, em
+            cada nó, o corte de maior ganho [5].</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">19</p>
+        </div>
+      </section>
+
+      <!-- 20 - Ganho dos candidatos -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>lag12 ganha 0,0632 bits e sen ganha 0,0043</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Melhor corte de cada feature, sobre os 315 meses de treino</th><th>Ganho, em bits</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>lag12</code> &le; 737.169.694</td><td>0,0632</td></tr>
+            <tr><td><code>abate_suinos_lag1</code></td><td>0,0544</td></tr>
+            <tr><td><code>producao_ovos_lag1</code></td><td>0,0519</td></tr>
+            <tr><td><code>lag1</code> &le; 655.298.371</td><td>0,0449</td></tr>
+            <tr><td><code>dias</code> &le; 28,5</td><td>0,0082</td></tr>
+            <tr><td><code>sen</code> &le; 0,6830</td><td>0,0043</td></tr>
+          </tbody>
+        </table>
+        <p>O campeão ganha mais de catorze vezes o que <code>sen</code> ganha [4]. Saber o nível do
+        abate doze meses atrás informa mais sobre a alta do que saber em que ponto do ciclo anual
+        o mês está.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">20</p>
+        </div>
+      </section>
+
+      <!-- 21 - O corte degenerado -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O corte dias &le; 31 deixa os 315 juntos</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Corte candidato em <code>dias</code></th><th>Divisão</th><th>Ganho</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>dias</code> &le; 31</td><td>315 contra 0</td><td>não há ganho a medir</td></tr>
+            <tr><td><code>dias</code> &le; 30,5</td><td>131 contra 184</td><td>0,0032 bits</td></tr>
+            <tr><td><code>dias</code> &le; 28,5</td><td>20 contra 295</td><td>0,0082 bits</td></tr>
+          </tbody>
+        </table>
+        <p>A coluna <code>dias</code> tem quatro valores no treino: 28, 29, 30 e 31 [4]. Um limiar
+        acima do máximo deixa todos os meses do mesmo lado, e um nó que não parte a amostra não
+        reduz incerteza nenhuma. Por isso a varredura de limiares só considera os pontos médios
+        entre valores distintos e consecutivos.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">21</p>
+        </div>
+      </section>
+
+      <!-- 22 - A arvore escolhe o mesmo corte -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A árvore de entropia escolhe o mesmo lag12</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Nó da raiz, com <code>criterion="entropy"</code></th><th>Meses</th><th>Entropia</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Raiz</td><td>315</td><td>0,7584</td></tr>
+            <tr><td>Filho da esquerda, <code>lag12</code> &le; 737.169.696</td><td>144</td><td>0,4374</td></tr>
+            <tr><td>Filho da direita</td><td>171</td><td>0,9123</td></tr>
+          </tbody>
+        </table>
+        <p>A conta à mão e o <code>DecisionTreeClassifier</code> chegam ao mesmo corte, com dois
+        quilogramas de diferença no limiar [4][5]. O filho da esquerda reúne os meses de abate
+        mais baixo doze meses antes, e é o lado mais previsível: 0,4374 bits contra 0,9123 do
+        outro.</p>
+        <p><strong>Pergunta para a sala:</strong> por que o lado de abate baixo há um ano é o lado
+        mais fácil de prever?</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">22</p>
+        </div>
+      </section>
+
+      <!-- 23 - Ausencia: uniao contra intersecao -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A junção interna descarta 120 dos 471 meses</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Medida sobre as cinco séries mensais</th><th>Valor</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>União dos períodos, de 1987-01 a 2026-03</td><td>471 meses</td></tr>
+            <tr><td>Interseção, de 1997-01 a 2026-03</td><td>351 meses</td></tr>
+            <tr><td>Períodos descartados pela junção interna</td><td>120, ou 25,5%</td></tr>
+            <tr><td>Células vazias na matriz período por série</td><td>480 de 2.355, ou 20,4%</td></tr>
+          </tbody>
+        </table>
+        <p>Nenhum dos dez CSVs versionados tem valor vazio [1][4]. A ausência real do acervo é de
+        período: <code>producao_ovos</code> começa dez anos antes das outras quatro séries, e a
+        junção interna joga fora esses dez anos de ovos para manter as cinco colunas
+        preenchidas.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">23</p>
+        </div>
+      </section>
+
+      <!-- 24 - Figura 3 e o exercicio de mascaramento -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A imputação sazonal erra 4,44%</h2>
+        </div>
+        <img src="../assets/img/aula09-imputacao.png" alt="Barras horizontais do erro percentual médio de cinco estratégias de imputação sobre 16 meses mascarados do treino: a média da série erra 34,53%, a mediana 34,38%, o último valor medido 7,60%, a interpolação linear 7,27% e o mesmo mês do ano anterior corrigido pelo fator médio 4,44%, destacada como a menor das cinco" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 350px;">
+        <p>Dezesseis meses de treino foram escondidos com semente 42, imputados por cinco
+        estratégias e comparados com o valor real [2][4].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">24</p>
+        </div>
+      </section>
+
+      <!-- 25 - A tabela das cinco estrategias -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A média da série erra 34,53% dos valores</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Estratégia sobre os 16 meses mascarados</th><th>Erro médio</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Média da série, <code>SimpleImputer(strategy="mean")</code></td><td>34,53%</td></tr>
+            <tr><td>Mediana da série</td><td>34,38%</td></tr>
+            <tr><td>Último valor medido</td><td>7,60%</td></tr>
+            <tr><td>Interpolação linear entre vizinhos</td><td>7,27%</td></tr>
+            <tr><td><strong>Mesmo mês do ano anterior, com fator 1,05378</strong></td><td><strong>4,44%</strong></td></tr>
+          </tbody>
+        </table>
+        <p>A série cresce por 28 anos, então qualquer estatística global do histórico descreve mal
+        um mês específico [4][8]. A estratégia que erra menos é a que usa a estrutura sazonal já
+        medida nas Aulas 04 a 08, e nenhuma delas vem de graça no <code>SimpleImputer</code>.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">25</p>
+        </div>
+      </section>
+
+      <!-- 26 - Dimensionalidade -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>De 2 para 11 features, a distância vai a 4,31</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Features na matriz padronizada</th><th>Distância média entre meses</th><th>KNN k=5</th><th>Regressão</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>2: <code>lag1</code> e <code>lag12</code></td><td>1,65</td><td>3,71%</td><td>4,71%</td></tr>
+            <tr><td>4: mais <code>sen</code> e <code>cos</code></td><td>2,65</td><td>4,59%</td><td>4,73%</td></tr>
+            <tr><td>7: mais <code>lag2</code>, <code>lag3</code> e <code>dias</code></td><td>3,49</td><td>4,28%</td><td>3,44%</td></tr>
+            <tr><td>11: mais as quatro séries defasadas</td><td>4,31</td><td>5,01%</td><td>3,32%</td></tr>
+          </tbody>
+        </table>
+        <p>Cada coluna nova soma um termo positivo à distância euclidiana, e os vizinhos ficam
+        todos mais longe: é a maldição de dimensionalidade do autoestudo da semana [10]. O KNN
+        piora, porque decide por vizinhança e cada coluna afasta o vizinho mais perto. A regressão
+        melhora, porque estima um coeficiente por coluna e não depende de proximidade [4].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">26</p>
+        </div>
+      </section>
+
+      <!-- 27 - Domain knowledge -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Domain knowledge na modelagem do problema</h2>
+        </div>
+        <p>Nenhuma decisão de feature deste acervo saiu de busca automática. Cada uma tem um
+        motivo declarado, de domínio ou de medição [9]:</p>
+        <table class="data-table">
+          <thead>
+            <tr><th>Decisão</th><th>O que a motivou</th><th>Onde está registrada</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Alvo em razão sobre <code>lag12</code></td><td>o abate tem ciclo anual, e a árvore não extrapola tendência</td><td>Aula 07, <code>ADR-010</code></td></tr>
+            <tr><td>Granularidade mensal</td><td>o TAPI fala em abate mensal, e a classificação c12716 do SIDRA entrega mês</td><td>Aula 07, <code>ADR-010</code></td></tr>
+            <tr><td>Horizonte de 24 meses</td><td>é o que a LDC pediu no TAPI</td><td><code>PLANO_DE_ENSINO.md</code></td></tr>
+            <tr><td>Leite fora das entradas do Modelo 1</td><td>H2 não rejeitada na primeira diferença, apesar de r = +0,96 em nível</td><td>Aulas 04 e 05</td></tr>
+          </tbody>
+        </table>
+        <p>A última linha é a que mais ensina: o leite entrou como candidato por correlação alta em
+        nível, saiu por hipótese declarada e confirmou a saída fora da amostra, piorando o MAPE de
+        1,60% para 1,89% na Aula 05. Os autoestudos de domain knowledge, Netflix e Airbnb trazem o
+        mesmo movimento em outras empresas [10].</p>
+        <p><strong>Exercício em dupla, cinco minutos:</strong> apontar um conhecimento de domínio
+        da LDC que já mudou uma decisão de feature no projeto de vocês.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">27</p>
+        </div>
+      </section>
+
+      <!-- 28 - Escopo das conclusoes -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Escopo das conclusões desta aula</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>O que foi medido</th><th>O que não se pode afirmar</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Três modelos melhoram com sorteio nesta base</td><td>Que sorteio sempre infla a métrica: a regressão em razão piora, de 3,32% para 3,60%</td></tr>
+            <tr><td>A ordem das cinco estratégias de imputação, com semente 42</td><td>O valor exato de cada estratégia em qualquer outro recorte</td></tr>
+            <tr><td>O KNN piora e a regressão melhora com 11 features</td><td>Que menos features é melhor: só a distância média cresce sempre</td></tr>
+          </tbody>
+        </table>
+        <p>O alvo binário existe para ensinar métrica de classificação sobre dado real. Os três
+        modelos do TAPI seguem sendo de regressão, e a ART.7 compara modelos de regressão [3].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">28</p>
+        </div>
+      </section>
+
+      <!-- 29 - Quiz 1 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pergunta 1 &middot; O corte por data</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">O KNN sai de 7,64% de MAPE com corte por data para 5,29% com
+          sorteio aleatório. O que esses 5,29% medem?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O sorteio não mudou o modelo nem os hiperparâmetros: k segue em 5 e as features são as mesmas. O que mudou foi quais meses ficaram no teste.">Que o KNN está mais bem ajustado quando treina com meses sorteados</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: no sorteio, 24 dos 24 meses de teste têm um mês vizinho no treino, contra 1 de 24 no corte por data. O modelo interpola entre pontos conhecidos, o que a LDC nunca poderá fazer."
+                data-incorrect-msg="Era esta: no sorteio, 24 dos 24 meses de teste têm um mês vizinho no treino, contra 1 de 24 no corte por data. O modelo interpola entre pontos conhecidos, o que a LDC nunca poderá fazer.">Um teste em que quase todo mês tem um vizinho dentro do treino</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O MAPE é razão entre erro e valor real, então ele não depende de escala. Quem responde à escala do período sorteado é o RMSE, que cai de 104.945.482 para 48.382.751.">Só o efeito da escala menor do período sorteado, porque o MAPE segue a escala</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="A regressão linear sobre a razão piora com o sorteio, de 3,32% para 3,60%. A melhora atinge quem memoriza vizinho, não todo modelo.">Uma melhora que apareceria em qualquer modelo treinado nesta base</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">29</p>
+        </div>
+      </section>
+
+      <!-- 30 - Quiz 2 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pergunta 2 &middot; A acurácia de 83,3%</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">A árvore de entropia acerta 83,3% dos 24 meses de teste. O que
+          esse número autoriza a dizer sobre ela?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="A baseline que prevê sempre alta também acerta 83,3%, com a mesma precisão de 0,833 e a mesma revocação de 1,000. Empatar com ela não é evidência de aprendizado.">Que ela aprendeu o padrão de crescimento do abate, com boa margem</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="A regressão logística tem acurácia menor (79,2%) e é a única que prevê queda alguma vez, acertando 2 dos 4 meses de queda. Acurácia maior não implica modelo mais útil aqui.">Que ela é o melhor dos cinco classificadores, já que tem a maior acurácia</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: ela prevê alta nos 24 meses, e por isso repete as quatro métricas da baseline. A matriz de confusão mostra isso, e a acurácia sozinha não mostra."
+                data-incorrect-msg="Era esta: ela prevê alta nos 24 meses, e por isso repete as quatro métricas da baseline. A matriz de confusão mostra isso, e a acurácia sozinha não mostra.">Nada ainda, porque ela prevê a classe majoritária nos 24 meses</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O teste tem 20 meses de alta e 4 de queda, 83,3% contra 16,7%. Uma base equilibrada tornaria o empate com a baseline informativo, e não é o caso aqui.">Que o teste está equilibrado, já que 83,3% é bem acima de 50%</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">30</p>
+        </div>
+      </section>
+
+      <!-- 31 - Amarracao com a ART.7 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que a dupla leva para a ART.7, peso 8</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Erro silencioso</th><th>Como ele aparece</th><th>O que a comparação exige</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Vazamento temporal</td><td>MAPE melhor, de 7,64% para 5,29%</td><td>Corte por data em todo candidato</td></tr>
+            <tr><td>Métrica que não distingue</td><td>Acurácia de 83,3% em quem não decide</td><td>Baseline declarada e matriz de confusão</td></tr>
+            <tr><td>Imputação sem critério</td><td>34,53% de erro no valor imputado</td><td>Estratégia medida contra valor conhecido</td></tr>
+          </tbody>
+        </table>
+        <p><strong>ART.7 Comparação de modelos, peso 8</strong>, na Sprint 4, com planning em 14/09
+        e review em 25/09 [9]. Cada dupla entrega os candidatos do Modelo 1 comparados sob o mesmo
+        protocolo: mesmo corte por data, mesma métrica sem dependência de escala, e a baseline da
+        LDC como piso de comparação.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">31</p>
+        </div>
+      </section>
+
+      <!-- 32 - Referencias -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Referências</h2>
+        </div>
+        <ol class="exercise-steps lista-longa">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite:
+          tabelas 1092, 1093, 1094, 7524 e 1086 do SIDRA, classificação c12716.</li>
+          <li>Números canônicos da aula em
+          <code>.superpowers/sdd/2026-09-08-aula09/global-constraints.md</code>.</li>
+          <li>Escopo e divisão dos 105 minutos em <code>docs/adrs/ADR-012</code>.</li>
+          <li>As doze conclusões travadas em <code>tools/tests/test_problemas_aula09.py</code> e no
+          <a href="../materiais/aula09.html">material de apoio</a>.</li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn: Machine Learning in Python</em>. JMLR, 2011.</li>
+          <li>Kaufman, S. et al. <em>Leakage in Data Mining: Formulation, Detection, and
+          Avoidance</em>. ACM TKDD, 6(4), 2012.</li>
+          <li>Shannon, C. E. <em>A Mathematical Theory of Communication</em>. BSTJ, 27, 1948.</li>
+          <li>Little, R. J. A.; Rubin, D. B. <em>Statistical Analysis with Missing Data</em>.
+          3a ed., Wiley, 2019.</li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seções 4 e 6: peso 8 da ART.7, planning em 14/09 e
+          review em 25/09.</li>
+          <li>Autoestudos da Semana 07, com título exato em
+          <a href="../referencias/aula09.html">referencias/aula09.html</a>.</li>
+          <li><a href="../aulas/aula08.html">Aula 08</a> e seu
+          <a href="../materiais/aula08.html">material</a>, de onde vêm os números do resgate.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 09 &middot; Sprint 4</p>
+          <p class="footer-page">32</p>
+        </div>
+      </section>
+
+      <!-- 33 - Encerramento -->
+      <section class="end-slide">
+        <h1>Até 17/09</h1>
+        <h3>Aula 10: Hiperparâmetros e Explicabilidade do Modelo, Sprint 4</h3>
+        <p>Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot; 2026-2A</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      width: 1280, height: 720, center: false, margin: 0,
+      hash: true, slideNumber: false, transition: 'fade'
+    });
+  </script>
+  <script src="../assets/js/inteli-quiz.js"></script>
+  <script src="../assets/js/inteli-zoom.js"></script>
+  <script src="../assets/js/inteli-print.js"></script>
+</body>
+</html>
