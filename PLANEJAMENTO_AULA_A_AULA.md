@@ -497,29 +497,29 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 10h15 - 12h00  Instrução em metodologia ativa
 
   10h15 - 10h30  Resgate: os modelos de árvore e ensemble da Aula 07, já comparados com a
-    baseline. Hoje: reduzir a dimensionalidade dos drivers macroeconômicos que alimentam o
-    Modelo 2 e o Modelo 3. Pergunta disparada: "quantas variáveis macro vocês acham que
-    realmente são independentes entre si?"
+    baseline, e o modelo do fecho com 3,32% de MAPE contra 3,71% da baseline da LDC. Hoje:
+    reduzir a dimensionalidade das features que alimentam o Modelo 1. Pergunta disparada:
+    "quantas das onze features vocês acham que realmente são independentes entre si?"
 
-  10h30 - 10h45  Teoria: PCA, variância explicada, componentes principais.
+  10h30 - 10h55  Teoria e prática: escolha de K por Elbow Plot e Silhouette Analysis, sobre as
+    duas bases da Aula 06. A inércia aponta K=3 (queda de 25,1% até K=3 e de 14,3% até K=4), a
+    silhueta aponta K=2 (0,3785) e só K=4 recupera o trimestre do calendário (98,3%). Cada dupla
+    roda as três medidas de K=2 a K=8 nas duas bases.
 
-  10h45 - 11h00  Prática: cada dupla roda PCA sobre as colunas de preço e disponibilidade dos
-    macroingredientes (milho, farelo de soja, sorgo, trigo, DDGS) dos boletins do Sindirações.
+  10h55 - 11h40  Teoria e prática: PCA sobre as onze features da base mensal, com escalador e PCA
+    ajustados só nos 315 meses de treino. Variância explicada (PC1 com 68,21%, quatro componentes
+    com 96,07%), loadings, o plano dos componentes 2 e 3, que recupera o mês em 91,7% dos meses de
+    treino, e o custo do corte: quatro componentes levam o MAPE de 3,32% para 4,94%, abaixo da
+    baseline da LDC. Cada dupla roda o PCA, lê os loadings de PC1 e plota os meses no plano PC2
+    por PC3.
 
-  11h00 - 11h15  Teoria: como interpretar os dois primeiros componentes principais em termos dos
-    ingredientes originais (loadings).
+  11h40 - 11h50  Fecho conceitual: sistemas de recomendação como outra família de aprendizado não
+    supervisionado, e por que o desdobramento de ração entre macroingredientes (Modelo 3) se
+    parece com um problema de recomendação de mix.
 
-  11h15 - 11h30  Prática: cada dupla plota os trimestres no espaço dos dois primeiros
-    componentes e aponta agrupamentos visíveis.
-
-  11h30 - 11h45  Discussão dirigida: sistemas de recomendação como outra família de aprendizado
-    não supervisionado, e por que o desdobramento de ração entre macroingredientes (Modelo 3) se
-    parece com um problema de recomendação de mix. Cada dupla debate a analogia com a dupla
-    vizinha.
-
-  11h45 - 12h00  Amarração com a sprint: os componentes principais dos drivers macroeconômicos
-    entram como features de menor dimensionalidade no Modelo 3, alimentando **ART.6 Preparação
-    dos Dados e Modelagem** (peso 6). Fecha a Sprint 3 (review em 11/09).
+  11h50 - 12h00  Amarração com a sprint: os componentes principais e o custo medido do corte
+    entram na justificativa de feature engineering da **ART.6 Preparação dos Dados e Modelagem**
+    (peso 6). Fecha a Sprint 3 (review em 11/09).
 
     **Escopo ampliado em 31/08/2026, por causa da ADR-009.** Elbow Plot e Silhouette Analysis, que
     estavam roteirizados na Aula 06, migram para a Aula 08: a Aula 06 fixou K em 4 e usou a
@@ -529,6 +529,18 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
     Silhouette Analysis a partir desse contraste, antes do bloco de PCA. Isso soma dois assuntos
     novos ao escopo já previsto (PCA e sistemas de recomendação), e a Aula 08 vai precisar de um
     corte compensatório. O corte é decidido quando a aula for construída, não hoje.
+
+    **Roteiro corrigido em 08/09/2026, na construção da aula, pela ADR-011.** Duas mudanças. A
+    primeira é de fonte: a prática de PCA citava preço e disponibilidade de macroingredientes dos
+    boletins do Sindirações, que não existem como série aberta em `dados/`, o mesmo problema que a
+    ADR-007 já corrigiu na Aula 04. O PCA passa a rodar sobre as onze features da base mensal que
+    a Aula 07 deixou pronta, que são os drivers do Modelo 1 e têm 20 dos 55 pares de colunas acima
+    de 0,9 de correlação absoluta. A segunda é o corte compensatório: sistemas de recomendação sai
+    de discussão dirigida de 15 minutos e fica em fecho conceitual de 10 minutos, sem prática,
+    porque é o único dos quatro assuntos sem dado no acervo para sustentar prática e o único
+    inteiramente coberto pelos cinco autoestudos da semana. A prática de plotar trimestres no
+    espaço dos dois primeiros componentes passa a plotar meses no plano dos componentes 2 e 3,
+    porque é ali que o calendário aparece nesta base.
 
 ---
 

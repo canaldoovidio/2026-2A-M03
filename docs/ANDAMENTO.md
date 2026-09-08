@@ -119,14 +119,39 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
   contra 5,82% em k=3, 9,37% contra 5,62% em k=5, e 10,09% contra 6,10% em k=10, porque sem
   padronizar a distância euclidiana já reparte quase igualmente entre `lag1` (49,28%) e `lag12`
   (50,72%), e padronizar dá peso artificial a `sen` e `cos`.
-- **ADRs** (`docs/adrs/ADR-001` a `ADR-010`): as dez decisões de arquitetura do acervo, para o
+- **Aula 08 completa, os quatro artefatos** (`aulas/aula08.html`, `materiais/aula08.html`,
+  `referencias/aula08.html`, `notebooks/aula08.ipynb`) mais as notas do professor
+  (`docs/notas-do-professor/aula08.md`), a `docs/adrs/ADR-011`, as três figuras
+  (`tools/graficos_aula08.py`) e a suíte `tools/tests/test_pca_aula08.py`. O deck tem 32 slides e
+  os quatro botões do card no portal estão habilitados. A aula fecha a Sprint 3 com escolha de K
+  por Elbow Plot e Silhouette Analysis sobre as duas bases trimestrais da Aula 06, e PCA sobre as
+  onze features da base mensal da Aula 07, com escalador e PCA ajustados só nos 315 meses de
+  treino.
+- **Os achados medidos antes do primeiro slide da Aula 08.** (1) Na base de participação de cada
+  trimestre no total do próprio ano, a inércia aponta K=3 (queda de 25,1% de K=2 para K=3 e de
+  14,3% de K=3 para K=4), a silhueta é máxima em K=2 (0,3785) e só K=4 recupera o trimestre do
+  calendário, com 98,3% de concordância contra 75,0% em K=3 e 50,0% em K=2: os dois critérios
+  internos discordam entre si e nenhum aponta o valor que serve ao case. (2) PC1 vale 68,21% da
+  variância e pesa entre 0,336 e 0,362 nas oito colunas em quilos, com peso abaixo de 0,021 em
+  `sen`, `cos` e `dias`. PC2 (11,85%) e PC3 (9,24%) carregam o calendário: agrupar os 315 meses de
+  treino em doze grupos no plano PC2 por PC3 recupera o mês em 91,7% das linhas, com silhueta de
+  0,8037 para os rótulos verdadeiros de mês, sem que nenhuma coluna da matriz seja o número do
+  mês. Quatro componentes chegam a 96,07% da variância. (3) O corte custa MAPE. O modelo do fecho
+  da Aula 07 sai de 3,32% para 4,92% com dois componentes, 4,94% com quatro e 6,20% com nove, e
+  perde da baseline de coeficiente fixo da LDC (3,71%) em todo k de 1 a 9. Só k=10 devolve os
+  3,32%, porque PC9 e PC10, que valem 0,21% e 0,17% da variância, recebem coeficiente 22 e 27
+  vezes o do PC1. Com os onze componentes o MAPE é idêntico ao das onze features até a nona casa
+  decimal, já que PCA sem descarte é rotação, o que confirma a invariância medida na Aula 05.
+- **ADRs** (`docs/adrs/ADR-001` a `ADR-011`): as onze decisões de arquitetura do acervo, para o
   fan-out não relitigar nenhuma. Motor Reveal.js, Platypi no lugar da Azurio, regressão tabular em
   base trimestral, case só com fonte aberta, os quatro artefatos por aula, as skills globais, a
   base analítica montada a partir das cinco séries do SIDRA, o protocolo de corte temporal e
   baseline do Modelo 1, a redução de escopo da Aula 06 (K fixo em 4, Elbow e Silhouette para a
   Aula 08), e a correção de granularidade da Aula 07 (base mensal a partir da classificação
   c12716 do SIDRA, com matriz de confusão, precisão, revocação, Naive Bayes, regressão logística,
-  SVM e entropia calculada à mão movidos para a Aula 09).
+  SVM e entropia calculada à mão movidos para a Aula 09), e a base e o escopo do PCA da Aula 08
+  (onze features da base mensal no lugar dos boletins do Sindirações, e sistemas de recomendação
+  reduzido a fecho conceitual de dez minutos).
 - **Integração contínua** (`.github/workflows/validate.yml` e `.github/workflows/static.yml`):
   validação em push e pull_request (marca, links, layout, pytest e execução dos notebooks, mais um
   passo que reprova se a validação alterar arquivo versionado) e publicação da raiz do repositório
@@ -146,11 +171,11 @@ saída, abaixo.
   `github-pages` foi corrigida pelo professor em 07/08/2026, e o `static.yml` passou a
   publicar normalmente a cada push em `main` (run 31142595526, 22s).
 
-- **Aulas 07 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
-  `aria-disabled="true"`. As Aulas 01 a 06 já existem. A **Aula 07, em 04/09**, é a próxima da
-  fila, e traz árvores de decisão e ensembles para o Modelo 1. O agente `construtor-aulas` existe
-  para esse fan-out, mas as seis primeiras aulas foram escritas sem ele, à mão, seguindo as mesmas
-  skills.
+- **Aulas 09 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
+  `aria-disabled="true"`. As Aulas 01 a 08 já existem. A **Aula 09, em 15/09**, é a próxima da
+  fila, abre a Sprint 4 e junta os problemas comuns de modelagem aos sete assuntos de
+  classificação que a `ADR-010` moveu da Aula 07. O agente `construtor-aulas` existe para esse
+  fan-out, mas as oito primeiras aulas foram escritas sem ele, à mão, seguindo as mesmas skills.
 - **O que a Aula 05 deixa marcado para as aulas seguintes.** As quatro séries defasadas em um
   trimestre derrubam o MAPE de teste para 1,14%, contra 1,60% do modelo de hoje, e ficaram de
   fora de propósito: entram como candidata declarada na Aula 07. O reajuste do modelo sobre a
@@ -159,22 +184,23 @@ saída, abaixo.
 - **O que a Aula 06 deixa marcado para as aulas seguintes.** Os quatro perfis de trimestre do
   calendário (K=4 sobre a participação de cada série no total do ano) ficam prontos para a Aula 07
   relatar no daily. K deixou de ser escolhido pela dupla, então a Aula 08 herda a decisão de como
-  escolher K, com o exemplo da silhueta que piora no agrupamento útil já medido. Ver a seção
-  "Dívida herdada pela Aula 08" abaixo.
+  escolher K, com o exemplo da silhueta que piora no agrupamento útil já medido. A Aula 08
+  assumiu essa decisão: ver a seção "Dívida da ADR-009, quitada na construção da Aula 08" abaixo.
 
-## Dívida herdada pela Aula 08, por causa da ADR-009
+## Dívida da ADR-009, quitada na construção da Aula 08 em 08/09/2026
 
-A `docs/adrs/ADR-009` moveu Elbow Plot e Silhouette Analysis da Aula 06 para a Aula 08, para quem
-construir a Aula 08 não descobrir isso tarde:
+A `docs/adrs/ADR-009` moveu Elbow Plot e Silhouette Analysis da Aula 06 para a Aula 08, e a
+`docs/adrs/ADR-011` registrou como a Aula 08 acomodou os quatro assuntos em 105 minutos:
 
-- **A Aula 08 ganha dois assuntos novos em cima do escopo que já tinha** (PCA e sistemas de
-  recomendação, `PLANEJAMENTO_AULA_A_AULA.md`). Vai precisar de um corte compensatório, ainda não
-  decidido: decidir o que sai (ou encolhe) é trabalho da construção da Aula 08, não desta task.
-- **O exemplo que a Aula 08 herda já está medido**, e não precisa ser refeito: silhueta 0,4795 no
+- **O corte compensatório saiu de sistemas de recomendação**, que foi de bloco com discussão
+  dirigida de 15 minutos para fecho conceitual de 10 minutos, sem prática. É o único dos quatro
+  assuntos sem dado no acervo para sustentar prática e o único inteiramente coberto pelos
+  autoestudos da semana.
+- **O exemplo que a Aula 08 herdou já estava medido**, e não precisou ser refeito: silhueta 0,4795 no
   agrupamento que só segue o calendário do tempo (concordância de 26,5% com o trimestre, o acaso),
   contra silhueta 0,2853 no agrupamento que recupera o trimestre do calendário em 98,3% das
   linhas. É o caso em que a métrica de qualidade premia o agrupamento menos útil, e serve como
-  motivação de abertura para Elbow Plot e Silhouette Analysis.
+  motivação de abertura para Elbow Plot e Silhouette Analysis, e é o que o deck usa.
 - **Descompasso entre autoestudo e aula.** Os autoestudos "Determinando K: Elbow Plot" e
   "Determinando K: Silhouette Analysis" são da Semana 05 (lidos em 01/09, antes da Aula 06), e o
   método só é ensinado em sala em 10/09, na Aula 08. A Aula 06 usa a silhueta como número lido nos

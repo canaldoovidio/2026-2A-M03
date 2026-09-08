@@ -1,0 +1,941 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 08 &middot; Aprendizado Não Supervisionado Parte II &middot; Módulo 03 IN</title>
+
+  <!-- Aula 08, 10/09/2026, Sprint 3 (review em 11/09). Escopo, corte de
+       conteudo e divisao dos 105 minutos definidos em
+       docs/adrs/ADR-011-escopo-e-base-do-pca-da-aula-08.md. Numeros canonicos
+       e definicao das duas bases em
+       .superpowers/sdd/2026-09-08-aula08/global-constraints.md. As oito
+       conclusoes da aula estao travadas em tools/tests/test_pca_aula08.py.
+
+       Tese unica, medida nos dois blocos: o criterio interno da tecnica nao
+       supervisionada (inercia, silhueta, variancia explicada) nao coincide com
+       o criterio do case (recuperar o calendario, prever com erro menor).
+
+       Divisao dos 105 minutos (ADR-011):
+         15  Resgate da Aula 07 e pergunta disparada       (slides 3 a 5)
+         25  Escolha de K por Elbow Plot e silhueta        (slides 6 a 11)
+         45  PCA: variancia, loadings e duas praticas      (slides 12 a 25)
+         10  Sistemas de recomendacao, fecho conceitual    (slide 26)
+         10  Amarracao com a ART.6 e a Sprint 3            (slides 27 a 30)
+
+       Bloco de escolha de K, base trimestral de participacao de cada trimestre
+       no total do proprio ano (116 linhas, anos completos, a mesma base da
+       Aula 06):
+         inercia    322,8 (K=2)  241,7 (K=3)  207,0 (K=4)
+         queda                   25,1%        14,3%
+         silhueta   0,3785       0,3389       0,2853
+         calendario 50,0%        75,0%        98,3%
+       Elbow aponta K=3, silhueta aponta K=2, e o unico K que recupera o
+       trimestre e 4. Na base de niveis (117 linhas) a silhueta e maior em todo
+       K (0,4247 em K=8 a 0,5639 em K=2) e a concordancia com o calendario fica
+       entre 25,6% e 29,1%, o acaso de quatro trimestres.
+
+       Bloco de PCA, sobre as 11 features da base analitica mensal da Aula 07
+       (339 linhas, treino de 315 meses, teste de 24). Escalador e PCA
+       ajustados SO no treino, nunca na base inteira: ajustar na base inteira
+       leva PC1 de 68,21% para 68,52% e o MAPE de k=4 de 4,94% para 4,91%,
+       sempre na direcao otimista.
+         PC1 68,21%  PC2 11,85%  PC3 9,24%  acumulada 80,06% em 2 e 96,07% em 4
+         quatro componentes para 95% da variancia
+         PC1 pesa 0,336 a 0,362 nas oito colunas em quilos e menos de 0,021 em
+           sen, cos e dias
+         PC2: dias 0,692, sen -0,619, cos -0,341; PC3: cos 0,885, sen -0,432
+         12 grupos no plano PC2xPC3 recuperam o mes em 91,7% dos 315 meses,
+           silhueta de 0,8037 para os rotulos verdadeiros de mes
+         20 dos 55 pares de features passam de 0,9 de correlacao absoluta,
+           maior par lag1 com lag3 (0,9810), numero de condicao 28,50
+         MAPE por k: 1 e 2 -> 4,92%; 3 e 4 -> 4,94%; 9 -> 6,20%;
+           10 e 11 -> 3,32%. O modelo perde da baseline da LDC (3,71%) em todo
+           k de 1 a 9, e k=11 e identico as 11 features ate a nona casa.
+         coeficientes: PC1 -0,009222, PC9 -0,203820, PC10 0,250588, com PC9 e
+           PC10 valendo 0,21% e 0,17% da variancia
+         sem padronizar, PC1 explica 96,72% e seus maiores pesos sao lag12
+           0,481, lag3 0,475 e lag1 0,475, porque o desvio de lag1 no treino e
+           244.980.297 contra 0,708 de sen
+
+       O resgate da Aula 07 (slides 3 e 4) copia o trecho de codigo e os
+       numeros de aulas/aula07.html, sem reescrever de memoria: achado
+       registrado da revisao da Aula 06.
+
+       Escopo da conclusao (slide 27): "PCA piora este modelo" vale para
+       regressao linear sem regularizacao, 11 features, 339 linhas mensais e
+       alvo em razao. Nao e afirmacao geral sobre PCA.
+
+       Resgate da Aula 07 (PLANO_DE_ENSINO.md secao 6): "A Aula 07 deixou
+       pronto os modelos de arvore e ensemble do Modelo 1, com RMSE e MAPE
+       medidos contra a baseline de coeficientes estaticos da LDC, mais o
+       exemplo de silhueta da Aula 06 (0,4795 contra 0,2853), que a ADR-009
+       reservou para motivar Elbow Plot e Silhouette Analysis nesta aula."
+
+       ART.6 Preparacao dos Dados e Modelagem, peso 6, review em 11/09
+       (PLANO_DE_ENSINO.md secao 4, matriz da secao 5). -->
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-theme.css">
+  <link rel="stylesheet" href="../assets/css/inteli-print.css" media="print">
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- 1 - Capa -->
+      <section class="cover-slide">
+        <div class="cover-panel">
+          <div class="cover-content">
+            <p class="cover-eyebrow">Módulo 03 IN &middot; Aula 08 &middot; 10/09/2026</p>
+            <h1>Aprendizado Não Supervisionado Parte II</h1>
+            <h3>Escolha de K por Elbow Plot e silhueta, PCA sobre as onze features do Modelo 1, e
+            o critério interno da técnica medido contra o critério do case</h3>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 - Agenda -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Agenda do encontro</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>08h00 &middot; 10h00</h3>
+            <p>Autoestudo na Adalove, cinco itens sobre sistemas de recomendação: Implementação:
+            Sistemas de Recomendação I, Kaggle: Sistemas de Recomendação II, Ponderada 2 de
+            Computação, Sistemas de Recomendação, Tipos de Sistemas de Recomendação [9].</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h00 &middot; 10h15</h3>
+            <p>Daily. Cada dupla relata o RMSE e o MAPE do próprio Random Forest da Aula 07.</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h15 &middot; 12h00</h3>
+            <p>Escolha de K nas duas bases da Aula 06 (25 min), PCA sobre as onze features do
+            Modelo 1 (45 min), sistemas de recomendação (10 min) e amarração com a ART.6
+            (10 min).</p>
+          </div>
+        </div>
+        <p>Elbow Plot e Silhouette Analysis foram autoestudo da Semana 05, lidos em 01/09 [9].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">2</p>
+        </div>
+      </section>
+
+      <!-- 3 - Resgate da Aula 07, trecho copiado de aulas/aula07.html -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que a Aula 07 deixou pronto</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>from sklearn.tree import (
+    DecisionTreeRegressor
+)
+
+arvore = DecisionTreeRegressor(
+    max_depth=3,
+    random_state=42
+)
+arvore.fit(X_treino, y_treino)
+arvore.get_n_leaves()   # 8</code></pre>
+          <div>
+            <p>A Aula 07 deixou pronto os modelos de árvore e ensemble do Modelo 1, com RMSE e
+            MAPE medidos contra a baseline de coeficientes estáticos da LDC, mais o exemplo de
+            silhueta da Aula 06 (0,4795 contra 0,2853) reservado para motivar a escolha de K
+            nesta aula [8].</p>
+            <p>O trecho ao lado é o da Aula 07, sem alteração: a árvore de profundidade 3 que
+            chegou a 8 folhas e previu um único valor nos 24 meses de teste.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">3</p>
+        </div>
+      </section>
+
+      <!-- 4 - Resgate: os numeros da Aula 07, copiados de aulas/aula07.html -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O fecho da Aula 07 soma 3,32% de MAPE</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Modelo, sobre o teste de 24 meses</th><th>RMSE</th><th>MAPE</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Baseline C, coeficiente fixo da LDC</td><td>54.523.588</td><td>3,71%</td></tr>
+            <tr><td><strong>Fecho: regressão linear, razão, 11 features</strong></td><td><strong>46.724.434</strong></td><td><strong>3,32%</strong></td></tr>
+            <tr><td>Árvore de decisão em razão</td><td>&nbsp;</td><td>3,86%</td></tr>
+            <tr><td>Random Forest em razão, 300 árvores</td><td>&nbsp;</td><td>4,48%</td></tr>
+            <tr><td>KNN k=5 em razão, padronizado</td><td>&nbsp;</td><td>4,59%</td></tr>
+          </tbody>
+        </table>
+        <p>Os números são os da Aula 07, na mesma base mensal de 339 linhas, com treino de 315
+        meses (1998-01 a 2024-03) e teste de 24 meses (2024-04 a 2026-03) [1][2].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">4</p>
+        </div>
+      </section>
+
+      <!-- 5 - Pergunta disparada -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>As features do modelo do fecho da Aula 07</h2>
+        </div>
+        <p>O modelo que bateu a baseline usa onze colunas: <code>lag1</code>, <code>lag2</code>,
+        <code>lag3</code> e <code>lag12</code> do abate de frangos, <code>sen</code>,
+        <code>cos</code> e <code>dias</code> do calendário, mais as outras quatro séries do case
+        (bovinos, suínos, ovos e leite) defasadas em um mês [2].</p>
+        <p>Onze colunas descrevem onze direções de variação apenas se cada uma trouxer informação
+        que as outras não trazem. Quando duas colunas sobem e descem juntas, a segunda repete a
+        primeira e a matriz tem menos direções do que colunas.</p>
+        <p><strong>Pergunta disparada:</strong> quantas das 11 features vocês acham que são
+        realmente independentes entre si?</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">5</p>
+        </div>
+      </section>
+
+      <!-- 6 - Escolha de K: as duas bases da Aula 06 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O agrupamento útil da Aula 06 tem silhueta de 0,2853</h2>
+        </div>
+        <p>A Aula 06 agrupou os trimestres do case por K-means com K fixo em 4, sobre duas bases
+        diferentes, e mediu a silhueta das duas [2][8]:</p>
+        <table class="data-table">
+          <thead>
+            <tr><th>Base agrupada com K=4</th><th>Silhueta</th><th>Concordância com o trimestre</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Níveis das cinco séries, 117 trimestres</td><td>0,4795</td><td>26,5%</td></tr>
+            <tr><td>Participação de cada trimestre no total do próprio ano, 116 linhas</td><td>0,2853</td><td>98,3%</td></tr>
+          </tbody>
+        </table>
+        <p>O agrupamento que a LDC pode usar, porque recupera o trimestre do calendário em 98,3%
+        das linhas, é o que tem a pior silhueta das duas bases. Hoje o K deixa de ser fixo, e os
+        dois métodos de escolha rodam sobre a base de participação [3].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">6</p>
+        </div>
+      </section>
+
+      <!-- 7 - Elbow Plot -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A inércia cai 25,1% até K=3 e 14,3% até K=4</h2>
+        </div>
+        <p>A inércia é a soma dos quadrados das distâncias de cada ponto ao centroide do próprio
+        grupo, em <code>KMeans.inertia_</code> [5]. Ela sempre cai quando K cresce, então o valor
+        absoluto não escolhe nada: o Elbow Plot procura o K em que a queda deixa de compensar.</p>
+        <table class="data-table">
+          <thead>
+            <tr><th>K</th><th>Inércia</th><th>Queda em relação ao K anterior</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>2</td><td>322,8</td><td>&nbsp;</td></tr>
+            <tr><td>3</td><td>241,7</td><td>25,1%</td></tr>
+            <tr><td>4</td><td>207,0</td><td>14,3%</td></tr>
+          </tbody>
+        </table>
+        <p>A queda até K=3 é mais de 1,7 vez a queda até K=4, e de K=4 em diante ela se estabiliza
+        [4]. O joelho da curva está em K=3.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">7</p>
+        </div>
+      </section>
+
+      <!-- 8 - Silhouette Analysis -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A silhueta é máxima em K=2, com 0,3785</h2>
+        </div>
+        <p>A silhueta de um ponto compara a distância média até os pontos do próprio grupo com a
+        distância média até os pontos do grupo vizinho mais próximo, num índice de -1 a 1 [7]. A
+        silhueta do agrupamento é a média dos pontos, em <code>silhouette_score</code> [5].</p>
+        <table class="data-table">
+          <thead>
+            <tr><th>K</th><th>Silhueta na base de participação</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>2</td><td>0,3785</td></tr>
+            <tr><td>3</td><td>0,3389</td></tr>
+            <tr><td>4</td><td>0,2853</td></tr>
+          </tbody>
+        </table>
+        <p>Diferente da inércia, a silhueta não cai por construção quando K cresce, e por isso
+        pode ser comparada entre valores de K. Nesta base ela é máxima em K=2 e não volta a esse
+        nível em nenhum K até 8 [4].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">8</p>
+        </div>
+      </section>
+
+      <!-- 9 - Figura 1: os tres criterios -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Nenhum critério interno aponta o K=4</h2>
+        </div>
+        <img src="../assets/img/aula08-escolha-de-k.png" alt="Três painéis lado a lado sobre a base de participação, com K de 2 a 8 no eixo horizontal. No primeiro, a inércia cai de 322,8 em K=2 de forma contínua, e o ponto K=3 aparece destacado. No segundo, a silhueta é máxima em K=2, com 0,3785, e cai nos K seguintes. No terceiro, a concordância com o trimestre do calendário sobe de 50,0% em K=2 para 98,3% em K=4, destacado, e permanece alta nos K seguintes, contra a linha do acaso em 25%" style="display: block; margin: 0 auto 8px; max-width: 100%; max-height: 370px;">
+        <p><strong>Pergunta para a sala:</strong> se o Elbow aponta 3 e a silhueta aponta 2, com
+        que argumento a dupla entrega K=4 para a LDC?</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">9</p>
+        </div>
+      </section>
+
+      <!-- 10 - A base de niveis -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A base de níveis fica no acaso de 25%</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Base trimestral, K de 2 a 8</th><th>Silhueta</th><th>Concordância com o trimestre</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Níveis das cinco séries, 117 linhas</td><td>0,4247 a 0,5639</td><td>25,6% a 29,1%</td></tr>
+            <tr><td>Participação no total do ano, 116 linhas</td><td>0,2853 em K=4</td><td>98,3% em K=4</td></tr>
+          </tbody>
+        </table>
+        <p>Quatro trimestres equilibrados dão 25% de concordância por sorteio. A base de níveis
+        não sai desse patamar em nenhum K testado, e ainda assim tem silhueta maior que qualquer K
+        da base de participação [4].</p>
+        <p>A silhueta alta ali mede o que o K-means encontrou de fato: os anos separados por
+        volume de produção, que é a estrutura mais forte da série em nível. Essa estrutura não é a
+        que o case pede.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">10</p>
+        </div>
+      </section>
+
+      <!-- 11 - Pratica do bloco de escolha de K -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; Elbow Plot e silhueta nas duas bases</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Rodar <code>KMeans(n_clusters=k, n_init=50, random_state=42)</code> para
+          <code>k</code> de 2 a 8 na base de participação da Aula 06 e guardar
+          <code>inertia_</code> e <code>silhouette_score</code> de cada k.</li>
+          <li>Plotar a inércia contra k, apontar o joelho e conferir as quedas de 25,1% e 14,3%
+          [2].</li>
+          <li>Repetir os dois gráficos na base de níveis e comparar as silhuetas: o agrupamento de
+          silhueta maior é o que recupera o trimestre do calendário?</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">11</p>
+        </div>
+      </section>
+
+      <!-- 12 - Resposta da pergunta disparada: correlacao entre as 11 features -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Vinte dos 55 pares passam de 0,9 de correlação</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Medida sobre as 11 features do modelo do fecho</th><th>Valor</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Pares distintos de colunas</td><td>55</td></tr>
+            <tr><td>Pares com correlação absoluta acima de 0,9</td><td>20</td></tr>
+            <tr><td>Par de maior correlação</td><td><code>lag1</code> com <code>lag3</code>, 0,9810</td></tr>
+            <tr><td>Número de condição da matriz padronizada</td><td>28,50</td></tr>
+          </tbody>
+        </table>
+        <p>Essa é a resposta medida da pergunta de abertura: as onze colunas estão longe de ser
+        independentes entre si [2][4]. As séries de proteína animal do case sobem juntas ao longo
+        de 28 anos, e as defasagens do próprio frango repetem uma à outra com um mês de
+        distância.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">12</p>
+        </div>
+      </section>
+
+      <!-- 13 - Como o PCA constroi os componentes -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Como o PCA constrói os componentes</h2>
+        </div>
+        <p>O PCA procura uma nova base de eixos para a mesma matriz [6]. O primeiro componente é a
+        combinação linear das colunas originais com a maior variância possível; o segundo é a de
+        maior variância entre as direções perpendiculares ao primeiro, e assim por diante até o
+        número de colunas.</p>
+        <p>Os componentes são ortogonais entre si por construção, então a correlação entre eles é
+        zero: as onze colunas correlacionadas do slide anterior viram onze direções sem
+        redundância. O peso de cada coluna original em cada componente é o <strong>loading</strong>,
+        em <code>pca.components_</code>, e a fração da variância que cada componente carrega está
+        em <code>pca.explained_variance_ratio_</code> [5].</p>
+        <p>Com todos os componentes mantidos, o PCA é uma rotação da matriz: nenhuma informação é
+        perdida. A redução de dimensionalidade acontece quando se descarta componente.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">13</p>
+        </div>
+      </section>
+
+      <!-- 14 - Sem padronizar -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Sem padronizar, PC1 vale 96,72%</h2>
+        </div>
+        <p>Variância depende de unidade de medida, e o PCA maximiza variância. Rodando sobre as
+        onze colunas cruas, o primeiro componente explica 96,72% e seus três maiores pesos são
+        <code>lag12</code> (0,481), <code>lag3</code> (0,475) e <code>lag1</code> (0,475) [4].</p>
+        <table class="data-table">
+          <thead>
+            <tr><th>Coluna</th><th>Desvio-padrão no treino</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>lag1</code>, em quilogramas</td><td>244.980.297</td></tr>
+            <tr><td><code>sen</code>, entre -1 e 1</td><td>0,708</td></tr>
+          </tbody>
+        </table>
+        <p>O peso de <code>sen</code>, <code>cos</code> e <code>dias</code> nesse PC1 fica abaixo
+        de 1e-6: o componente descreve a unidade das colunas, não a estrutura dos dados. É o mesmo
+        problema de condicionamento medido na Aula 05, e por isso o <code>StandardScaler</code>
+        vem antes do PCA [2].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">14</p>
+        </div>
+      </section>
+
+      <!-- 15 - Codigo: ajuste so no treino -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>PCA ajustado só nos 315 meses de treino</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>corte = len(base) - 24   # 315
+
+escalador = StandardScaler()
+escalador.fit(X[:corte])
+
+Ztr = escalador.transform(
+    X[:corte])
+Zte = escalador.transform(
+    X[corte:])
+
+pca = PCA().fit(Ztr)
+pca.explained_variance_ratio_[0]
+# 0.6821</code></pre>
+          <div>
+            <p>O <code>fit</code> vê só as 315 primeiras linhas. Os 24 meses de teste passam
+            apenas por <code>transform</code>, com a média, o desvio e os eixos aprendidos no
+            treino [5].</p>
+            <p>Ajustar os dois na base inteira leva PC1 de 68,21% para 68,52% e o MAPE de quatro
+            componentes de 4,94% para 4,91% [2]. O efeito é pequeno e sempre na direção otimista,
+            que é justamente o que torna esse erro difícil de perceber sem disciplina de corte. A
+            Aula 09 volta a esse ponto como vazamento temporal.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">15</p>
+        </div>
+      </section>
+
+      <!-- 16 - Variancia explicada -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Quatro componentes retêm 96,07% da variância</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Componente</th><th>Variância explicada</th><th>Acumulada</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>PC1</td><td>68,21%</td><td>68,21%</td></tr>
+            <tr><td>PC2</td><td>11,85%</td><td>80,06%</td></tr>
+            <tr><td>PC3</td><td>9,24%</td><td>&nbsp;</td></tr>
+            <tr><td>Até PC4</td><td>&nbsp;</td><td>96,07%</td></tr>
+          </tbody>
+        </table>
+        <p>Quatro componentes bastam para passar de 95% da variância das onze colunas
+        padronizadas [4]. É a conta que a dupla faz em sala: onze colunas, quatro direções que
+        respondem por quase toda a variação.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">16</p>
+        </div>
+      </section>
+
+      <!-- 17 - Loadings de PC1 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>PC1 pesa de 0,336 a 0,362 nas colunas em quilos</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Grupo de colunas</th><th>Loading em PC1, em módulo</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>As oito colunas em quilogramas: <code>lag1</code>, <code>lag2</code>, <code>lag3</code>, <code>lag12</code> e as quatro séries defasadas</td><td>de 0,336 a 0,362</td></tr>
+            <tr><td>As três colunas de calendário: <code>sen</code>, <code>cos</code>, <code>dias</code></td><td>abaixo de 0,021</td></tr>
+          </tbody>
+        </table>
+        <p>Os oito pesos quase iguais identificam PC1 como o nível comum das cinco séries, a
+        tendência de 28 anos que bovinos, suínos, frangos, ovos e leite compartilham [4]. Um
+        componente que responde por 68,21% da variância e ignora o calendário.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">17</p>
+        </div>
+      </section>
+
+      <!-- 18 - Pratica 1 do bloco de PCA -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; Rodar o PCA e ler os loadings de PC1</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Padronizar as onze features com <code>StandardScaler</code> ajustado só nas 315
+          primeiras linhas e rodar <code>PCA().fit(Ztr)</code>.</li>
+          <li>Somar <code>explained_variance_ratio_</code> componente a componente e achar quantos
+          componentes chegam a 95%; conferir os 96,07% de quatro componentes [2].</li>
+          <li>Imprimir <code>pca.components_[0]</code> ao lado dos nomes das features e classificar
+          os pesos em dois grupos: as colunas em quilos e as de calendário.</li>
+          <li>Rodar o mesmo PCA sem padronizar e comparar a variância de PC1 com os 96,72% do
+          slide 14.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">18</p>
+        </div>
+      </section>
+
+      <!-- 19 - Loadings de PC2 e PC3 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>PC2 pesa 0,692 em dias e PC3 pesa 0,885 em cos</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Componente</th><th>Variância</th><th>Loadings dominantes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>PC2</td><td>11,85%</td><td><code>dias</code> 0,692, <code>sen</code> -0,619, <code>cos</code> -0,341</td></tr>
+            <tr><td>PC3</td><td>9,24%</td><td><code>cos</code> 0,885, <code>sen</code> -0,432</td></tr>
+          </tbody>
+        </table>
+        <p>As três colunas que PC1 ignorou são as que dominam PC2 e PC3 [4]. O PCA não recebeu
+        nenhuma instrução sobre calendário: ele separou o que varia junto ao longo dos 28 anos (o
+        nível) do que varia dentro de cada ano (a posição no ciclo anual).</p>
+        <p>Nenhuma coluna da matriz é o número do mês. Entram <code>sen</code>, <code>cos</code> e
+        o número de dias do mês civil, e nada mais [2].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">19</p>
+        </div>
+      </section>
+
+      <!-- 20 - Figura 2: o plano PC2 x PC3 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O calendário reaparece em 91,7% dos meses</h2>
+        </div>
+        <img src="../assets/img/aula08-plano-pc2-pc3.png" alt="Dispersão dos 315 meses de treino no plano do componente 2 (11,85% da variância) contra o componente 3 (9,24%). Os centroides de cada mês aparecem numerados de 01 a 12 e ligados ao do mês seguinte, formando um ciclo fechado. Fevereiro, marcado em destaque, fica isolado à esquerda como o mês com menos dias" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 370px;">
+        <p>Doze grupos aqui reencontram o mês em 91,7% dos 315 meses, e a silhueta dos rótulos
+        verdadeiros de mês é 0,8037 [4].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">20</p>
+        </div>
+      </section>
+
+      <!-- 21 - Pratica 2 do bloco de PCA -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; Plotar os meses no plano PC2 por PC3</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Projetar o treino com <code>pca.transform(Ztr)</code> e ficar com as colunas 1 e 2,
+          que são PC2 e PC3.</li>
+          <li>Plotar os 315 pontos e colorir cada um pelo mês real, extraído da coluna
+          <code>periodo</code>, que não entrou na matriz.</li>
+          <li>Rodar <code>KMeans(n_clusters=12, n_init=50, random_state=42)</code> nesse plano e
+          medir a concordância entre o rótulo majoritário de cada grupo e o mês real; conferir os
+          91,7% [2].</li>
+          <li>Localizar fevereiro no gráfico e explicar, com o loading de <code>dias</code> em
+          PC2, por que ele fica separado dos outros onze.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">21</p>
+        </div>
+      </section>
+
+      <!-- 22 - Figura 3: o custo do corte -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Quatro componentes levam o MAPE a 4,94%</h2>
+        </div>
+        <img src="../assets/img/aula08-corte-custa-mape.png" alt="Gráfico com dois eixos verticais e o número de componentes usados na regressão de 1 a 11 no eixo horizontal. A linha escura do MAPE de teste fica perto de 4,9% nos primeiros componentes, sobe até 6,20% em nove e cai para 3,32% em dez e onze. A linha da variância retida sobe de 68% em um componente para 96,07% em quatro, destacado, e satura perto de 100%. Uma linha horizontal marca a baseline da LDC em 3,71% e outra o modelo de 11 features em 3,32%" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 370px;">
+        <p>Os quatro componentes que guardam 96,07% da variância custam cerca de 1,6 ponto
+        percentual de MAPE [2][3].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">22</p>
+        </div>
+      </section>
+
+      <!-- 23 - Tabela do MAPE por numero de componentes -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O modelo perde da baseline em todo k de 1 a 9</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Componentes na regressão</th><th>MAPE de teste</th><th>Contra a baseline de 3,71%</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1 e 2</td><td>4,92%</td><td>Perde</td></tr>
+            <tr><td>3 e 4</td><td>4,94%</td><td>Perde</td></tr>
+            <tr><td>9</td><td>6,20%</td><td>Perde</td></tr>
+            <tr><td>10</td><td>3,32%</td><td>Ganha</td></tr>
+            <tr><td>11, todos os componentes</td><td>3,32%</td><td>Ganha</td></tr>
+          </tbody>
+        </table>
+        <p>Mesma base, mesmo alvo em razão, mesma regressão linear da Aula 07: só muda quantos
+        componentes entram [4]. Reduzir a dimensionalidade aqui devolve o modelo para trás da
+        baseline que a LDC já usa.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">23</p>
+        </div>
+      </section>
+
+      <!-- 24 - Os coeficientes explicam o corte -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>PC10 vale 0,17% da variância e pesa 27 vezes o PC1</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Componente</th><th>Variância explicada</th><th>Coeficiente da regressão</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>PC1</td><td>68,21%</td><td>-0,009222</td></tr>
+            <tr><td>PC9</td><td>0,21%</td><td>-0,203820</td></tr>
+            <tr><td>PC10</td><td>0,17%</td><td>0,250588</td></tr>
+          </tbody>
+        </table>
+        <p>PC9 e PC10 recebem os dois maiores coeficientes da regressão sobre a razão, 22 e 27
+        vezes o coeficiente de PC1 [4]. É por isso que o corte custa MAPE: a ordem dos componentes
+        é a ordem da variância, e o alvo desta aula não está no componente de maior variância.</p>
+        <p>Variância grande mede o quanto a coluna varia. Poder preditivo mede o quanto ela
+        explica o alvo. As duas coisas não coincidem nesta base [6].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">24</p>
+        </div>
+      </section>
+
+      <!-- 25 - k=11 e rotacao -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Com 11 componentes o MAPE é idêntico ao das 11 features</h2>
+        </div>
+        <p>Rodando a regressão sobre os onze componentes, sem descartar nenhum, o MAPE de teste
+        bate com os 3,32% das onze features originais até a nona casa decimal [4]. A Aula 05 já
+        havia medido a causa: regressão linear sem regularização é invariante a transformação afim
+        das entradas, e o PCA completo é uma rotação.</p>
+        <p>Isso separa as duas coisas que costumam ser confundidas em uma só. A rotação de eixos
+        não muda a previsão. O que muda a previsão é o descarte de componente, e nesta base o
+        descarte chega a levar o MAPE a 6,20%, em k=9.</p>
+        <p><strong>Pergunta para a sala:</strong> se rotacionar não muda nada, para que rodar PCA
+        neste modelo?</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">25</p>
+        </div>
+      </section>
+
+      <!-- 26 - Sistemas de recomendacao, fecho conceitual -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Sistemas de recomendação e o Modelo 3 do case</h2>
+        </div>
+        <p>Sistemas de recomendação são a terceira família de aprendizado não supervisionado do
+        módulo, ao lado do agrupamento e da redução de dimensionalidade, e os cinco autoestudos de
+        hoje cobrem o assunto em profundidade, com duas implementações [9].</p>
+        <p>A ligação com o case está no Modelo 3, que desdobra a demanda de ração em
+        macroingredientes. Um recomendador estima a nota que um usuário daria a um item que ele
+        nunca consumiu, a partir do que usuários parecidos consumiram; o Modelo 3 estima a fração
+        de cada macroingrediente num mix que aquela combinação de rebanho e preço nunca teve. As
+        duas estruturas são a mesma matriz esparsa de linhas por colunas com valores faltando.</p>
+        <p>A tese dos dois blocos de hoje vale aqui também: a métrica interna de similaridade não
+        garante que o mix recomendado seja formulável [3].</p>
+        <p><strong>Debate em dupla, cinco minutos com a dupla vizinha:</strong> o que faz o papel
+        de "usuário" e o que faz o papel de "item" no Modelo 3?</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">26</p>
+        </div>
+      </section>
+
+      <!-- 27 - Escopo da conclusao -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Escopo da conclusão sobre PCA nesta base</h2>
+        </div>
+        <p>O que a aula mediu vale para regressão linear sem regularização, sobre onze features, em
+        339 linhas mensais, com alvo em razão [3]. Fora desse recorte a conclusão não se
+        transporta, e a dupla que escrever "PCA piora o modelo" na ART.6 sem esse recorte está
+        afirmando mais do que o dado sustenta.</p>
+        <table class="data-table">
+          <thead>
+            <tr><th>Situação</th><th>Efeito esperado da redução</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Regressão linear sem regularização, 11 features, 339 linhas</td><td>Piora, medido nesta aula</td></tr>
+            <tr><td>KNN k=5 da Aula 07, cuja distância euclidiana soma todas as colunas</td><td>Melhora, 4,78% com 4 componentes contra 5,01% com as 11 features [3]</td></tr>
+            <tr><td>Matriz com muito mais colunas que linhas</td><td>Assunto da Aula 09, com o autoestudo "Maldição de dimensionalidade" [9]</td></tr>
+          </tbody>
+        </table>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">27</p>
+        </div>
+      </section>
+
+      <!-- 28 - Quiz 1 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pergunta 1 &middot; A escolha de K</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">Na base de participação, o Elbow Plot aponta K=3 e a silhueta
+          aponta K=2, mas a dupla entrega K=4. O que justifica a entrega?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="A silhueta de K=4 é 0,2853, a pior dos três valores testados. Se o critério fosse a silhueta, K=2 ganharia com 0,3785.">K=4 tem a melhor silhueta dos três valores testados</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: K=4 recupera o trimestre em 98,3% das linhas, contra 75,0% em K=3 e 50,0% em K=2. Inércia e silhueta medem a geometria dos grupos, não a utilidade deles."
+                data-incorrect-msg="Era esta: K=4 recupera o trimestre em 98,3% das linhas, contra 75,0% em K=3 e 50,0% em K=2. Inércia e silhueta medem a geometria dos grupos, não a utilidade deles.">K=4 recupera o trimestre do calendário em 98,3% das linhas</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="A inércia cai em todo K, por construção. Nenhum K a minimiza a não ser o número de linhas da base.">K=4 minimiza a inércia entre os valores testados</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Não há regra de calendário no método. Na base de níveis, K=4 dá 26,5% de concordância, o acaso.">Quatro é o número de trimestres, e o K-means sempre encontra o calendário</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">28</p>
+        </div>
+      </section>
+
+      <!-- 29 - Quiz 2 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pergunta 2 &middot; O corte de componentes</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">Quatro componentes retêm 96,07% da variância e o MAPE sobe de
+          3,32% para 4,94%. Por quê?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O escalador e o PCA foram ajustados só no treino. Ajustar na base inteira levaria o MAPE de k=4 a 4,91%, melhor e não pior.">Porque o escalador foi ajustado na base inteira e vazou o teste</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: PC9 e PC10 valem 0,21% e 0,17% da variância e recebem coeficiente 22 e 27 vezes o de PC1. O corte descarta na ordem da variância, e o poder preditivo não está ali."
+                data-incorrect-msg="Era esta: PC9 e PC10 valem 0,21% e 0,17% da variância e recebem coeficiente 22 e 27 vezes o de PC1. O corte descarta na ordem da variância, e o poder preditivo não está ali.">Os componentes descartados têm variância pequena e coeficiente grande na regressão</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Com os 11 componentes o MAPE é idêntico ao das 11 features até a nona casa. O que custa MAPE é o descarte, não a rotação.">Porque a rotação do PCA distorce a relação entre as features e o alvo</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="A regressão desta aula não tem regularização, e por isso é invariante a transformação afim, como a Aula 05 mediu.">Porque a regularização da regressão penaliza os componentes menores</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">29</p>
+        </div>
+      </section>
+
+      <!-- 30 - Amarracao com a ART.6 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que a dupla leva para a ART.6, peso 6</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Medição</th><th>Critério interno</th><th>Critério do case</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Escolha de K na base de participação</td><td>Elbow aponta 3, silhueta aponta 2</td><td>K=4, com 98,3% de concordância</td></tr>
+            <tr><td>Redução por PCA nas 11 features</td><td>4 componentes retêm 96,07%</td><td>MAPE piora de 3,32% para 4,94%</td></tr>
+          </tbody>
+        </table>
+        <p><strong>ART. 6 Preparação dos Dados e Modelagem, peso 6</strong>, fecha na Sprint 3, com
+        review em 11/09 [8]. Cada dupla entrega o K escolhido com a justificativa medida, a
+        variância explicada dos componentes da própria base, e a decisão sobre reduzir ou não a
+        dimensionalidade do Modelo 1, com o MAPE que sustenta a decisão.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">30</p>
+        </div>
+      </section>
+
+      <!-- 31 - Referencias -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Referências</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite,
+          tabelas 1092, 1093, 1094, 7524 e 1086 do SIDRA. Contrato de colunas em
+          <code>dados/</code> e <code>dados/mensal/</code>.</li>
+          <li>Números canônicos e definição das duas bases em
+          <code>.superpowers/sdd/2026-09-08-aula08/global-constraints.md</code>.</li>
+          <li>Escopo e divisão dos 105 minutos em <code>docs/adrs/ADR-011</code>.</li>
+          <li>As oito conclusões travadas em <code>tools/tests/test_pca_aula08.py</code>, com o
+          detalhamento no <a href="../materiais/aula08.html">material de apoio</a>.</li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn: Machine Learning in Python</em>. JMLR,
+          2011.</li>
+          <li>Jolliffe, I. T.; Cadima, J. <em>Principal component analysis: a review and recent
+          developments</em>. Phil. Trans. R. Soc. A, 374, 2016.</li>
+          <li>Rousseeuw, P. J. <em>Silhouettes: a graphical aid to the interpretation and
+          validation of cluster analysis</em>. J. Comput. Appl. Math., 20, 53 a 65, 1987.</li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seção 4 (peso 6 da ART.6, review em 11/09) e
+          seção 6, a espiral da Aula 07 para a Aula 08.</li>
+          <li>Autoestudos das Semanas 05, 06 e 07, com o título exato de cada um em
+          <a href="../referencias/aula08.html">referencias/aula08.html</a>.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 08 &middot; Sprint 3</p>
+          <p class="footer-page">31</p>
+        </div>
+      </section>
+
+      <!-- 32 - Encerramento -->
+      <section class="end-slide">
+        <h1>Até 15/09</h1>
+        <h3>Aula 09: Problemas Comuns com Modelagem de IA e mais Feature Engineering, Sprint 4</h3>
+        <p>Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot; 2026-2A</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      width: 1280, height: 720, center: false, margin: 0,
+      hash: true, slideNumber: false, transition: 'fade'
+    });
+  </script>
+  <script src="../assets/js/inteli-quiz.js"></script>
+  <script src="../assets/js/inteli-zoom.js"></script>
+  <script src="../assets/js/inteli-print.js"></script>
+</body>
+</html>
