@@ -321,6 +321,19 @@ html.print-pdf.reveal-print .reveal .slides section.cover-slide[class] {
   padding-left: 28px;
 }
 
+/* Modificador opt-in para lista que passa de dez itens, medido no slide de
+   referencias da Aula 09. A lista de referencias cresce a cada aula do acervo
+   (5, 7, 9 e 11 itens da Aula 01 a 09), e a altura dela e dada pela contagem
+   de itens, nao por quebra de linha: com 11 itens de uma linha cada, nenhum
+   passando de 75% da largura da caixa, o bloco chega a 444px e deixa 70px de
+   folga vertical, abaixo do piso de ~80px que o CI Ubuntu exige (ver CLAUDE.md).
+   Encurtar o texto de cada item nao devolve nada, porque nenhum item quebra
+   linha. Reduzir o gap devolve 6px por item. Manter o font-size intocado: o
+   piso de legibilidade de 18px vale aqui como em qualquer slide. */
+.exercise-steps.lista-longa {
+  gap: 6px;
+}
+
 /* Estados do quiz, escritos pelo inteli-quiz.js via classList.add: o JS so
    troca classe, nunca escreve cor, entao esses estados moram aqui, so
    tokens. .certa e .errada marcam a opcao clicada; .revelada marca a opcao
