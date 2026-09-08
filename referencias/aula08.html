@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referências &middot; Aula 08 &middot; Aprendizado Não Supervisionado Parte II</title>
+  <meta name="description" content="Autoestudos da Semana 06 na Adalove e leitura complementar da Aula 08 do Módulo 03 IN, com as fontes primárias de PCA, silhueta e método do joelho.">
+
+  <!-- Duas secoes fixas, nesta ordem, em TODAS as 14 aulas:
+       1. Autoestudos da semana (Adalove), copiados de
+          docs/autoestudos-por-semana.md, titulo por titulo, sem inventar
+          nenhum e sem alterar caractere.
+       2. Leitura complementar do professor.
+       A segunda secao nunca e omitida, mesmo sem curadoria fechada.
+
+       ATENCAO: os cinco autoestudos da Semana 06 sao todos de sistemas de
+       recomendacao, e nenhum deles cobre PCA nem escolha de K, que sao os dois
+       blocos principais da aula. Os autoestudos de Elbow Plot e Silhouette
+       Analysis foram da Semana 05, lidos em 01/09, por causa da ADR-009. O
+       descompasso e declarado na secao 1 e esta registrado em
+       docs/ANDAMENTO.md, na secao "Divida herdada pela Aula 08". -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 08 &middot; 10/09/2026 &middot; Semana 06</p>
+      <h1>Referências: Aprendizado Não Supervisionado Parte II</h1>
+      <p class="doc-subtitulo">A Semana 06 tem um único Encontro de Instrução, em 10/09, e cinco
+      autoestudos, todos de sistemas de recomendação. Os dois blocos principais da aula, escolha de
+      K e PCA, têm autoestudo em outras semanas: Elbow Plot e Silhouette Analysis foram lidos em
+      01/09, na Semana 05, e PCA volta na Semana 07. A seção 1 lista os cinco itens desta semana com
+      o título exato da fonte e declara esse descompasso; a seção 2 traz as fontes primárias que
+      cobrem o que os autoestudos da semana não cobrem.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#autoestudos">Autoestudos da semana (Adalove)</a></li>
+        <li><a href="#complementar">Leitura complementar do professor</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="autoestudos">
+        <h2>1. Autoestudos da semana (Adalove)</h2>
+        <p>Semana 06, os cinco itens da semana do encontro de 10/09:</p>
+        <ol class="doc-referencias">
+          <li>Implementação: Sistemas de Recomendação I
+            <span class="doc-porque">Primeira das duas implementações da semana. Cobre a construção
+            de um recomendador do começo ao fim, da matriz de usuários por itens até a lista de
+            recomendações. É o item que sustenta o fecho conceitual da aula, e a parte de fatores
+            latentes dele é o vínculo direto com o bloco de PCA: fatorar a matriz em poucas
+            dimensões é o mesmo movimento de substituir onze colunas correlacionadas por poucas
+            direções.</span></li>
+          <li>Kaggle: Sistemas de Recomendação II
+            <span class="doc-porque">Segunda implementação, em notebook do Kaggle. Cobre a
+            aplicação sobre uma base pública de avaliações, com o cálculo de similaridade e a
+            avaliação do recomendador. A aula não tem prática de recomendação, por decisão
+            registrada na <code>ADR-011</code>, então este item é onde a mão no código do tema
+            acontece.</span></li>
+          <li>Ponderada 2 de Computação
+            <span class="doc-porque">Atividade ponderada da semana, aplicada fora do encontro. É o
+            exercício avaliativo do tema de sistemas de recomendação, e não é conteúdo de
+            exposição: o enunciado e o gabarito ficam na Adalove, e nenhum artefato deste acervo
+            reproduz qualquer parte deles.</span></li>
+          <li>Sistemas de Recomendação
+            <span class="doc-porque">Enquadramento geral do assunto: o que um recomendador estima,
+            que evidência ele usa e por que a matriz de usuários por itens é grande e esparsa. É a
+            leitura que o fecho conceitual da aula pressupõe.</span></li>
+          <li>Tipos de Sistemas de Recomendação
+            <span class="doc-porque">As famílias de recomendador: filtragem colaborativa,
+            recomendação baseada em conteúdo e sistemas híbridos. É o item que sustenta a analogia
+            da aula com o Modelo 3 do TAPI, o desdobramento da demanda de ração entre
+            macroingredientes com substituição possível entre milho, farelo de soja, sorgo, trigo e
+            DDGS.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>Estes títulos são cópia literal de <code>docs/autoestudos-por-semana.md</code>, que é
+          gerado do <code>Turma.xlsx</code> oficial. Autoestudo que não está lá não entra aqui. O
+          acesso ao conteúdo é pela Adalove, com o login institucional.</p>
+        </div>
+        <div class="doc-nota">
+          <p><strong>A aula ensina em 10/09 dois métodos cujo autoestudo foi lido em 01/09.</strong>
+          Os autoestudos "Determinando K: Elbow Plot" e "Determinando K: Silhouette Analysis"
+          pertencem à <strong>Semana 05</strong>, e foram lidos antes do encontro de 01/09, que é a
+          Aula 06. O método de escolha de K só é ensinado em sala hoje, nove dias depois da leitura.
+          Eles estão listados na página de referências daquela aula
+          (<a href="aula06.html#autoestudos">referencias/aula06.html</a>), com o título exato da
+          fonte, porque é lá que a contagem de autoestudos da Semana 05 fecha.</p>
+          <p>O motivo está em <code>docs/adrs/ADR-009</code> e no registro de
+          <code>docs/ANDAMENTO.md</code>, na seção "Dívida herdada pela Aula 08". O professor
+          avaliou que o módulo estava acima do que a turma acompanhava em quatro eixos ao mesmo
+          tempo, a Aula 06 trocou dois blocos de conteúdo novo por diagnóstico e revisão dirigida
+          das Aulas 01 a 05, fixou K em 4 por decisão de aula e mandou o método de escolha de K para
+          hoje. A Aula 06 usou a silhueta como número lido nos dois agrupamentos, 0,4795 contra
+          0,2853, sem ensinar o método, o que reduz o descompasso sem fechá-lo. Quem quiser refazer
+          a leitura antes do encontro tem os dois itens na Adalove, na Semana 05.</p>
+          <p>PCA tem o mesmo tipo de descompasso, na direção oposta. Ele apareceu como "Opcional:
+          PCA" na Semana 05, também na lista da Aula 06, e volta na <strong>Semana 07</strong> com
+          "Maldição de dimensionalidade", "PCA - Resolvendo o problema da dimensionalidade" e "PCA:
+          o que é e como usar em Python", que são autoestudos da Aula 09. A aula de hoje é a
+          primeira em que o método é aplicado ao case, e por isso a seção 2 desta página carrega as
+          fontes primárias de PCA: elas cobrem o que os cinco autoestudos desta semana não
+          cobrem.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="complementar">
+        <h2>2. Leitura complementar do professor</h2>
+        <p>A curadoria definitiva desta seção ainda será fechada pelo professor. Até lá, ficam aqui,
+        numeradas, as fontes que sustentam o deck e o material de apoio desta aula. O slide de
+        referências do deck traz uma lista mais curta, com numeração própria, e esta página é a
+        lista completa.</p>
+        <ol class="doc-referencias">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite, tabelas
+            1092, 1093, 1094, 7524 e 1086 do SIDRA, com a classificação c12716 (Referência
+            temporal) aberta em Total do trimestre, No 1º mês, No 2º mês e No 3º mês.
+            <span class="doc-porque">Origem das duas bases da aula, com o contrato de colunas e a
+            checagem de sanidade dos valores em <code>dados/README.md</code>. O bloco de escolha de
+            K usa a base trimestral de <code>dados/</code>, 117 linhas de 1997-T1 a 2026-T1, das
+            quais 116 entram na conta de participação no ano; o bloco de PCA usa a base mensal de
+            <code>dados/mensal/</code>, 339 linhas de 1998-01 a 2026-03.</span></li>
+          <li>Pearson, K. <em>On lines and planes of closest fit to systems of points in space</em>.
+            Philosophical Magazine, Series 6, v. 2, n. 11, p. 559-572, 1901.
+            <span class="doc-porque">Fonte primária mais antiga da técnica. Pearson formula o
+            problema como o de encontrar a reta e o plano que melhor se ajustam a uma nuvem de
+            pontos, minimizando a distância perpendicular, que é a leitura geométrica usada no deck
+            para apresentar o primeiro componente.</span></li>
+          <li>Hotelling, H. <em>Analysis of a complex of statistical variables into principal
+            components</em>. Journal of Educational Psychology, v. 24, n. 6, p. 417-441, 1933.
+            <span class="doc-porque">Fonte primária da formulação estatística, e de onde vem o nome
+            "componentes principais". É a versão que trata os componentes como direções de máxima
+            variância de um conjunto de variáveis correlacionadas, que é a definição usada nas
+            seções 5 a 7 do material de apoio.</span></li>
+          <li>Jolliffe, I. T.; Cadima, J. <em>Principal component analysis: a review and recent
+            developments</em>. Philosophical Transactions of the Royal Society A, v. 374, 2016. O
+            tratamento longo do mesmo autor está em Jolliffe, I. T. <em>Principal Component
+            Analysis</em>. 2. ed. New York: Springer, 2002.
+            <span class="doc-porque">Revisão de consulta do assunto, mais acessível que os dois
+            artigos originais, e a fonte citada no slide de PCA do deck. Trata explicitamente dois
+            pontos que a aula mede: o efeito da escala das colunas sobre as direções, que é o achado
+            da seção 11 do material, e o cuidado com o uso dos componentes como entradas de
+            regressão, que é o achado da seção 10.</span></li>
+          <li>Rousseeuw, P. J. <em>Silhouettes: a graphical aid to the interpretation and
+            validation of cluster analysis</em>. Journal of Computational and Applied Mathematics,
+            v. 20, p. 53-65, 1987.
+            <span class="doc-porque">Artigo original da silhueta, o mesmo já citado na Aula 06. A
+            métrica compara a distância média dentro do grupo com a distância média ao grupo vizinho
+            mais próximo. O próprio título delimita o alcance dela, ao apresentá-la como auxílio
+            gráfico à interpretação e à validação de uma análise de agrupamento, e é esse limite que
+            a aula mede: a silhueta aponta K=2 na base em que só K=4 recupera o
+            calendário.</span></li>
+          <li>Thorndike, R. L. <em>Who belongs in the family?</em>. Psychometrika, v. 18, n. 4,
+            p. 267-276, 1953.
+            <span class="doc-porque">Fonte primária usualmente atribuída ao método do joelho.
+            Thorndike propõe examinar a curva do critério de agrupamento em função do número de
+            grupos e procurar o ponto em que o ganho de acrescentar um grupo deixa de compensar, que
+            é exatamente a leitura do Elbow Plot da aula: queda de 25,1% de K=2 para K=3 e de 14,3%
+            de K=3 para K=4.</span></li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn: Machine Learning in Python</em>. Journal of
+            Machine Learning Research, v. 12, p. 2825-2830, 2011:
+            <a href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html">PCA</a>,
+            <a href="https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html">KMeans</a>,
+            <a href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.silhouette_score.html">silhouette_score</a>
+            e
+            <a href="https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html">StandardScaler</a>.
+            <span class="doc-porque">As quatro chamadas que a prática usa. A página do
+            <code>PCA</code> documenta <code>explained_variance_ratio_</code>,
+            <code>components_</code> e <code>n_components</code>; a do <code>KMeans</code> documenta
+            <code>inertia_</code>, <code>n_init</code> e <code>random_state</code>; a do
+            <code>StandardScaler</code> é onde está a separação entre <code>fit</code> e
+            <code>transform</code> que o bloco de PCA exige.</span></li>
+          <li>Koren, Y.; Bell, R.; Volinsky, C. <em>Matrix Factorization Techniques for Recommender
+            Systems</em>. Computer, v. 42, n. 8, p. 30-37, 2009.
+            <span class="doc-porque">Leitura de fundo do fecho conceitual de sistemas de recomendação, e a ponte entre
+            os dois temas da aula. Descreve os modelos de fatores latentes, em que a matriz de
+            usuários por itens é representada por poucas dimensões, o mesmo movimento de redução que
+            o bloco de PCA executa sobre as onze features do case.</span></li>
+          <li>Autoestudos da Semana 06 na Adalove, listados na seção 1 desta página.
+            <span class="doc-porque">Referência cruzada usada como citação no deck, no fecho
+            conceitual de sistemas de recomendação.</span></li>
+          <li>Material de apoio da aula, em
+            <a href="../materiais/aula08.html">materiais/aula08.html</a>.
+            <span class="doc-porque">Onde estão as tabelas completas das duas medições, o
+            mecanismo de cada resultado e o <strong>escopo da conclusão</strong> sobre PCA (seção
+            13): a afirmação de que PCA piora este modelo vale para regressão linear sem
+            regularização, onze features, 339 linhas mensais e alvo em razão, e a mesma seção aponta
+            os dois casos em que a redução compensa.</span></li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seções 4 e 5.
+            <span class="doc-porque">A seção 5 é a matriz de rastreabilidade, que amarra a Aula 08 à
+            ART.6 Preparação dos Dados e Modelagem, e só a ela. O peso 6 dessa ART e o calendário da
+            Sprint 3, com review em 11/09, estão na seção 4.</span></li>
+          <li><code>docs/adrs/ADR-011-escopo-e-base-do-pca-da-aula-08.md</code>,
+            <code>docs/adrs/ADR-009</code> e
+            <code>docs/adrs/ADR-010</code>.
+            <span class="doc-porque">A primeira define o escopo desta aula: PCA sobre as onze
+            features da base mensal, escolha de K a partir do contraste já medido, sistemas de
+            recomendação como fecho conceitual de dez minutos e a remoção da citação dos boletins do
+            Sindirações, que não existem em <code>dados/</code>. A segunda registra a migração de
+            Elbow Plot e Silhouette Analysis da Aula 06 para cá. A terceira estabelece a base mensal
+            e as onze features sobre as quais o PCA de hoje roda. As conclusões estão travadas em
+            <code>tools/tests/test_pca_aula08.py</code> e as figuras em
+            <code>tools/graficos_aula08.py</code>.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>O item 1 vai sem link de propósito: a URL de consulta da API do SIDRA, para cada
+          tabela, está documentada em <code>dados/README.md</code>, e apontar direto para ela aqui
+          duplicaria a mesma informação em dois lugares que podem divergir com o tempo.</p>
+          <p>Os itens 2, 3, 5, 6 e 8 vão sem link e sem DOI de propósito: a citação traz periódico,
+          volume, número e páginas, que é o suficiente para localizar cada artigo, e uma URL ou um
+          identificador digitado de memória mandaria quem for conferir procurar no lugar errado.
+          Os cinco são leitura de fundo, dispensáveis como preparação para o encontro: a aula mede o
+          comportamento de cada técnica sobre as bases do case, sem exigir a formulação dos artigos
+          originais.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula08.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../materiais/aula08.html"><span class="material-symbols-outlined" aria-hidden="true">menu_book</span>Material</a>
+  </nav>
+</body>
+</html>
