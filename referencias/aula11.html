@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referências &middot; Aula 11 &middot; AutoML com PyCaret</title>
+  <meta name="description" content="Autoestudos da Semana 08 na Adalove e leitura complementar da Aula 11 do Módulo 03 IN, com as fontes primárias de AutoML, vazamento em validação e comparação de candidatos.">
+
+  <!-- Duas secoes fixas, nesta ordem, em TODAS as 14 aulas:
+       1. Autoestudos da semana (Adalove), copiados de
+          docs/autoestudos-por-semana.md, titulo por titulo, sem inventar
+          nenhum e sem alterar caractere.
+       2. Leitura complementar do professor.
+       A segunda secao nunca e omitida, mesmo sem curadoria fechada.
+
+       A Semana 08 tem CINCO autoestudos e UM Encontro de Instrucao (24/09),
+       entao nao ha rateio a declarar, diferente das Semanas 05 e 07.
+
+       ATENCAO: os cinco autoestudos ensinam a API do PyCaret 3 (setup(),
+       compare_models()), e a aula usa o PyCaret 4.0.0a8, cuja API e de objeto.
+       O descompasso e declarado na secao 1, com o motivo medido, e a tabela de
+       conversao esta no slide 7 do deck. Motivo completo em ADR-014. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 11 &middot; 24/09/2026 &middot; Semana 08</p>
+      <h1>Referências: AutoML com PyCaret</h1>
+      <p class="doc-subtitulo">A Semana 08 tem um único Encontro de Instrução e cinco autoestudos,
+      todos de PyCaret, então não há rateio entre aulas a declarar. Há, em compensação, um
+      descompasso de versão: os cinco ensinam a API do PyCaret 3 e a aula roda no 4.0.0a8, por um
+      motivo medido que a seção 1 explica. A seção 2 traz as fontes primárias de AutoML, de
+      vazamento em validação e do próprio PyCaret.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#autoestudos">Autoestudos da semana (Adalove)</a></li>
+        <li><a href="#complementar">Leitura complementar do professor</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="autoestudos">
+        <h2>1. Autoestudos da semana (Adalove)</h2>
+        <p>Semana 08, os cinco itens do encontro de 24/09:</p>
+        <ol class="doc-referencias">
+          <li>O que é AutoML?
+            <span class="doc-porque">Enquadramento da aula inteira. A leitura apresenta a promessa
+            do AutoML, que é automatizar a escolha e o ajuste de modelo, e a aula mede exatamente
+            onde essa promessa se cumpre e onde não: o `compare_models()` varre 22 famílias em
+            segundos, e não decide o alvo, o protocolo de validação nem as features.</span></li>
+          <li>O que é Pycaret?
+            <span class="doc-porque">Apresentação da biblioteca. O que a aula acrescenta é a leitura
+            crítica dos defaults: o construtor traz <code>train_size=0.7</code>, que separa 95 dos
+            315 meses por sorteio, e <code>fold_strategy="kfold"</code>, que é o validador que a
+            Aula 10 mostrou pondo 252 meses de treino no futuro.</span></li>
+          <li>Prática: Pycaret para Regressão
+            <span class="doc-porque">O roteiro mais próximo do que a aula faz, porque os três
+            modelos encadeados do TAPI são de regressão. A prática da aula segue o mesmo caminho
+            sobre a base de frango, com a diferença de API declarada abaixo.</span></li>
+          <li>Prática: Pycaret para Classificação
+            <span class="doc-porque">Roteiro de classificação. Ele não tem correspondente direto no
+            case, porque a ART.7 compara modelos de regressão, mas conversa com o alvo binário que a
+            Aula 09 criou e que a Aula 10 usou no bloco de curva ROC.</span></li>
+          <li>Prática: Pycaret para Classificação Multiclasse
+            <span class="doc-porque">Extensão do item anterior para mais de duas classes. Não entra
+            em sala: o case não tem alvo multiclasse, e criar um só para exercitar a API seria dado
+            sintético, que o acervo proíbe.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>Estes títulos são cópia literal de <code>docs/autoestudos-por-semana.md</code>, que é
+          gerado do <code>Turma.xlsx</code> oficial. Autoestudo que não está lá não entra aqui. O
+          acesso ao conteúdo é pela Adalove, com o login institucional.</p>
+        </div>
+        <div class="doc-nota">
+          <p><strong>Os cinco autoestudos ensinam uma API que a aula não usa, e o motivo é
+          medido.</strong> Eles descrevem o PyCaret 3, com <code>setup()</code> e
+          <code>compare_models()</code> como funções soltas. A aula roda o PyCaret
+          <strong>4.0.0a8</strong>, em que o fluxo é
+          <code>RegressionExperiment().fit(X, y)</code> seguido de
+          <code>exp.compare_models()</code>.</p>
+          <p>A troca não é preferência. O <code>pycaret</code> 3.3.2, que é a última versão estável,
+          <strong>recusa o Python 3.12 na importação</strong>, com uma checagem explícita no
+          <code>__init__.py</code> do pacote que devolve
+          <code>RuntimeError: Pycaret only supports python 3.9, 3.10, 3.11</code>. Além disso,
+          instalá-lo rebaixa <code>scikit-learn</code> para 1.4.2, <code>numpy</code> para 1.26.4 e
+          <code>pandas</code> para 2.1.4, que são versões anteriores às que os outros dez notebooks
+          do acervo usam. A linha 4.0 roda no Python atual sem mexer em nenhuma das três.</p>
+          <p>A tabela de conversão entre as duas APIs está no slide 7 do deck e na seção 3 do
+          <a href="../materiais/aula11.html">material de apoio</a>, e a decisão inteira está em
+          <code>docs/adrs/ADR-014</code>. Vale o aviso que a própria aula tira disso: a versão da
+          biblioteca faz parte da descrição do experimento, e um resultado sem versão declarada não
+          é reproduzível.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="complementar">
+        <h2>2. Leitura complementar do professor</h2>
+        <p>A curadoria definitiva desta seção ainda será fechada pelo professor. Até lá, ficam aqui,
+        numeradas, as fontes que sustentam o deck e o material de apoio desta aula. O slide de
+        referências do deck traz uma lista mais curta, com numeração própria, e esta página é a
+        lista completa.</p>
+        <ol class="doc-referencias">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite, tabelas
+            1092, 1093, 1094, 7524 e 1086 do SIDRA, com a classificação c12716 (Referência temporal)
+            aberta em No 1º mês, No 2º mês e No 3º mês.
+            <span class="doc-porque">Origem de todo número desta aula, com o contrato de colunas e a
+            checagem de sanidade dos valores em <code>dados/README.md</code>. A base é a mesma das
+            Aulas 07 a 10: 339 linhas de 1998-01 a 2026-03, treino de 315 meses e teste de 24
+            meses.</span></li>
+          <li>Ali, M. <em>PyCaret: An open source, low-code machine learning library in
+            Python</em>, versão 4.0.0a8, 2020 em diante.
+            <span class="doc-porque">A biblioteca da aula. A versão exata importa, e está fixada em
+            <code>requirements-ci.txt</code>: é a única dependência do acervo com versão travada, e
+            a exceção à política daquele arquivo está justificada ali e na
+            <code>ADR-014</code>.</span></li>
+          <li>Hutter, F.; Kotthoff, L.; Vanschoren, J. (org.). <em>Automated Machine Learning:
+            Methods, Systems, Challenges</em>. Springer Series on Challenges in Machine Learning,
+            2019.
+            <span class="doc-porque">Tratado de referência do campo, e a fonte do enquadramento da
+            aula. O livro separa as três camadas que o AutoML pode automatizar (escolha de modelo,
+            ajuste de hiperparâmetro e construção de feature) e trata a preparação do dado como
+            camada à parte, que é exatamente a distinção que o achado desta aula usa: a decisão de
+            alvo não está em nenhuma delas.</span></li>
+          <li>Bergstra, J.; Bengio, Y. <em>Random Search for Hyper-Parameter Optimization</em>.
+            Journal of Machine Learning Research, v. 13, p. 281-305, 2012.
+            <span class="doc-porque">Já citado na Aula 10, e relevante de novo aqui pelo contraste: o
+            artigo trata do custo de varrer o espaço de hiperparâmetro, e esta aula mede que o ganho
+            do case não estava nesse espaço. São duas buscas diferentes, e confundi-las é o erro que
+            o bloco de fecho desfaz.</span></li>
+          <li>Kaufman, S.; Rosset, S.; Perlich, C.; Stitelman, O. <em>Leakage in Data Mining:
+            Formulation, Detection, and Avoidance</em>. ACM Transactions on Knowledge Discovery from
+            Data, v. 6, n. 4, artigo 15, 2012.
+            <span class="doc-porque">Fonte primária de vazamento, já usada na Aula 09. Entra aqui
+            porque o PyCaret traz duas formas dele ligadas por padrão, e o artigo é o que dá nome ao
+            que está acontecendo: vazamento pela construção do conjunto de treino.</span></li>
+          <li>Bergmeir, C.; Benítez, J. M. <em>On the Use of Cross-validation for Time Series
+            Predictor Evaluation</em>. Information Sciences, v. 191, p. 192-213, 2012.
+            <span class="doc-porque">Fonte da troca de <code>fold_strategy</code>. A Aula 10 usou o
+            artigo para defender a validação temporal como regra de protocolo; esta aula mede o
+            ganho dentro do PyCaret, com a estimativa do leaderboard passando a errar 0,17 ponto em
+            vez de 0,47.</span></li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn: Machine Learning in Python</em>. Journal of
+            Machine Learning Research, v. 12, p. 2825-2830, 2011.
+            <span class="doc-porque">O PyCaret é uma camada sobre o scikit-learn, e os modelos do
+            leaderboard são os estimadores dele. A comparação da aula, entre o campeão automático e
+            os modelos de referência do acervo, roda toda com as mesmas classes.</span></li>
+          <li>Artefatos internos desta aula:
+            <code>docs/adrs/ADR-014-pycaret-4-alpha-e-escopo-da-aula-11.md</code>,
+            <code>tools/tests/test_automl_aula11.py</code> e
+            <code>tools/graficos_aula11.py</code>.
+            <span class="doc-porque">A ADR registra a escolha da versão, o quadro de referência
+            medido e a mudança de tese da aula. As nove conclusões estão travadas no arquivo de
+            teste, com duas versões propositalmente quebradas documentadas e uma variação que não
+            quebra nada, registrada para ninguém repetir. As quatro figuras saem do script de
+            gráficos.</span></li>
+          <li>As ADRs que esta aula reexamina ou aplica: <code>ADR-008</code> (corte temporal e
+            baseline da LDC), <code>ADR-010</code> (base mensal e a escolha do alvo em razão) e
+            <code>ADR-013</code> (floresta ajustada e validação temporal).
+            <span class="doc-porque">A <code>ADR-010</code> é a que esta aula reabre: ela escolheu o
+            alvo em razão para resolver o teto da árvore de decisão, e a medição mostra que a
+            decisão continua certa para a árvore e custa 0,46 ponto percentual ao modelo
+            linear.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>O item 1 vai sem link de propósito: a URL de consulta da API do SIDRA está documentada
+          em <code>dados/README.md</code>, e apontar direto para ela aqui duplicaria a mesma
+          informação em dois lugares que podem divergir com o tempo.</p>
+          <p>Os itens 3 a 7 vão sem link e sem DOI de propósito: a citação traz periódico, volume,
+          número e páginas, que é o suficiente para localizar cada obra, e uma URL ou um
+          identificador digitado de memória mandaria quem for conferir procurar no lugar errado. Os
+          cinco são leitura de fundo, dispensáveis como preparação para o encontro.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula11.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../materiais/aula11.html"><span class="material-symbols-outlined" aria-hidden="true">menu_book</span>Material</a>
+  </nav>
+</body>
+</html>
