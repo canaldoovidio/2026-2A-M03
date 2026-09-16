@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material de apoio &middot; Aula 11 &middot; AutoML com PyCaret</title>
+  <meta name="description" content="Material de apoio da Aula 11 do Módulo 03 IN: o quadro de referência dos modelos do acervo, o leaderboard do PyCaret, o R2 que não é comparável entre alvos, os dois defaults temporais da ferramenta e a decisão de alvo da Aula 07 reexaminada.">
+
+  <!-- Este material NAO e o roteiro do deck em prosa. Ele aprofunda o que o
+       slide so pode apontar, e e o lugar onde a dupla confere cada numero com
+       calma. Todo numero citado aqui esta travado nos nove testes de
+       tools/tests/test_automl_aula11.py e reproduzido por
+       tools/graficos_aula11.py, sobre os CSVs de dados/mensal/.
+       A versao do PyCaret e o escopo estao em
+       docs/adrs/ADR-014-pycaret-4-alpha-e-escopo-da-aula-11.md.
+
+       CUIDADO: esta aula tem DOIS alvos em jogo (nivel e razao) e DOIS
+       protocolos (default do PyCaret e temporal). Todo numero precisa vir com
+       os dois declarados ao lado, ou vira outra coisa. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 11 &middot; 24/09/2026 &middot; Sprint 4</p>
+      <h1>Material de apoio: AutoML com PyCaret</h1>
+      <p class="doc-subtitulo">A Aula 10 gastou trinta minutos ajustando hiperparâmetros e levou a
+      floresta de 5,04% para 4,21% de MAPE. Esta aula roda um comparador automático sobre a mesma
+      base, em quatro segundos, e ele bate esse resultado. O motivo vale mais que o número: o AutoML
+      varre a família de modelos, e ao varrê-la expõe uma decisão de preparação de dado que o acervo
+      tomou na Aula 07, pelo motivo certo, e nunca reabriu quando a família mudou. Cada seção
+      registra a medição, o mecanismo e o escopo da conclusão.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#quadro">O quadro de referência, e a surpresa dele</a></li>
+        <li><a href="#familia">Hiperparâmetro não muda a família nem o alvo</a></li>
+        <li><a href="#api">A API da aula não é a API do autoestudo</a></li>
+        <li><a href="#leaderboard">Vinte e dois candidatos em quatro segundos</a></li>
+        <li><a href="#nao-decide">O que o compare_models não decide</a></li>
+        <li><a href="#r2">O R2 despenca sem o modelo piorar</a></li>
+        <li><a href="#ordem">O leaderboard vem ordenado pelo R2</a></li>
+        <li><a href="#defaults">Dois vazamentos temporais ligados por padrão</a></li>
+        <li><a href="#estimativa">O fold temporal erra 0,17 em vez de 0,47</a></li>
+        <li><a href="#alvo">A decisão de alvo da Aula 07, reexaminada</a></li>
+        <li><a href="#valeu">O que as Aulas 07 a 10 valeram</a></li>
+        <li><a href="#escopo">Escopo das conclusões desta aula</a></li>
+        <li><a href="#art7">O que a dupla entrega na ART.7</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="quadro">
+        <h2>1. O quadro de referência, e a surpresa dele</h2>
+        <p>Antes de rodar qualquer coisa automática é preciso saber contra o que comparar. O acervo
+        já tem quatro modelos medidos sobre exatamente os mesmos 24 meses de teste, com as mesmas
+        onze features e o mesmo corte por data, e esta é a primeira vez que eles aparecem lado a
+        lado.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>modelo</th><th>MAPE nos 24 meses de teste</th><th>de onde vem</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>regressão linear, alvo em <strong>nível</strong></td><td><strong>2,86%</strong></td><td>nunca publicado em nenhuma aula</td></tr>
+              <tr><td>regressão linear, alvo em razão</td><td>3,32%</td><td>o fecho da Aula 07</td></tr>
+              <tr><td>baseline de coeficiente fixo da LDC</td><td>3,71%</td><td><code>ADR-008</code>, fator 1,05299</td></tr>
+              <tr><td>floresta ajustada na Aula 10</td><td>4,21%</td><td><code>ADR-013</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O modelo que <strong>dois encontros de trabalho manual produziram é o pior dos
+        quatro</strong>. Ele perde para a regressão do fecho da Aula 07, e perde para a baseline que
+        a própria LDC já usava antes de o projeto começar.</p>
+        <p>A primeira linha é a que não existia. A regressão linear sobre o alvo em nível nunca foi
+        rodada em nenhuma aula: desde a Aula 07 todo modelo do acervo treina sobre a razão entre o
+        mês e o mesmo mês do ano anterior. A seção 10 volta a isso.</p>
+        <div class="doc-nota">
+          <p>Os quatro números saem de <code>test_o_modelo_ajustado_a_mao_e_o_pior_dos_quatro</code>,
+          que trava também a <strong>ordem</strong> entre eles, e não só cada valor. Se algum dia a
+          ordem mudar, o teste reprova antes de o material ficar errado.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="familia">
+        <h2>2. Hiperparâmetro não muda a família nem o alvo</h2>
+        <p>Isso não quer dizer que as Aulas 07 a 10 foram perdidas. Quer dizer que elas trabalharam
+        dentro de uma escolha que ninguém reabriu.</p>
+        <p>A Aula 07 comparou árvore de decisão, KNN e Random Forest, e a floresta ficou com o
+        modelo. A Aula 10 varreu 27 combinações de <code>max_depth</code>,
+        <code>min_samples_leaf</code> e <code>n_estimators</code> sobre essa floresta. As duas
+        buscas são reais e cada uma encontrou o que havia para encontrar no espaço em que
+        procurou.</p>
+        <p>O ponto é qual espaço é esse. Uma busca de hiperparâmetro percorre o espaço de ajuste
+        <strong>dentro</strong> de uma família já escolhida, com um alvo já escolhido. Ela não pode,
+        por construção, trocar uma floresta por uma regressão nem trocar a razão pelo nível.</p>
+      </section>
+
+      <section class="doc-secao" id="api">
+        <h2>3. A API da aula não é a API do autoestudo</h2>
+        <p>Os cinco autoestudos da semana ensinam o PyCaret 3, com <code>setup()</code> e
+        <code>compare_models()</code> como funções soltas. A aula roda o <strong>4.0.0a8</strong>,
+        em que tudo passa por um objeto de experimento.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>autoestudo, PyCaret 3</th><th>aula, PyCaret 4.0.0a8</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>setup(data=df, target="alvo")</code></td><td><code>exp = RegressionExperiment()</code> e <code>exp.fit(X, y)</code></td></tr>
+              <tr><td><code>compare_models()</code></td><td><code>exp.compare_models()</code></td></tr>
+              <tr><td><code>pull()</code></td><td><code>exp.pull()</code></td></tr>
+              <tr><td>argumentos dentro de <code>setup()</code></td><td>argumentos no construtor do <code>RegressionExperiment</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A troca não é preferência. O <code>pycaret</code> 3.3.2, que é a última versão estável,
+        <strong>recusa o Python 3.12 na importação</strong>, com uma checagem explícita no
+        <code>__init__.py</code> do pacote. E instalá-lo rebaixa <code>scikit-learn</code> para
+        1.4.2, <code>numpy</code> para 1.26.4 e <code>pandas</code> para 2.1.4, que são versões
+        anteriores às que os outros dez notebooks do acervo usam.</p>
+        <p>A última linha da tabela é a que importa para as seções 5 e 8: os argumentos que no
+        PyCaret 3 ficavam no <code>setup()</code> passam para o construtor, e é lá que vivem
+        <code>train_size</code> e <code>fold_strategy</code>.</p>
+        <div class="doc-nota">
+          <p><strong>Isso já é conteúdo da ART.7.</strong> A versão da biblioteca faz parte da
+          descrição do experimento, e um resultado sem versão declarada não é reproduzível. Este
+          acervo fixa a versão em <code>requirements-ci.txt</code>, que é a única dependência com
+          versão travada, contra a política declarada no topo daquele arquivo. A exceção e o motivo
+          estão escritos ali e em <code>docs/adrs/ADR-014</code>.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="leaderboard">
+        <h2>4. Vinte e dois candidatos em quatro segundos</h2>
+        <p>O <code>compare_models()</code> treina um catálogo inteiro de famílias sob a mesma
+        validação e devolve a lista ordenada. Sobre os 315 meses de treino, com o alvo em razão e
+        tudo no default:</p>
+        <pre class="doc-codigo"><code>from pycaret.regression import RegressionExperiment
+
+exp = RegressionExperiment(session_id=42)
+exp.fit(X_treino, y_treino)
+resultado = exp.compare_models(n_select=5)
+exp.pull()</code></pre>
+        <p>Os <strong>oito primeiros colocados são modelos lineares</strong>: <code>ridge</code>,
+        <code>lar</code>, <code>tr</code>, <code>br</code>, <code>lasso</code>, <code>lr</code>,
+        <code>llar</code> e <code>en</code>. A primeira família de outro tipo aparece só na nona
+        posição, com o <code>svm</code>, e a árvore mais bem colocada fica bem abaixo.</p>
+        <p>Isso responde metade da pergunta de abertura. O comparador bate o modelo ajustado à mão,
+        e não por ajustar melhor: ele não ajustou hiperparâmetro nenhum no
+        <code>compare_models()</code>, e treinou cada família com os valores padrão dela. O que ele
+        mexeu foi a <strong>família</strong>.</p>
+      </section>
+
+      <section class="doc-secao" id="nao-decide">
+        <h2>5. O que o compare_models não decide</h2>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>decisão</th><th>quem decide</th><th>onde isso aparece no case</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>qual família de modelo</td><td>o PyCaret</td><td>22 candidatos, em segundos</td></tr>
+              <tr><td>hiperparâmetro de cada família</td><td>o PyCaret, com <code>tune_model</code></td><td>o que a Aula 10 fez à mão</td></tr>
+              <tr><td><strong>qual é o alvo</strong></td><td>a dupla</td><td>decidido na Aula 07, nunca reaberto</td></tr>
+              <tr><td><strong>como validar</strong></td><td>a dupla</td><td>dois defaults errados para série</td></tr>
+              <tr><td><strong>quais features</strong></td><td>a dupla</td><td>onze, desde a Aula 09</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>As três últimas linhas são o resto desta aula. A ferramenta automatiza a comparação; ela
+        não automatiza o protocolo, e nem tem como saber que o dado é uma série temporal.</p>
+      </section>
+
+      <section class="doc-secao" id="r2">
+        <h2>6. O R2 despenca sem o modelo piorar</h2>
+        <p>Rodando o mesmo <code>compare_models()</code>, com as mesmas features e os mesmos
+        defaults, e mudando <strong>só o alvo</strong>:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>alvo do treino</th><th>R2 do primeiro colocado</th><th>MAPE do primeiro colocado</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>nível, em quilogramas</td><td><strong>0,9771</strong></td><td>3,63%</td></tr>
+              <tr><td>razão sobre o mesmo mês do ano anterior</td><td><strong>0,4832</strong></td><td>3,73%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O R2 cai pela metade e o MAPE nem se move. O modelo não piorou.</p>
+        <p>O R2 é a fração da variância do alvo que o modelo explica, e os dois alvos têm variâncias
+        completamente diferentes. O nível sobe de cerca de 0,3 para cerca de 1,2 bilhão de
+        quilogramas ao longo de 28 anos; a razão fica quase toda entre 0,9 e 1,2. Explicar 98% de
+        uma série que cresce é fácil, porque a tendência já explica quase tudo. Explicar 48% de uma
+        razão que oscila em torno de 1 é outra coisa, e é a parte difícil do problema.</p>
+        <p>O MAPE atravessa a troca sem se mover porque é razão entre erro e valor real, e não
+        depende da variância do alvo.</p>
+        <div class="doc-nota">
+          <p><strong>É o mesmo erro de leitura que a Aula 09 tratou.</strong> Lá, o RMSE não era
+          comparável entre dois conjuntos de teste com médias que diferiam em 35%. Aqui, o R2 não é
+          comparável entre dois alvos com variâncias que diferem em uma ordem de grandeza. A regra
+          que vale nos dois casos: <strong>métrica que depende da escala ou da variância do alvo não
+          é comparável entre alvos nem entre conjuntos diferentes.</strong></p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="ordem">
+        <h2>7. O leaderboard vem ordenado pelo R2</h2>
+        <p>A seção anterior tem uma consequência imediata que passa despercebida.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>posição</th><th>modelo</th><th>R2</th><th>MAPE</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td><code>ridge</code></td><td>0,4832</td><td>3,73%</td></tr>
+              <tr><td>2</td><td><code>lar</code></td><td>0,4745</td><td>3,78%</td></tr>
+              <tr><td>3</td><td><code>tr</code></td><td>0,4449</td><td>3,88%</td></tr>
+              <tr><td><strong>4</strong></td><td><strong><code>br</code></strong></td><td><strong>0,4008</strong></td><td><strong>4,04%</strong></td></tr>
+              <tr><td><strong>5</strong></td><td><strong><code>lasso</code></strong></td><td><strong>0,3999</strong></td><td><strong>4,03%</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A quarta linha tem MAPE maior que a quinta e mesmo assim vem antes dela, porque a
+        ordenação é pelo R2. Quem lê a primeira linha do leaderboard sem olhar a coluna está lendo o
+        ranking de outra métrica, e é justamente a métrica que a seção anterior mostrou não ser
+        comparável entre alvos.</p>
+        <p>Na prática, para o case: a dupla que rodar dois experimentos com alvos diferentes e
+        comparar a primeira linha de cada um vai concluir que o alvo em nível é duas vezes melhor.
+        A vantagem real dele é de 0,46 ponto de MAPE, por um motivo que a seção 10 mede, e o fator
+        de dois é artefato da métrica de ordenação.</p>
+      </section>
+
+      <section class="doc-secao" id="defaults">
+        <h2>8. Dois vazamentos temporais ligados por padrão</h2>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>default do construtor</th><th>o que ele faz</th><th>onde a sprint viu isso</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>train_size=0.7</code></td><td>separa 95 dos 315 meses por sorteio</td><td>Aula 09, o sorteio que infla o MAPE de quem memoriza vizinho</td></tr>
+              <tr><td><code>fold_strategy="kfold"</code></td><td>valida com <code>KFold</code></td><td>Aula 10, com 252 de 252 meses de treino no futuro na primeira dobra</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A dupla entrega 315 meses ao PyCaret e ele treina com 220, escolhidos por sorteio. Os
+        dois defaults são exatamente os erros de protocolo que as duas aulas anteriores ensinaram a
+        reconhecer, e vêm ativados sem aviso na tela.</p>
+        <p><strong>Este é o default correto para dado tabular sem ordem</strong>, que é o caso da
+        maior parte de quem usa a biblioteca. A ferramenta não sabe que este
+        dado é uma série temporal e não tem como saber: nada no <code>DataFrame</code> diz isso. A
+        responsabilidade de declarar o protocolo é de quem conhece o dado.</p>
+        <pre class="doc-codigo"><code>from sklearn.model_selection import TimeSeriesSplit
+
+exp = RegressionExperiment(
+    session_id=42,
+    fold_strategy=TimeSeriesSplit(n_splits=5),
+    train_size=0.99)</code></pre>
+      </section>
+
+      <section class="doc-secao" id="estimativa">
+        <h2>9. O fold temporal erra 0,17 em vez de 0,47</h2>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>alvo</th><th>protocolo</th><th>meses de treino</th><th>MAPE estimado</th><th>MAPE de teste</th><th>diferença</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>nível</td><td>default</td><td>220</td><td>3,63%</td><td>2,81%</td><td>0,82</td></tr>
+              <tr><td>nível</td><td>temporal</td><td>311</td><td>3,35%</td><td><strong>2,84%</strong></td><td><strong>0,51</strong></td></tr>
+              <tr><td>razão</td><td>default</td><td>220</td><td>3,73%</td><td>3,26%</td><td>0,47</td></tr>
+              <tr><td>razão</td><td>temporal</td><td>311</td><td>3,51%</td><td>3,34%</td><td><strong>0,17</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Os quatro quadrantes de alvo por protocolo, todos medidos. Em cada alvo, o protocolo
+        temporal reduz a diferença entre o que o leaderboard estima e o que o teste mede: de 0,82
+        para 0,51 no alvo em nível, e de 0,47 para 0,17 no alvo em razão.</p>
+        <p>Em cada alvo, as duas configurações escolhem o mesmo campeão e chegam a um MAPE de teste
+        parecido. O que muda é a <strong>qualidade da estimativa</strong> que o leaderboard dá do
+        próprio desempenho.</p>
+        <p>Há uma segunda diferença, que a revisão desta aula apontou e que importa para qualquer
+        comparação: o protocolo default treina o campeão com <strong>220 dos 315 meses</strong>,
+        sorteados, e o temporal com 311. Comparar um modelo do default com um modelo treinado nos
+        315 meses inteiros compara família e volume de dado ao mesmo tempo. O quadro de referência
+        da seção 1 usa, por isso, o campeão do protocolo temporal.</p>
+        <p>É a confirmação, dentro da ferramenta nova, do argumento que a Aula 10 defendeu como
+        regra de protocolo. Naquela aula a troca de validador não melhorou o modelo, e o argumento
+        foi que ela torna a estimativa auditável. Aqui dá para medir o quanto isso vale: a
+        estimativa auditável é também a mais próxima da verdade.</p>
+        <div class="doc-nota">
+          <p><strong>Uma ressalva de leitura.</strong> Esta é uma medição sobre um conjunto de teste
+          de 24 meses, e a diferença entre 0,47 e 0,17 não é um número universal. O que se afirma é
+          a direção, e ela tem mecanismo por trás: uma estimativa produzida por um procedimento que
+          treina com o futuro está respondendo a uma pergunta que o teste não faz.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="alvo">
+        <h2>10. A decisão de alvo da Aula 07, reexaminada</h2>
+        <p>Falta a outra metade da pergunta de abertura: o que exatamente o AutoML fez de
+        diferente.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>modelo, mesmas onze features e mesmo corte</th><th>alvo em nível</th><th>alvo em razão</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>regressão linear</strong></td><td><strong>2,86%</strong></td><td>3,32%</td></tr>
+              <tr><td>floresta ajustada na Aula 10</td><td>5,67%</td><td><strong>4,21%</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>As duas linhas dizem coisas opostas, e as duas estão certas.</p>
+        <p><strong>Para a árvore, o alvo em razão é melhor, e por muito: 4,21% contra 5,67%.</strong>
+        É exatamente o motivo pelo qual a Aula 07 o escolheu. Uma árvore de decisão não extrapola:
+        cada folha devolve a média dos valores de treino que caíram nela, então uma série que cresce
+        sai do alcance dela. Treinar sobre a razão resolve isso, porque a razão não cresce.</p>
+        <p><strong>Para o modelo linear, o alvo em razão custa 0,46 ponto percentual.</strong> Uma
+        regressão linear extrapola sem dificuldade: ela estima um coeficiente por feature, e o
+        crescimento da série entra pelos próprios coeficientes das defasagens. Ela não precisa da
+        proteção que a árvore precisava, e paga por ela.</p>
+        <p>A decisão da Aula 07 <strong>não estava errada</strong>. Ela estava sendo aplicada fora do
+        caso em que foi tomada, porque ficou valendo para todos os modelos seguintes sem que ninguém
+        a reabrisse quando a família mudou.</p>
+        <div class="doc-nota">
+          <p><strong>A regra que sai daqui, e que é o que a ART.7 leva:</strong> toda decisão de
+          preparação de dado tomada por causa de um modelo específico precisa ser reaberta quando o
+          modelo mudar. Nenhuma busca de hiperparâmetro encontra isso, porque o espaço que ela
+          percorre já pressupõe o alvo fixado.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="valeu">
+        <h2>11. O que as Aulas 07 a 10 valeram</h2>
+        <p>Uma leitura possível de tudo isto é que as quatro aulas anteriores foram perdidas, e que
+        bastaria rodar quatro segundos de AutoML. A medição diz o contrário, e o argumento está numa
+        linha já vista.</p>
+        <p>O leaderboard que a dupla encontra primeiro, com os defaults ligados, estima
+        <strong>3,63%</strong> para o campeão em nível. Esse número não corresponde a nada: ele saiu
+        de 220 meses sorteados e de um validador que treina com o futuro. O MAPE real do mesmo
+        modelo, nos 24 meses que ele nunca viu, é 2,81%, e o do campeão sob o protocolo honesto é
+        2,84%.</p>
+        <p>Dessa vez o erro foi para o lado pessimista, e a dupla teria sorte. Não há garantia
+        nenhuma de que seja sempre assim: no bloco de vazamento da Aula 09, o erro de protocolo
+        empurrava a métrica sempre para o lado otimista, que é o lado que não dispara alarme.</p>
+        <p>Quem não passou pelas Aulas 09 e 10 não tem como saber disso. Aceita o número da tela,
+        entrega para a LDC e descobre no primeiro trimestre. <strong>O AutoML ordena candidatos; ele
+        não diz se a ordenação é confiável</strong>, e essa pergunta é a que a sprint inteira
+        ensinou a fazer.</p>
+      </section>
+
+      <section class="doc-secao" id="escopo">
+        <h2>12. Escopo das conclusões desta aula</h2>
+        <p>Quatro limites que precisam viajar junto com os números.</p>
+        <p><strong>O ganho do alvo em nível se apoia nas defasagens curtas.</strong>
+        <code>lag1</code>, <code>lag2</code> e <code>lag3</code> estão entre as features desde a Aula
+        07, e um modelo em nível se apoia mais nelas que um modelo em razão. Isso é premissa do
+        acervo inteiro, não escolha desta aula, e continua valendo a ressalva de que a LDC precisa
+        dessas defasagens disponíveis no momento da previsão.</p>
+        <p><strong>O leaderboard é de uma versão alpha.</strong> O PyCaret 4.0.0a8 pode mudar de API
+        ou de comportamento antes de virar estável. A versão está fixada, e os números aqui valem
+        para ela.</p>
+        <p><strong>A comparação entre folds é sobre estimativa, não sobre modelo.</strong> As duas
+        configurações escolhem o mesmo campeão. O que se mede é o quanto o leaderboard acerta o
+        próprio desempenho.</p>
+        <p><strong>Escolha de feature continua fora.</strong> Todas as rodadas usam as onze features
+        que a Aula 09 deixou. Nenhuma aula do acervo reabriu essa escolha, e ela é o próximo
+        candidato natural ao mesmo tipo de reexame que esta aula fez com o alvo.</p>
+      </section>
+
+      <section class="doc-secao" id="art7">
+        <h2>13. O que a dupla entrega na ART.7</h2>
+        <p><strong>ART.7 Comparação de modelos, peso 8</strong>, fecha a Sprint 4, com review em
+        25/09 (<code>PLANO_DE_ENSINO.md</code>, seções 4 e 6). O protocolo completo da sprint:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>aula</th><th>o que ela acrescentou ao protocolo</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>09</td><td>corte por data em todo candidato, baseline declarada, métrica sem dependência de escala, imputação medida contra valor conhecido</td></tr>
+              <tr><td>10</td><td>grade de hiperparâmetros declarada, validação que respeita o tempo, métrica de desempate e leitura de importância declarada</td></tr>
+              <tr><td><strong>11</strong></td><td><strong>varrer a família antes de ajustar, reabrir a decisão de alvo quando a família mudar, declarar a versão da biblioteca e não confiar na ordem do leaderboard</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O melhor candidato do acervo, ao fim da Sprint 4, é um modelo linear sobre o alvo em
+        nível, e não a floresta que duas aulas ajustaram. Na Aula 12 ele é o que vai para o
+        <code>Pipeline</code> do scikit-learn e para o MLflow, e a decisão de alvo entra no pipeline
+        junto com ele, para não se perder de novo.</p>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula11.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../referencias/aula11.html"><span class="material-symbols-outlined" aria-hidden="true">menu_book</span>Referências</a>
+  </nav>
+</body>
+</html>
