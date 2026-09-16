@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 11 &middot; AutoML com PyCaret &middot; Módulo 03 IN</title>
+
+  <!-- Aula 11, 24/09/2026, Sprint 4 (planning em 14/09, review em 25/09).
+       Fecha a Sprint 4. Escopo, versao do PyCaret e a divisao dos 105 minutos
+       estao em docs/adrs/ADR-014-pycaret-4-alpha-e-escopo-da-aula-11.md. As
+       nove conclusoes da aula estao travadas em
+       tools/tests/test_automl_aula11.py, e as quatro figuras saem de
+       tools/graficos_aula11.py.
+
+       Tese unica, medida nos quatro blocos: o AutoML varre a familia de
+       modelos, e nao conserta o protocolo. Varrer a familia achou em quatro
+       segundos um ganho que dois encontros de ajuste manual nao acharam,
+       porque o ganho estava numa decisao de ALVO tomada na Aula 07 para a
+       arvore e nunca reexaminada quando a familia mudou. E, ao mesmo tempo, o
+       PyCaret vem com os dois vazamentos temporais da Aula 10 ligados por
+       padrao.
+
+       Divisao dos 105 minutos (ADR-014):
+         15  Resgate das Aulas 07 a 10 e pergunta disparada  (slides 3 a 5)
+         15  O que o compare_models faz, e o que nao decide  (slides 6 a 9)
+         15  Pratica: o leaderboard do Modelo 1              (slide 10)
+         15  Ler o leaderboard sem se enganar                (slides 11 a 14)
+         15  Pratica: trocar o fold e medir a estimativa     (slides 15 a 17)
+         15  O que o AutoML achou que duas aulas nao acharam (slides 18 a 21)
+         15  Quiz e amarracao com a ART.7                    (slides 22 a 25)
+
+       VERSAO DO PYCARET, e o motivo (ADR-014): 4.0.0a8, uma alpha. A estavel
+       3.3.2 RECUSA Python 3.12 na importacao, com checagem explicita no
+       __init__.py, e instala-la rebaixa scikit-learn para 1.4.2, numpy para
+       1.26.4 e pandas para 2.1.4. A alpha roda no Python atual sem mexer em
+       nenhuma das tres. Custo: a API e de objeto, sem setup(), e difere da dos
+       cinco autoestudos da semana. A tabela de conversao esta no slide 7.
+
+       Base: a mesma das Aulas 07 a 10. 339 linhas (1998-01 a 2026-03), treino
+       de 315 meses, teste de 24 meses (2024-04 a 2026-03), 11 features.
+
+       Quadro de referencia, todos nos MESMOS 24 meses de teste:
+         regressao linear, alvo em NIVEL        2,86%   (nunca publicado antes)
+         regressao linear, alvo em razao        3,32%   (fecho da Aula 07)
+         baseline de coeficiente fixo da LDC    3,71%   (ADR-008, fator 1,05299)
+         floresta ajustada na Aula 10           4,21%   (ADR-013) <- a PIOR
+
+       PyCaret 4.0.0a8, 22 candidatos, poucos segundos cada rodada. Os QUATRO
+       quadrantes de alvo x protocolo, todos medidos:
+                            treino  topo   estimado  teste  |est-teste|
+         nivel,  default       220  tr        3,63%  2,81%     0,82
+         nivel,  TEMPORAL      311  tr        3,35%  2,84%     0,51
+         razao,  default       220  ridge     3,73%  3,26%     0,47
+         razao,  TEMPORAL      311  ridge     3,51%  3,34%     0,17
+       R2 do primeiro colocado: 0,9771 em nivel e 0,4832 em razao, no default.
+
+       CUIDADO, e foi achado da revisao: o campeao que aparece na figura 1 e o
+       do protocolo TEMPORAL (2,84%), e nao o dos defaults (2,81%). Os quatro
+       modelos de referencia do grafico treinam com os 315 meses inteiros, e o
+       campeao dos defaults treinaria com 220 deles, sorteados: por-los no mesmo
+       grafico compararia familia E volume de dado ao mesmo tempo. O 2,81%
+       aparece no slide 21, onde o protocolo e o assunto.
+         leaderboard: os oito primeiros sao lineares, svm em 9o e knn em 10o
+         a ordem do leaderboard e por R2, NAO por MAPE: br (4,04%) aparece
+           acima de lasso (4,03%)
+         defaults do construtor: train_size=0.7 (separa 95 dos 315 meses por
+           sorteio) e fold_strategy="kfold" (o validador que a Aula 10 mostrou
+           pondo 252 de 252 meses de treino no futuro na primeira dobra)
+
+       O achado central: o alvo em razao custa 0,46 ponto ao modelo linear
+       (3,32% contra 2,86%) e continua CERTO para a arvore, que foi o motivo
+       pelo qual ele foi escolhido na Aula 07. A decisao nao estava errada:
+       estava sendo aplicada fora do caso em que foi tomada.
+
+       O resgate da Aula 10 (slide 3) copia o trecho de codigo e os numeros de
+       aulas/aula10.html, sem reescrever de memoria: achado registrado da
+       revisao da Aula 06.
+
+       Escopo da conclusao: dizer que o AutoML bateu duas aulas de trabalho
+       manual NAO e dizer que as Aulas 07 a 10 foram perdidas. Sem o protocolo
+       delas, a dupla aceitaria o 3,63% estimado com o fold errado. O slide 21
+       existe para nao deixar essa leitura de pe.
+
+       ART.7 Comparacao de modelos, peso 8, sprint com planning em 14/09 e
+       review em 25/09 (PLANO_DE_ENSINO.md secao 4). -->
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-theme.css">
+  <link rel="stylesheet" href="../assets/css/inteli-print.css" media="print">
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- 1 - Capa -->
+      <section class="cover-slide">
+        <div class="cover-panel">
+          <div class="cover-content">
+            <p class="cover-eyebrow">Módulo 03 IN &middot; Aula 11 &middot; 24/09/2026</p>
+            <h1>AutoML com PyCaret</h1>
+            <h3>Comparação automática de candidatos, leitura do leaderboard e o
+            que o AutoML não decide por você</h3>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 - Agenda -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Agenda do encontro</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>08h00 &middot; 10h00</h3>
+            <p>Autoestudo na Adalove, cinco itens: o que é AutoML, o que é PyCaret e as três
+            práticas de classificação, multiclasse e regressão [11].</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h00 &middot; 10h15</h3>
+            <p>Daily. Cada dupla traz a feature mais influente encontrada via SHAP na Aula 10, com
+            a leitura declarada.</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h15 &middot; 12h00</h3>
+            <p>O quadro de referência (15 min), o leaderboard (30 min), como lê-lo sem se enganar
+            (30 min), o achado do alvo (15 min) e a amarração com a ART.7 (15 min).</p>
+          </div>
+        </div>
+        <p>A Sprint 4 fecha amanhã, 25/09, com a entrega da <strong>ART.7</strong> [10].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">2</p>
+        </div>
+      </section>
+
+      <!-- 3 - Resgate da Aula 10, trecho copiado de aulas/aula10.html -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A Aula 10 entregou 4,21% de MAPE</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>GRADE = {
+    "n_estimators": [100, 300, 600],
+    "max_depth": [None, 4, 8],
+    "min_samples_leaf": [1, 2, 5],
+}
+
+busca = GridSearchCV(
+    RandomForestRegressor(
+        random_state=42),
+    GRADE,
+    scoring="neg_mean_absolute"
+            "_percentage_error",
+    cv=TimeSeriesSplit(n_splits=5),
+    n_jobs=-1)
+# 4 / 5 / 600, teste 4,21%</code></pre>
+          <div>
+            <p>135 treinos, 27 combinações, nove segundos. A floresta saiu de 5,04% para
+            <strong>4,21%</strong> de MAPE nos 24 meses de teste, e a Aula 10 explicou as decisões
+            dela com SHAP e partial dependence [12].</p>
+            <p>O trecho ao lado é o da Aula 10, sem alteração.</p>
+            <p>Hoje a pergunta é se um comparador automático, rodando em segundos, bate esse
+            resultado. Antes de responder, falta uma coisa: contra o que mais ele deveria ser
+            comparado [2].</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">3</p>
+        </div>
+      </section>
+
+      <!-- 4 - Figura 1: o quadro de referencia -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A floresta ajustada é a pior das quatro</h2>
+        </div>
+        <img src="../assets/img/aula11-quadro-de-referencia.png" alt="Barras do MAPE nos 24 meses de teste de cinco modelos, em ordem crescente de erro: campeão do AutoML com alvo em nível e protocolo temporal com 2,84%, regressão linear com alvo em nível com 2,86%, regressão linear com alvo em razão com 3,32%, baseline da LDC com 3,71% e floresta ajustada na Aula 10 com 4,21%, destacada em coral como a pior" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 348px;">
+        <p>Todos nos mesmos 24 meses e com o mesmo volume de treino [2]. O campeão aqui é o do protocolo temporal, pelo mesmo motivo.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">4</p>
+        </div>
+      </section>
+
+      <!-- 5 - Por que a floresta perde, e a pergunta disparada -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Hiperparâmetro não muda a família</h2>
+        </div>
+        <p>O modelo que dois encontros de trabalho manual produziram perde para a baseline que a
+        LDC já usava antes de o projeto começar [2][9]. Isso não quer dizer que as Aulas 07 a 10
+        foram perdidas: elas trabalharam <strong>dentro de uma escolha de família</strong> que
+        ninguém reabriu.</p>
+        <p>A Aula 07 escolheu árvore e ensemble. A Aula 10 ajustou os hiperparâmetros da floresta.
+        Nenhuma das duas podia encontrar um ganho que estivesse fora da família escolhida, porque
+        hiperparâmetro não muda a família e não muda o alvo [3].</p>
+        <p><strong>Pergunta disparada:</strong> vocês acham que o AutoML vai bater o modelo que
+        vocês ajustaram à mão? E se bater, o que exatamente ele terá feito de diferente?</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">5</p>
+        </div>
+      </section>
+
+      <!-- 6 - Divisor: AutoML -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>AutoML</h2>
+        <h3>Vinte e dois candidatos ordenados em quatro segundos</h3>
+      </section>
+
+      <!-- 7 - A API, e a versao -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A aula usa uma API diferente do autoestudo</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Autoestudo, PyCaret 3</th><th>Aula, PyCaret 4.0.0a8</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>setup(data=df, target="alvo")</code></td><td><code>exp = RegressionExperiment()</code><br><code>exp.fit(X, y)</code></td></tr>
+            <tr><td><code>compare_models()</code></td><td><code>exp.compare_models()</code></td></tr>
+            <tr><td><code>pull()</code></td><td><code>exp.pull()</code></td></tr>
+          </tbody>
+        </table>
+        <p>O PyCaret é uma camada sobre o scikit-learn [5][6]: os candidatos do leaderboard são os
+        estimadores dele, com os valores padrão de cada um. O PyCaret estável
+        <strong>recusa o Python 3.12 na importação</strong>, com uma checagem
+        explícita dentro do pacote, e instalá-lo rebaixaria <code>scikit-learn</code>,
+        <code>numpy</code> e <code>pandas</code> para versões anteriores às dos outros dez notebooks
+        do acervo [3]. A linha 4.0 roda no Python atual sem mexer em nenhuma das três, e o preço é
+        esta tabela.</p>
+        <p>Isso já é conteúdo da ART.7: a versão da biblioteca faz parte da descrição do
+        experimento, e resultado sem versão declarada não é reproduzível [10].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">7</p>
+        </div>
+      </section>
+
+      <!-- 8 - Figura 2: o leaderboard -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Os oito primeiros são modelos lineares</h2>
+        </div>
+        <img src="../assets/img/aula11-leaderboard.png" alt="As dez primeiras linhas do leaderboard do PyCaret sobre o alvo em razão, em barras horizontais do MAPE estimado. Os oito primeiros colocados, de ridge a en, são modelos lineares, pintados em coral; svm em nono e knn em décimo aparecem em cinza" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 348px;">
+        <p>Vinte e dois candidatos, poucos segundos, e nenhuma árvore no topo [2]. Foi a família, e
+        não o ajuste, que o comparador mexeu.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">8</p>
+        </div>
+      </section>
+
+      <!-- 9 - O que ele nao decide -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que o compare_models não decide</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Decisão</th><th>Quem decide</th><th>Onde isso apareceu</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Qual família de modelo</td><td>o PyCaret</td><td>22 candidatos, em segundos</td></tr>
+            <tr><td>Hiperparâmetro de cada um</td><td>o PyCaret, com <code>tune_model</code></td><td>o que a Aula 10 fez à mão</td></tr>
+            <tr><td><strong>Qual é o alvo</strong></td><td>a dupla</td><td>decidido na Aula 07, nunca reaberto</td></tr>
+            <tr><td><strong>Como validar</strong></td><td>a dupla</td><td>dois defaults temporais errados</td></tr>
+            <tr><td><strong>Quais features</strong></td><td>a dupla</td><td>onze, desde a Aula 09</td></tr>
+          </tbody>
+        </table>
+        <p>As três últimas linhas são o conteúdo do resto da aula. A literatura de AutoML separa
+        justamente essas camadas, e trata a preparação do dado como camada à parte [7]: a escolha do
+        alvo não está em nenhuma das duas que a ferramenta automatiza. Ela automatiza a comparação,
+        não o protocolo, e nem sabe que o dado é uma série temporal [3].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">9</p>
+        </div>
+      </section>
+
+      <!-- 10 - Pratica 1 -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; O leaderboard do Modelo 1</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Abrir a seção 2 do <a href="https://github.com/canaldoovidio/2026-2A-M03/blob/main/notebooks/aula11.ipynb">notebook da aula</a> e rodar o
+          <code>compare_models()</code> sobre a base de frango.</li>
+          <li>Anotar o campeão, o MAPE que o leaderboard estima para ele, e quantos segundos a
+          rodada levou.</li>
+          <li>Comparar esse campeão com o modelo que a dupla ajustou na Aula 10. Qual das duas
+          famílias ficou por cima?</li>
+          <li>Conferir quantos meses o PyCaret de fato usou para treinar, com
+          <code>len(exp.X_train)</code>. O número não é 315, e a própria seção 2 explica por quê.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">10</p>
+        </div>
+      </section>
+
+      <!-- 11 - Divisor: ler o leaderboard -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Ler o leaderboard</h2>
+        <h3>A primeira linha responde a uma pergunta que talvez não seja a sua</h3>
+      </section>
+
+      <!-- 12 - Figura 3: o R2 despenca -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O R2 cai de 0,977 para 0,483</h2>
+        </div>
+        <img src="../assets/img/aula11-r2-engana.png" alt="Dois painéis com os mesmos modelos e as mesmas features, mudando só o alvo. À esquerda, o R2 do primeiro colocado cai de 0,977 com o alvo em nível para 0,483 com o alvo em razão. À direita, o MAPE dos mesmos modelos fica em 3,63% e 3,73%, praticamente igual" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 348px;">
+        <p>Mesmos modelos, mesmas features, mesma validação: só o alvo mudou. O MAPE nem se
+        moveu [2].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">12</p>
+        </div>
+      </section>
+
+      <!-- 13 - Por que o R2 despenca -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A variância menor do alvo derruba o R2</h2>
+        </div>
+        <p>O R2 é a fração da variância do alvo que o modelo explica, e os dois alvos têm variâncias
+        muito diferentes. O alvo em nível sobe de 0,3 para 1,2 bilhão de quilogramas ao longo de 28
+        anos; o alvo em razão fica quase todo entre 0,9 e 1,2 [1].</p>
+        <p>Explicar 98% de uma série que cresce é fácil, e explicar 48% de uma razão que oscila em
+        torno de 1 é outra coisa. O MAPE atravessa a troca sem se mover porque é razão entre erro e
+        valor real, e não depende da variância do alvo [2].</p>
+        <p>É o mesmo erro de leitura que a Aula 09 tratou com o RMSE entre dois conjuntos de teste
+        de escalas diferentes [12]: <strong>métrica que depende da escala do alvo não é comparável
+        entre alvos.</strong></p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">13</p>
+        </div>
+      </section>
+
+      <!-- 14 - A ordem do leaderboard -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O leaderboard vem ordenado por R2</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Posição</th><th>Modelo</th><th>R2</th><th>MAPE</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td><code>ridge</code></td><td>0,4832</td><td>3,73%</td></tr>
+            <tr><td>2</td><td><code>lar</code></td><td>0,4745</td><td>3,78%</td></tr>
+            <tr><td>3</td><td><code>tr</code></td><td>0,4449</td><td>3,88%</td></tr>
+            <tr><td><strong>4</strong></td><td><strong><code>br</code></strong></td><td><strong>0,4008</strong></td><td><strong>4,04%</strong></td></tr>
+            <tr><td><strong>5</strong></td><td><strong><code>lasso</code></strong></td><td><strong>0,3999</strong></td><td><strong>4,03%</strong></td></tr>
+          </tbody>
+        </table>
+        <p>A quarta linha tem MAPE <strong>maior</strong> que a quinta e mesmo assim vem antes,
+        porque a ordenação é pelo R2 [2]. Quem lê a primeira linha sem olhar a coluna está lendo o
+        ranking de outra métrica, e é justamente a métrica que a página anterior mostrou não ser
+        comparável entre alvos [4].</p>
+        <p><strong>Pergunta disparada:</strong> este leaderboard foi produzido com a validação que
+        o PyCaret traz por padrão. O que vocês acham que muda nele se trocarmos essa validação pela
+        que a Aula 10 fixou?</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">14</p>
+        </div>
+      </section>
+
+      <!-- 15 - Os dois defaults temporais -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Dois vazamentos vêm ligados por padrão</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Default do construtor</th><th>O que ele faz</th><th>Onde a aula viu isso</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>train_size=0.7</code></td><td>separa 95 dos 315 meses por sorteio</td><td>Aula 09, o sorteio que infla o MAPE</td></tr>
+            <tr><td><code>fold_strategy="kfold"</code></td><td>valida com <code>KFold</code></td><td>Aula 10, 252 de 252 meses no futuro</td></tr>
+          </tbody>
+        </table>
+        <p>A dupla entregou 315 meses ao PyCaret e ele treinou com 220, escolhidos por sorteio. Os
+        dois defaults são exatamente os erros de protocolo que as duas aulas anteriores ensinaram a
+        reconhecer, e vêm ativados sem aviso [2][8].</p>
+        <p>Este é o default correto para dado tabular sem ordem, que é o caso da maior parte de quem
+        usa a biblioteca. A ferramenta não sabe que o dado é uma série temporal, e não tem como
+        saber: nada no <code>DataFrame</code> diz isso [8].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">15</p>
+        </div>
+      </section>
+
+      <!-- 16 - Figura 4: estimativa contra teste -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O fold temporal erra 0,17 em vez de 0,47</h2>
+        </div>
+        <img src="../assets/img/aula11-estimativa-contra-teste.png" alt="Barras pareadas do MAPE estimado pelo leaderboard e do MAPE medido nos 24 meses de teste, em duas configurações. Com o fold default, o leaderboard estima 3,73% e o teste mede 3,26%, errando 0,47 ponto. Com TimeSeriesSplit, estima 3,51% e o teste mede 3,34%, errando 0,17 ponto" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 348px;">
+        <p>As duas escolhem o mesmo campeão. O que muda é o quanto a estimativa do leaderboard
+        acerta o próprio desempenho [2].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">16</p>
+        </div>
+      </section>
+
+      <!-- 17 - Pratica 2 -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; Consertar o protocolo</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Repetir o <code>compare_models()</code> da dupla passando
+          <code>fold_strategy=TimeSeriesSplit(n_splits=5)</code> e <code>train_size=0.99</code> no
+          construtor do <code>RegressionExperiment</code>.</li>
+          <li>Anotar o MAPE que o leaderboard estima e medir o campeão nos 24 meses de teste, que
+          nenhuma das duas rodadas viu.</li>
+          <li>Calcular a diferença entre estimado e medido nas duas configurações. Qual das duas
+          estimativas chegou mais perto?</li>
+          <li>Repetir o exercício para uma segunda etapa do pipeline do case, Modelo 2 ou Modelo 3,
+          conforme a escolha da dupla.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">17</p>
+        </div>
+      </section>
+
+      <!-- 18 - Divisor: o achado -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>O achado</h2>
+        <h3>Uma decisão da Aula 07 que ninguém reabriu</h3>
+      </section>
+
+      <!-- 19 - O custo do alvo em razao -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O alvo em razão custa 0,46 ao linear</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Modelo, mesmas onze features e mesmo corte</th><th>Alvo em nível</th><th>Alvo em razão</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Regressão linear</strong></td><td><strong>2,86%</strong></td><td>3,32%</td></tr>
+            <tr><td>Floresta ajustada na Aula 10</td><td>5,67%</td><td><strong>4,21%</strong></td></tr>
+          </tbody>
+        </table>
+        <p>A Aula 07 escolheu o alvo em razão porque a árvore de decisão não extrapola: a folha
+        devolve a média dos valores vistos no treino, e uma série que cresce sai do alcance dela
+        [12]. A decisão estava certa, e a segunda linha da tabela mostra que continua certa.</p>
+        <p>O que aconteceu é que ela <strong>ficou valendo para todos os modelos seguintes</strong>,
+        inclusive para os lineares, que não têm esse problema: uma regressão linear extrapola sem
+        dificuldade. Para ela, o alvo em razão custa 0,46 ponto [2].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">19</p>
+        </div>
+      </section>
+
+      <!-- 20 - O que isso quer dizer -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A decisão saiu do caso em que foi tomada</h2>
+        </div>
+        <p>Nenhuma busca de hiperparâmetro encontraria isso. A Aula 10 varreu 27 combinações de
+        profundidade, folha e número de árvores, e nenhuma delas muda o alvo do modelo [12]. O
+        espaço que o <code>GridSearchCV</code> percorre é o espaço de ajuste <em>dentro</em> de uma
+        escolha já feita.</p>
+        <p>O AutoML encontrou porque varre a família, e famílias diferentes têm necessidades
+        diferentes de alvo. Ele não sabia da Aula 07 e não tinha opinião sobre razão nem nível: ele
+        só testou os dois quando a dupla pediu [2].</p>
+        <p><strong>A regra que sai daqui:</strong> toda decisão de preparação de dado tomada por
+        causa de um modelo específico precisa ser reaberta quando o modelo mudar.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">20</p>
+        </div>
+      </section>
+
+      <!-- 21 - O que as Aulas 07 a 10 valeram -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Sem protocolo, o 3,63% pareceria bom</h2>
+        </div>
+        <p>Uma leitura possível de tudo isto é que as Aulas 07 a 10 foram perdidas, e que bastaria
+        rodar quatro segundos de AutoML. A medição diz o contrário.</p>
+        <p>O leaderboard que a dupla vê primeiro, com os defaults ligados, estima
+        <strong>3,63%</strong> para um modelo que erra 2,84% de verdade. Esse número não corresponde
+        a nada: saiu de 220 meses sorteados e de um validador que treina com o futuro [2][8].</p>
+        <p>Desta vez o erro foi para o lado pessimista, e a dupla teria sorte. No bloco de vazamento
+        da Aula 09 o mesmo tipo de erro empurrava a métrica para o lado otimista, que é o lado que
+        não dispara alarme. <strong>A direção não é garantida</strong>, e quem não passou pelas
+        Aulas 09 e 10 não tem como saber nem que existe uma direção a checar [12].</p>
+        <p>O AutoML ordena candidatos. Ele não diz se a ordenação é confiável, e essa pergunta é a
+        que a sprint inteira ensinou a fazer.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">21</p>
+        </div>
+      </section>
+
+      <!-- 22 - Quiz 1 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pergunta 1 &middot; O R2 de 0,977</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">O mesmo leaderboard dá R2 0,977 com o alvo em nível e 0,483 com o
+          alvo em razão. O que isso diz?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O MAPE dos dois fica em 3,63% e 3,73%, praticamente igual. Se o modelo tivesse piorado pela metade, o erro relativo teria subido junto.">Que o modelo em razão é cerca de metade tão bom quanto o em nível</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: o R2 é a fração da variância do alvo que o modelo explica, e os dois alvos têm variâncias muito diferentes. O MAPE, que é razão entre erro e valor real, nem se move."
+                data-incorrect-msg="Era esta: o R2 é a fração da variância do alvo que o modelo explica, e os dois alvos têm variâncias muito diferentes. O MAPE, que é razão entre erro e valor real, nem se move.">Que o R2 não é comparável entre alvos de variâncias diferentes</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O alvo em razão é o que a Aula 07 escolheu e continua certo para a árvore. O R2 é que não serve para comparar dois alvos de variâncias diferentes.">Que o alvo em razão é uma escolha ruim e deveria ser abandonado</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="As duas rodadas usam as mesmas onze features, o mesmo corte e a mesma validação. Só o alvo muda, e é por isso que a comparação isola o efeito dele.">Que as duas rodadas usaram features diferentes, e por isso divergem</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">22</p>
+        </div>
+      </section>
+
+      <!-- 23 - Quiz 2 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pergunta 2 &middot; O ganho do AutoML</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">O campeão do AutoML, com alvo em nível e protocolo temporal, erra
+          2,84%, e a floresta ajustada na Aula 10 erra 4,21%. De onde veio essa diferença?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O PyCaret não ajustou hiperparâmetro nenhum no compare_models: ele treinou cada família com os valores padrão dela. Quem ajustou hiperparâmetro foi a Aula 10.">De um ajuste de hiperparâmetros mais fino que o da Aula 10</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="As duas rodadas usam as mesmas onze features da Aula 09. Escolha de feature não entrou nesta aula, e continua como gancho aberto.">De o AutoML ter selecionado um conjunto melhor de features</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: ele trocou a família, de árvore para linear, e com ela o alvo deixou de precisar ser a razão. A decisão de alvo veio da Aula 07, para resolver o teto da árvore, e ficou valendo fora do caso dela."
+                data-incorrect-msg="Era esta: ele trocou a família, de árvore para linear, e com ela o alvo deixou de precisar ser a razão. A decisão de alvo veio da Aula 07, para resolver o teto da árvore, e ficou valendo fora do caso dela.">De trocar a família de modelo, e com ela a necessidade do alvo em razão</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="As duas rodadas treinam com os 315 meses. E mesmo a rodada com os defaults, que usa 220 deles, erra 2,81%: menos dado e ainda assim menos erro.">De o PyCaret ter treinado com mais dado que a Aula 10</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">23</p>
+        </div>
+      </section>
+
+      <!-- 24 - Amarracao com a ART.7 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que a dupla entrega na ART.7, peso 8</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Aula</th><th>O que ela acrescentou ao protocolo</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>09</td><td>Corte por data, baseline declarada, métrica sem dependência de escala</td></tr>
+            <tr><td>10</td><td>Grade de hiperparâmetros declarada e validação que respeita o tempo</td></tr>
+            <tr><td><strong>11</strong></td><td><strong>Varrer a família antes de ajustar, e declarar alvo, versão e critério de ordenação</strong></td></tr>
+          </tbody>
+        </table>
+        <p><strong>ART.7 Comparação de modelos, peso 8</strong>, fecha a Sprint 4 com review
+        <strong>amanhã, 25/09</strong> [10]. O melhor candidato do acervo é um modelo linear sobre o
+        alvo em nível, e não a floresta que duas aulas ajustaram.</p>
+        <p>Na Aula 12 ele é o que vai para o <code>Pipeline</code> do scikit-learn e para o MLflow,
+        e a decisão de alvo entra no pipeline junto com ele.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">24</p>
+        </div>
+      </section>
+
+      <!-- 25 - Referencias -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Referências</h2>
+        </div>
+        <ol class="exercise-steps lista-longa">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite:
+          tabelas 1092, 1093, 1094, 7524 e 1086 do SIDRA.</li>
+          <li>As nove conclusões da aula, em <code>tools/tests/test_automl_aula11.py</code>.</li>
+          <li>Versão do PyCaret, escopo e os 105 minutos em <code>docs/adrs/ADR-014</code>.</li>
+          <li><a href="../materiais/aula11.html">Material de apoio da Aula 11</a>.</li>
+          <li>Ali, M. <em>PyCaret: An open source, low-code machine learning library in
+          Python</em>, 2020.</li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn</em>. JMLR, 2011.</li>
+          <li>Hutter, F.; Kotthoff, L.; Vanschoren, J. (org.). <em>Automated Machine Learning:
+          Methods, Systems, Challenges</em>. Springer, 2019.</li>
+          <li>Kaufman, S. et al. <em>Leakage in Data Mining</em>. ACM TKDD, 6(4), 2012.</li>
+          <li>Corte temporal e baseline de coeficiente fixo da LDC em
+          <code>docs/adrs/ADR-008</code>.</li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seções 4 e 6: peso 8 da ART.7 e review em 25/09.</li>
+          <li>Autoestudos da Semana 08 em
+          <a href="../referencias/aula11.html">referencias/aula11.html</a>.</li>
+          <li><a href="../aulas/aula10.html">Aula 10</a>, de onde vem o resgate,
+          <a href="../aulas/aula09.html">a Aula 09</a>, do RMSE entre escalas, e
+          <a href="../aulas/aula07.html">a Aula 07</a>, que decidiu o alvo em razão.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 11 &middot; Sprint 4</p>
+          <p class="footer-page">25</p>
+        </div>
+      </section>
+
+      <!-- 26 - Encerramento -->
+      <section class="end-slide">
+        <h1>Até 29/09</h1>
+        <h3>Aula 12: Deploy de modelo e criação de pipeline, Sprint 5</h3>
+        <p>Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot; 2026-2A</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      width: 1280, height: 720, center: false, margin: 0,
+      hash: true, slideNumber: false, transition: 'fade'
+    });
+  </script>
+  <script src="../assets/js/inteli-quiz.js"></script>
+  <script src="../assets/js/inteli-zoom.js"></script>
+  <script src="../assets/js/inteli-print.js"></script>
+</body>
+</html>

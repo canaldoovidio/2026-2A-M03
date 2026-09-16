@@ -716,6 +716,19 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
     modelos do case é a entrega central desta etapa, alimentando **ART.7 Comparação de modelos**
     (peso 8). Fecha a Sprint 4 (review em 25/09).
 
+    **Roteiro corrigido em 16/09/2026, na construção da aula, pela ADR-014.** Duas mudanças. A
+    primeira é de ferramenta: o roteiro pede `setup()` e `compare_models()`, que é a API do
+    PyCaret 3, e essa versão **recusa o Python 3.12 na importação**, além de rebaixar
+    scikit-learn, numpy e pandas ao ser instalada. A aula usa o PyCaret 4.0.0a8, cuja API é de
+    objeto, e declara a diferença em sala com uma tabela de conversão de três linhas. A segunda é
+    de tese: a pergunta "o AutoML bate o modelo ajustado à mão?" tem resposta medida, e ela é
+    maior que a pergunta. O campeão automático erra 2,81% contra 4,21% da floresta da Aula 10,
+    mas o ganho não vem de ajuste: vem de varrer a família, o que expôs que o alvo em razão,
+    escolhido na Aula 07 para resolver o teto da árvore, custa 0,46 ponto ao modelo linear e
+    continua valendo 1,46 ponto para a árvore. A aula passa a ensinar que o AutoML varre a família
+    e não conserta o protocolo, e que `train_size=0.7` e `fold_strategy="kfold"` vêm ligados por
+    padrão.
+
 ---
 
 ### Aula 12 - 29/09/2026 - Deploy de modelo e criação de pipeline de processamento  (Sprint 5)

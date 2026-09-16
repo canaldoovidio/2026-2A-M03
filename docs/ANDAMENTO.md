@@ -156,6 +156,13 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
   travadas e quatro versões propositalmente quebradas documentadas. O deck tem 34 slides e os
   quatro botões do card no portal estão habilitados. A aula fecha a Semana 07 e é a primeira do
   acervo **sem bloco de resgate separado**: ver a seção da dívida da ADR-012 abaixo.
+- **Aula 11 completa, os quatro artefatos** (`aulas/aula11.html`, `materiais/aula11.html`,
+  `referencias/aula11.html`, `notebooks/aula11.ipynb`) mais as notas do professor
+  (`docs/notas-do-professor/aula11.md`), a `docs/adrs/ADR-014`, as quatro figuras
+  (`tools/graficos_aula11.py`) e a suíte `tools/tests/test_automl_aula11.py`, com nove conclusões
+  travadas. O deck tem 26 slides e os quatro botões do card no portal estão habilitados. A aula
+  fecha a Sprint 4, e a tese dela é que o AutoML varre a família de modelos e não conserta o
+  protocolo.
 - **Os achados medidos antes do primeiro slide da Aula 10.** (1) A AUC desfaz o empate da Aula 09:
   baseline majoritária 0,500, árvore de entropia 0,500 (a curva dela tem dois pontos, porque ela
   prevê a mesma classe nos 24 meses) e SVM RBF 0,738, com os três marcando 83,3% de acurácia. A
@@ -223,11 +230,11 @@ saída, abaixo.
   `github-pages` foi corrigida pelo professor em 07/08/2026, e o `static.yml` passou a
   publicar normalmente a cada push em `main` (run 31142595526, 22s).
 
-- **Aulas 11 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
-  `aria-disabled="true"`. As Aulas 01 a 10 já existem. A **Aula 11, em 24/09**, é a próxima da
-  fila, fecha a Sprint 4 e traz AutoML com PyCaret, mais o risco de dependência registrado abaixo.
-  O agente `construtor-aulas` existe para esse fan-out, mas as dez primeiras aulas foram escritas
-  sem ele, à mão, seguindo as mesmas skills.
+- **Aulas 12 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
+  `aria-disabled="true"`. As Aulas 01 a 11 já existem, e a Sprint 4 está fechada. A **Aula 12, em
+  29/09**, é a próxima da fila, abre a Sprint 5 e traz `Pipeline` do scikit-learn, export do modelo
+  e MLflow. O agente `construtor-aulas` existe para esse fan-out, mas as onze primeiras aulas foram
+  escritas sem ele, à mão, seguindo as mesmas skills.
 - **O que a Aula 05 deixa marcado para as aulas seguintes.** As quatro séries defasadas em um
   trimestre derrubam o MAPE de teste para 1,14%, contra 1,60% do modelo de hoje, e ficaram de
   fora de propósito: entram como candidata declarada na Aula 07. O reajuste do modelo sobre a
@@ -331,22 +338,72 @@ Dois achados que apareceram construindo a Aula 10 e não são específicos dela:
    construída com 97px e 103px nos dois piores, foi apertada de propósito (figura menor,
    referências mais curtas) e ficou com 142px. **Abaixo de 120px, apertar antes de commitar.**
 
-## Bloqueio conhecido da Aula 11: o PyCaret não roda em Python 3.12
+## O bloqueio do PyCaret, resolvido na construção da Aula 11 em 16/09/2026
 
-Medido em 16/09/2026, durante a construção da Aula 10, antes de a Aula 11 começar:
+Medido antes de a Aula 11 começar, e registrado na `docs/adrs/ADR-014`:
 
-- **`pycaret` 3.3.2 recusa Python 3.12 na importação**, com `RuntimeError: Pycaret only supports
-  python 3.9, 3.10, 3.11`. Não é incompatibilidade silenciosa: é uma checagem explícita no
-  `__init__.py` do pacote, então nenhum ajuste de versão de dependência contorna.
-- **A instalação arrasta o resto do acervo para trás.** No venv de teste, o `pip install pycaret`
-  fixou `scikit-learn` 1.4.2, `numpy` 1.26.4 e `pandas` 2.1.4, contra 1.9.1, 2.x e 3.0.5 do
-  ambiente atual. Pôr `pycaret` no `requirements-ci.txt` sem isolamento muda a versão sob a qual os
-  outros dez notebooks são executados no CI.
-- **Consequências a decidir quando a Aula 11 for construída**, e que precisam de uma ADR própria:
-  se o notebook da Aula 11 fica fora da execução do CI, se o Colab (que hoje roda 3.12+) consegue
-  rodar PyCaret, e se o roteiro da aula sobrevive com outro comparador automático caso não consiga.
-  O roteiro em `PLANEJAMENTO_AULA_A_AULA.md` pede `setup()` e `compare_models()` do PyCaret sobre a
-  base de frango, e a Aula 11 fecha a Sprint 4 em 24/09.
+- **`pycaret` 3.3.2, a última versão estável, recusa Python 3.12 na importação**, com
+  `RuntimeError: Pycaret only supports python 3.9, 3.10, 3.11`. É uma checagem explícita no
+  `__init__.py` do pacote, então nenhum ajuste de versão de dependência contorna. A instalação
+  também rebaixa `scikit-learn` para 1.4.2, `numpy` para 1.26.4 e `pandas` para 2.1.4.
+- **`pycaret` 4.0.0a8 roda no Python atual sem mexer em nenhuma das três**, e convive com o
+  `requirements-ci.txt` inteiro: `pip check` não acusa conflito, e `scikit-learn` 1.9.1, `numpy`
+  2.5.3, `pandas` 3.0.5 e `shap` 0.52.0 permanecem nas versões atuais. É a versão escolhida.
+- **É a única dependência do acervo com versão fixada**, contra a política declarada no topo do
+  `requirements-ci.txt`, porque sem o pin exato o pip nem considera uma pré-release. A exceção e o
+  motivo estão escritos ali.
+- **Custo aceito:** a API da alpha é de objeto (`RegressionExperiment().fit(X, y)`), sem `setup()`,
+  e difere da que os cinco autoestudos da Semana 08 ensinam. O descompasso é declarado em
+  `referencias/aula11.html`, e a tabela de conversão está no slide 7 do deck.
+
+## O que a Aula 11 mediu, e o que ela deixa aberto
+
+- **O modelo que duas aulas de ajuste manual produziram é o pior das quatro referências do
+  acervo**, todas nos mesmos 24 meses de teste: regressão linear sobre o alvo em nível 2,86%, a
+  mesma em razão 3,32%, baseline de coeficiente fixo da LDC 3,71% e floresta ajustada na Aula 10
+  4,21%. O campeão do `compare_models()` sobre o alvo em nível erra 2,81%.
+- **O achado central é uma decisão de alvo aplicada fora do caso em que foi tomada.** A `ADR-010`
+  escolheu o alvo em razão na Aula 07 para resolver o teto da árvore de decisão, e a escolha ficou
+  valendo para todos os modelos seguintes. Para a floresta ela continua certa, e por muito (4,21%
+  contra 5,67% em nível); para o modelo linear ela custa 0,46 ponto. Nenhuma busca de
+  hiperparâmetro encontraria isso, porque o espaço dela já pressupõe o alvo fixado.
+- **O PyCaret traz dois vazamentos temporais ligados por padrão:** `train_size=0.7`, que separa 95
+  dos 315 meses de treino por sorteio, e `fold_strategy="kfold"`, que é o validador que a Aula 10
+  mostrou pondo 252 de 252 meses de treino no futuro na primeira dobra. Trocando pelo
+  `TimeSeriesSplit`, a estimativa do leaderboard passa a errar 0,17 ponto em vez de 0,47.
+- **O R2 não é comparável entre alvos.** Trocando o alvo de nível para razão, sem mudar mais nada,
+  o R2 do leaderboard cai de 0,9771 para 0,4832 e o MAPE não sai da casa (3,63% contra 3,73%). E o
+  leaderboard vem ordenado **por R2**, não por MAPE: `br`, com 4,04%, aparece acima de `lasso`, com
+  4,03%.
+- **A escolha das onze features nunca foi reaberta.** Ela veio da Aula 09 e atravessou as Aulas 10 e
+  11 sem exame. É o próximo candidato ao mesmo tipo de reexame que a Aula 11 fez com o alvo, e fica
+  como gancho para a Aula 12.
+- **A Aula 12 recebe o campeão real do acervo**, um modelo linear sobre o alvo em nível, e não a
+  floresta que duas aulas ajustaram. A decisão de alvo precisa entrar no `Pipeline` junto com ele,
+  para não se perder de novo.
+
+## Achados que valem para o acervo inteiro, da revisão da Aula 11
+
+Dois achados do `revisor-slides` que não são específicos daquela aula:
+
+1. **Comparabilidade de volume de treino é parte do protocolo, e nenhum validador do acervo a
+   checa.** A primeira versão da Aula 11 punha, no mesmo gráfico, o campeão do PyCaret (treinado com
+   220 dos 315 meses, sorteados, por causa do `train_size=0.7` default) e quatro modelos de
+   referência treinados com os 315 inteiros. O gráfico comparava família **e** volume de dado ao
+   mesmo tempo, e usava como número de destaque o produto do protocolo que a própria aula ensina a
+   desconfiar. A correção foi medir o quadrante que faltava (nível com protocolo temporal, 311
+   meses, 2,84%) e usar esse como campeão. **A regra que sai disso: antes de pôr dois modelos na
+   mesma figura, conferir que eles viram a mesma quantidade de dado**, e não só o mesmo conjunto de
+   teste. O acervo já tinha a disciplina do corte por data; esta é a outra metade.
+2. **O corpo 26 das figuras ainda chega abaixo do piso de 18px em projeção.** A Aula 10 subiu o
+   corpo das figuras de 18 para 26 depois de uma versão ilegível, e o revisor mediu o resultado:
+   com `figsize=(16,9)`, `dpi=150` e `max-height: 348px` no slide, a imagem é renderizada a
+   618x348px e o texto embutido chega à tela entre **12px e 15px**, ainda abaixo do piso de 18px do
+   tema. O mesmo vale para a classe `.data-table`, que usa `--escala-complementar` (14px). Isso é
+   sistêmico, herdado de `graficos_aula09.py` em diante, e não se resolve mexendo num script só:
+   precisa de decisão de tema (aumentar o `max-height` da figura no slide, reduzir mais o conteúdo
+   de cada figura, ou aceitar formalmente um piso menor para gráfico que para texto corrido).
+   **Decisão pendente do professor.**
 
 ## Achados que valem para o acervo inteiro, da construção da Aula 06
 
