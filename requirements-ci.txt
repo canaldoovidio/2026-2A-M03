@@ -21,3 +21,4 @@ matplotlib        # Aulas 02, 03 e 04, mais tools/graficos_aula*.py
 seaborn           # Aula 03
 scipy             # Aula 04, teste de Shapiro-Wilk
 scikit-learn      # Aula 04, StandardScaler e LinearRegression
+shap              # Aula 10, TreeExplainer no notebook e em graficos_aula10.py
