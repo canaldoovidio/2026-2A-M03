@@ -662,6 +662,20 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
   11h45 - 12h00  Amarração com a sprint: o modelo ajustado e explicado hoje é candidato direto na
     comparação de modelos, alimentando **ART.7 Comparação de modelos** (peso 8).
 
+    **Roteiro corrigido em 16/09/2026, na construção da aula, pela ADR-013.** Três mudanças. A
+    primeira é de estrutura: o bloco de resgate de 15 minutos deixa de existir como bloco próprio,
+    e os 15 minutos de abertura passam a ser curva ROC e AUC sobre o empate que a Aula 09 mediu.
+    É como a dívida da ADR-012 cabe nesta aula sem tirar tempo dos quatro assuntos já
+    roteirizados, e faz da Aula 10 a primeira do acervo sem bloco de resgate separado. A segunda é
+    de base: o roteiro manda ajustar "o Random Forest treinado na Aula 07" sem dizer sobre qual
+    conjunto de features, e a Aula 07 usava quatro contra as onze que a Aula 09 deixou. A aula
+    ajusta sobre as onze, onde a mesma floresta sem ajuste erra 5,04% contra os 4,48% publicados
+    pela Aula 07. A terceira é de conclusão: o bloco de validação cruzada estava escrito como se
+    `TimeSeriesSplit` fosse melhorar o modelo, e ele não melhora. Com onze features o `KFold`
+    termina 0,08 ponto à frente no teste e com quatro termina 0,04 atrás, então a vantagem é ruído,
+    e o bloco passa a ensinar validação temporal como regra de protocolo, com os 252 meses de
+    treino no futuro da primeira dobra do `KFold` como argumento.
+
 ---
 
 ### Aula 11 - 24/09/2026 - AutoML - Pycaret  (Sprint 4)

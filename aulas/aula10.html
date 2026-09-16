@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 10 &middot; Hiperparâmetros e Explicabilidade do Modelo &middot; Módulo 03 IN</title>
+
+  <!-- Aula 10, 17/09/2026, Sprint 4 (planning em 14/09, review em 25/09).
+       Escopo, base de ajuste e a divisao dos 105 minutos estao em
+       docs/adrs/ADR-013-escopo-e-base-de-ajuste-da-aula-10.md. As treze
+       conclusoes da aula estao travadas em tools/tests/test_ajuste_aula10.py,
+       e as quatro figuras saem de tools/graficos_aula10.py.
+
+       Tese unica, medida nos quatro blocos: o numero que a ferramenta devolve
+       por padrao responde a uma pergunta que ninguem fez. A acuracia nao
+       separa tres modelos empatados, o default do scikit-learn deixa a
+       floresta sem ajuste, o default do GridSearchCV valida treinando com o
+       futuro, e a importancia que vem de graca com a floresta discorda do SHAP
+       a partir da terceira feature.
+
+       Divisao dos 105 minutos (ADR-013):
+         15  Curva ROC e AUC sobre o empate da Aula 09     (slides 3 a 7)
+         30  Hiperparametros, GridSearch e RandomSearch    (slides 8 a 16)
+         30  Validacao cruzada temporal, TimeSeriesSplit   (slides 17 a 23)
+         20  Explicabilidade, SHAP e partial dependence    (slides 24 a 29)
+         10  Quiz e amarracao com a ART.7                  (slides 30 a 32)
+
+       Esta e a primeira aula do acervo sem bloco de resgate separado: a
+       retomada da Aula 09 e o primeiro conteudo novo ocupam o mesmo bloco,
+       porque o empate que a Aula 09 deixou e exatamente o que a curva ROC
+       desfaz. O motivo esta na ADR-013.
+
+       Base: a mesma das Aulas 07 a 09. Juncao interna das cinco series de
+       dados/mensal/, 339 linhas (1998-01 a 2026-03), treino de 315 meses e
+       teste de 24 meses (2024-04 a 2026-03).
+
+       DUAS listas de features convivem nesta aula, e confundi-las inverte
+       conclusao:
+         FEATURES_07 = lag1, lag12, sen, cos                 (4, da Aula 07)
+         FEATURES    = as 11 da Aula 09
+       A floresta de 300 arvores sem ajuste erra 4,48% sobre as quatro e 5,04%
+       sobre as onze. O 4,48% e o numero publicado em notebooks/aula07.ipynb.
+
+       Bloco de ROC e AUC (alvo binario y > lag12 da Aula 09, 11 features
+       padronizadas com escalador ajustado so no treino):
+         empatam nas quatro metricas, com acuracia 83,3%, precisao 0,833,
+           revocacao 1,000 e F1 0,909: baseline majoritaria, SVM RBF e arvore
+           de entropia
+         AUC: baseline 0,500 (2 pontos na curva), arvore 0,500 (2 pontos),
+           SVM RBF 0,738 (10 pontos)
+         logistica: acuracia 79,2% (a pior das que nao desabam) e AUC 0,800
+           (a melhor das cinco, empatada com o SVM linear)
+         naive bayes: acuracia 16,7% e AUC 0,587
+
+       Bloco de hiperparametros (alvo em razao, 11 features):
+         grade de 27 combinacoes: n_estimators 100/300/600,
+           max_depth None/4/8, min_samples_leaf 1/2/5
+         GridSearchCV com TimeSeriesSplit(5): max_depth=4, min_samples_leaf=5,
+           n_estimators=600. Validacao 5,87%, teste 4,21%
+         sem ajuste (None / 1 / 300):                 5,04%
+         so podar a profundidade (4 / 1 / 300):       4,45%
+         so exigir folha maior (None / 5 / 300):      4,40%
+         as duas podas juntas (4 / 5 / 300):          4,13%
+         dobrar as arvores sem podar (None / 1 / 600): 5,20%  (PIORA)
+         RandomizedSearchCV com 9 sorteios: mesma escolha, 45 treinos
+         a grade roda em 9 s com n_jobs=-1 e 19 s num nucleo
+
+       Bloco de validacao cruzada (315 meses de treino):
+         KFold(5), meses de treino posteriores ao inicio da validacao:
+           252 de 252, 189, 126, 63 e 0
+         TimeSeriesSplit(5): 0 nas cinco dobras, treino de 55 a 263 meses
+         onze features:  KFold escolhe 300 arvores, validacao 6,03%, teste 4,13%
+                         TSS   escolhe 600 arvores, validacao 5,87%, teste 4,21%
+         quatro features: KFold escolhe 300, validacao 5,66%, teste 3,99%
+                          TSS   escolhe 100, validacao 5,76%, teste 3,95%
+         a vantagem troca de sinal conforme o conjunto de features: e ruido, e
+         o motivo de usar TimeSeriesSplit e a estimativa ser auditavel
+
+       Bloco de explicabilidade (floresta ajustada, SHAP sobre os 24 meses de
+       teste, impureza sobre os 315 de treino):
+         as duas leituras concordam em lag12 e lag3 e se separam da terceira
+         abate_bovinos_lag1: 3a por SHAP, 6a por impureza
+         producao_ovos_lag1: 7a por SHAP, 5a por impureza
+         lag12 responde por 49,7% do SHAP total
+         partial dependence de lag12: 1,0931 na base pequena e 1,0101 na
+           grande, ou seja 9,3% contra 1,0% de crescimento previsto
+
+       O resgate da Aula 09 (slide 3) copia o trecho de codigo e os numeros de
+       aulas/aula09.html, sem reescrever de memoria: achado registrado da
+       revisao da Aula 06.
+
+       Escopo da conclusao: a vantagem do KFold no teste desta rodada e ruido
+       medido e precisa ser dita em sala, nao escondida (slide 22); o alvo
+       binario segue existindo so para ensinar metrica de classificacao sobre
+       dado real, e os tres modelos do TAPI seguem sendo de regressao.
+
+       ART.7 Comparacao de modelos, peso 8, sprint com planning em 14/09 e
+       review em 25/09 (PLANO_DE_ENSINO.md secao 4). -->
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-theme.css">
+  <link rel="stylesheet" href="../assets/css/inteli-print.css" media="print">
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- 1 - Capa -->
+      <section class="cover-slide">
+        <div class="cover-panel">
+          <div class="cover-content">
+            <p class="cover-eyebrow">Módulo 03 IN &middot; Aula 10 &middot; 17/09/2026</p>
+            <h1>Hiperparâmetros e Explicabilidade do Modelo</h1>
+            <h3>Curva ROC e AUC, GridSearch e RandomSearch, validação cruzada temporal,
+            SHAP e partial dependence</h3>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 - Agenda -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Agenda do encontro</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>08h00 &middot; 10h00</h3>
+            <p>Autoestudo na Adalove, dez itens: hiperparâmetro, GridSearch e RandomSearch,
+            validação cruzada, curva ROC e AUC, SHAP e explicabilidade [11].</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h00 &middot; 10h15</h3>
+            <p>Daily. O que fiz, o que vou fazer, impedimentos. Cada dupla relata se encontrou
+            vazamento temporal no próprio pipeline na Aula 09.</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h15 &middot; 12h00</h3>
+            <p>Curva ROC e AUC (15 min), hiperparâmetros (30 min), validação cruzada temporal
+            (30 min), explicabilidade (20 min) e a amarração com a ART.7 (10 min).</p>
+          </div>
+        </div>
+        <p>Os dez autoestudos de hoje fecham os dezenove da Semana 07: os outros nove foram
+        lidos para a Aula 09 [11].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">2</p>
+        </div>
+      </section>
+
+      <!-- 3 - Resgate da Aula 09, trecho copiado de aulas/aula09.html -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Três modelos com as quatro métricas iguais</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code># o alvo binario da Aula 09
+alvo = (base["abate_frangos"]
+        &gt; base["lag12"]).astype(int)
+
+alvo[:corte].mean()   # 0.7810
+alvo[corte:].mean()   # 0.8333
+
+# baseline, SVM RBF e arvore:
+#   acuracia  0.8333
+#   precisao  0.8333
+#   revocacao 1.0000
+#   F1        0.9091</code></pre>
+          <div>
+            <p>O alvo binário ao lado sai das próprias cinco séries do SIDRA [1]. A Aula 09 mediu
+            cinco classificadores contra a baseline que prevê sempre a classe majoritária, e nenhum
+            superou os 83,3% dela [12].</p>
+            <p>Três deles não só perderam: marcaram os <strong>quatro mesmos valores</strong>, até
+            a quarta casa. A baseline não é um modelo, a árvore de entropia é, e as métricas não
+            conseguem dizer isso [2].</p>
+            <p>Hoje o instrumento que desfaz esse empate entra em sala, e ele é autoestudo desta
+            mesma semana [11].</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">3</p>
+        </div>
+      </section>
+
+      <!-- 4 - O que a curva ROC varre -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A AUC é a chance de ordenar certo</h2>
+        </div>
+        <p>As quatro métricas da Aula 09 têm algo em comum: todas são medidas <strong>depois</strong>
+        de o modelo transformar o que calculou em uma decisão de sim ou não. O SVM calcula uma
+        distância até a fronteira, a árvore calcula a proporção de positivos na folha, e as duas
+        coisas viram um rótulo antes de a métrica existir [8].</p>
+        <p>A curva ROC não espera essa decisão. Ela varre todos os limiares possíveis e mede, em
+        cada um, quanto se ganha em verdadeiro positivo e quanto se paga em falso positivo. A AUC
+        resume a curva em um número, que tem leitura direta: <strong>a probabilidade de o modelo
+        dar escore maior a um mês que cresceu do que a um mês que não cresceu</strong> [8].</p>
+        <p><strong>Pergunta disparada:</strong> se dois modelos acertam a mesma quantidade de
+        meses, o que ainda pode diferenciar um do outro?</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">4</p>
+        </div>
+      </section>
+
+      <!-- 5 - Figura 1: ROC do empate -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A AUC separa 0,738 de 0,500 e 0,500</h2>
+        </div>
+        <img src="../assets/img/aula10-roc-empate.png" alt="Dois painéis. No da esquerda, barras agrupadas mostram que baseline majoritária, árvore de entropia e SVM RBF marcam os mesmos valores nas quatro métricas: 0,833 de acurácia, 0,833 de precisão, 1,000 de revocação e 0,909 de F1. No da direita, as curvas ROC dos três: a baseline e a árvore caem sobre a diagonal, com AUC 0,500, e o SVM RBF sobe acima dela, com AUC 0,738" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 348px;">
+        <p>A curva da árvore tem dois pontos, e é a diagonal: ela prevê a mesma classe nos 24
+        meses, então não há limiar intermediário para varrer [2].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">5</p>
+        </div>
+      </section>
+
+      <!-- 6 - A tabela de acuracia contra AUC -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A pior acurácia tem a melhor AUC</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Modelo, sobre os 24 meses de teste</th><th>Acurácia</th><th>AUC</th><th>Pontos da curva</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Baseline majoritária</td><td>83,3%</td><td>0,500</td><td>2</td></tr>
+            <tr><td>Árvore de entropia <code>max_depth=3</code></td><td>83,3%</td><td>0,500</td><td>2</td></tr>
+            <tr><td>SVM RBF</td><td>83,3%</td><td>0,738</td><td>10</td></tr>
+            <tr><td>SVM linear</td><td>83,3%</td><td>0,800</td><td>9</td></tr>
+            <tr><td><strong>Regressão logística</strong></td><td><strong>79,2%</strong></td><td><strong>0,800</strong></td><td>7</td></tr>
+            <tr><td>Naive Bayes gaussiano</td><td>16,7%</td><td>0,587</td><td>9</td></tr>
+          </tbody>
+        </table>
+        <p>Ordenar por acurácia e ordenar por AUC dão listas diferentes [2]. O SVM RBF decide igual
+        à baseline no limiar padrão, e por isso empata nas quatro métricas, mas ordena os meses
+        melhor que o acaso: é um modelo com o limiar no lugar errado, o que tem conserto. A árvore
+        não ordena nada, o que não tem conserto por limiar.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">6</p>
+        </div>
+      </section>
+
+      <!-- 7 - Pratica 1 -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; A curva ROC da dupla</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Abrir a seção 2 do <a href="https://github.com/canaldoovidio/2026-2A-M03/blob/main/notebooks/aula10.ipynb">notebook da aula</a> e rodar as duas células do bloco de
+          classificação.</li>
+          <li>Conferir que <code>roc_auc_score</code> precisa do <strong>escore</strong>
+          (<code>decision_function</code> ou <code>predict_proba</code>), e não do rótulo de
+          <code>predict</code>: passar o rótulo devolve 0,500 para o SVM RBF.</li>
+          <li>Contar quantos pontos a curva de cada modelo tem, e explicar por que a árvore tem
+          dois e o SVM RBF tem dez.</li>
+          <li>Responder: se a LDC precisasse escolher os 5 meses de maior chance de alta, qual dos
+          seis modelos da tabela ela deveria usar, e por quê?</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">7</p>
+        </div>
+      </section>
+
+      <!-- 8 - Divisor: hiperparametros -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Hiperparâmetros</h2>
+        <h3>GridSearch e RandomSearch sobre a floresta do case</h3>
+      </section>
+
+      <!-- 9 - Parametro contra hiperparametro -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O fit não escolhe hiperparâmetro</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code># hiperparametro: escolhido
+# antes, por quem modela
+floresta = RandomForestRegressor(
+    n_estimators=300,
+    random_state=42)
+
+# parametro: calculado pelo fit,
+# a partir dos dados
+floresta.fit(Xtr, razao_tr)
+
+floresta.estimators_[0].tree_
+# os cortes de cada no, que
+# ninguem escreveu a mao</code></pre>
+          <div>
+            <p>Um <strong>parâmetro</strong> é o que o modelo aprende dos dados: o coeficiente de
+            cada feature na regressão, o valor de corte de cada nó da árvore. O <code>fit</code> é
+            o ato de calcular isso [5].</p>
+            <p>Um <strong>hiperparâmetro</strong> decide <em>como</em> o <code>fit</code> vai
+            acontecer: quantas árvores, até que profundidade, com quantas amostras por folha. O
+            <code>fit</code> não escolhe nenhum deles, e o scikit-learn preenche com um default
+            quando ninguém escolhe [5].</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">9</p>
+        </div>
+      </section>
+
+      <!-- 10 - Os defaults que a Aula 07 aceitou -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A Aula 07 escolheu um de cinco</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Hiperparâmetro da floresta</th><th>Valor na Aula 07</th><th>Quem escolheu</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>n_estimators</code></td><td>300</td><td>A aula</td></tr>
+            <tr><td><code>max_depth</code></td><td><code>None</code>, cresce até a folha pura</td><td>O default</td></tr>
+            <tr><td><code>min_samples_leaf</code></td><td>1</td><td>O default</td></tr>
+            <tr><td><code>min_samples_split</code></td><td>2</td><td>O default</td></tr>
+            <tr><td><code>max_features</code></td><td>1.0, todas as colunas</td><td>O default</td></tr>
+          </tbody>
+        </table>
+        <p>Aceitar o default é uma escolha, e uma escolha que ninguém mediu. Com
+        <code>max_depth=None</code> e <code>min_samples_leaf=1</code>, cada árvore cresce até
+        separar uma linha por folha: quanto mais colunas a base tem, mais espaço isso dá para
+        decorar ruído [5].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">10</p>
+        </div>
+      </section>
+
+      <!-- 11 - As duas bases de features -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Sete features a mais custam 0,56 ponto</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>A mesma floresta de 300 árvores, alvo em razão</th><th>Features</th><th>MAPE de teste</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Sobre a base da Aula 07 (<code>lag1</code>, <code>lag12</code>, <code>sen</code>, <code>cos</code>)</td><td>4</td><td>4,48%</td></tr>
+            <tr><td>Sobre a base que a Aula 09 deixou</td><td>11</td><td>5,04%</td></tr>
+          </tbody>
+        </table>
+        <p>É o mesmo modelo, o mesmo corte por data e a mesma semente: só a largura da base mudou.
+        As sete features que a Aula 09 acrescentou <strong>pioram</strong> a floresta que ninguém
+        ajustou [2].</p>
+        <p>É a maldição de dimensionalidade daquela aula, agora medida no modelo do case e não numa
+        distância média [12]. A pergunta do bloco é se a culpa é das features ou da floresta, e
+        adivinhar não responde.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">11</p>
+        </div>
+      </section>
+
+      <!-- 12 - A grade -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>27 combinações rodam em 9 segundos</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>GRADE = {
+    "n_estimators": [100, 300, 600],
+    "max_depth": [None, 4, 8],
+    "min_samples_leaf": [1, 2, 5],
+}
+
+busca = GridSearchCV(
+    RandomForestRegressor(
+        random_state=42),
+    GRADE,
+    scoring="neg_mean_absolute"
+            "_percentage_error",
+    cv=TimeSeriesSplit(n_splits=5),
+    n_jobs=-1)
+
+busca.fit(X[:corte], razao[:corte])</code></pre>
+          <div>
+            <p>3 x 3 x 3 combinações, cada uma treinada em 5 dobras: <strong>135 treinos</strong>,
+            9 segundos com <code>n_jobs=-1</code> [3].</p>
+            <p>O <code>scoring</code> mede MAPE sobre a razão, e isso dá o mesmo número do MAPE em
+            nível: o <code>lag12</code> aparece no numerador e no denominador do erro relativo e se
+            cancela [2].</p>
+            <p>O <code>cv</code> é o assunto do próximo bloco. Por ora, basta saber que o default
+            seria outro.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">12</p>
+        </div>
+      </section>
+
+      <!-- 13 - Figura 2: a grade inteira -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O ajuste leva 5,04% para 4,21%</h2>
+        </div>
+        <img src="../assets/img/aula10-grade-de-hiperparametros.png" alt="As 27 combinações da grade em barras, ordenadas do menor para o maior MAPE de teste, que vai de 4,07% a 5,35%. Três barras estão nomeadas: a floresta da Aula 07 com os defaults, em 5,04%, a combinação que o GridSearchCV escolhe olhando só o treino, em 4,21%, e o melhor do conjunto de teste, em 4,07%" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 322px;">
+        <p>A barra verde, em 4,07%, é o melhor do teste, e não é alcançável: escolher a combinação pela
+        métrica de teste é escolher pela resposta [2][3].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">13</p>
+        </div>
+      </section>
+
+      <!-- 14 - De onde vem o ganho -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>As duas podas juntas valem 0,91 ponto</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Saindo do default, uma mudança de cada vez</th><th>MAPE de teste</th><th>Ganho</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Default da Aula 07 (<code>None</code> / 1 / 300)</td><td>5,04%</td><td>referência</td></tr>
+            <tr><td>Só podar a profundidade (4 / 1 / 300)</td><td>4,45%</td><td>0,59</td></tr>
+            <tr><td>Só exigir folha maior (<code>None</code> / 5 / 300)</td><td>4,40%</td><td>0,64</td></tr>
+            <tr><td><strong>As duas podas juntas (4 / 5 / 300)</strong></td><td><strong>4,13%</strong></td><td><strong>0,91</strong></td></tr>
+            <tr><td>Dobrar as árvores, sem podar (<code>None</code> / 1 / 600)</td><td>5,20%</td><td>piora 0,16</td></tr>
+          </tbody>
+        </table>
+        <p>O ganho vem de podar a árvore, não de ter mais árvores [2]. Das três dimensões da grade,
+        uma quase não muda o resultado, e um terço dos 135 treinos foi gasto nela.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">14</p>
+        </div>
+      </section>
+
+      <!-- 15 - RandomSearch -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Nove sorteios acham o mesmo que 27</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Busca</th><th>Treinos</th><th>Escolha</th><th>Validação</th><th>Teste</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>GridSearchCV</code>, 27 combinações</td><td>135</td><td>4 / 5 / 600</td><td>5,87%</td><td>4,21%</td></tr>
+            <tr><td><code>RandomizedSearchCV</code>, 9 sorteios</td><td>45</td><td>4 / 5 / 600</td><td>5,87%</td><td>4,21%</td></tr>
+          </tbody>
+        </table>
+        <p>Quando uma das dimensões da grade quase não muda o resultado, varrer todos os valores
+        dela é desperdício: o sorteio cobre as dimensões que importam com a mesma densidade e gasta
+        um terço do orçamento [6].</p>
+        <p>O argumento cresce com o tamanho da grade. Com três valores em cinco hiperparâmetros
+        seriam 243 combinações e 1.215 treinos, e a fração que o sorteio precisa visitar para achar
+        a mesma região não cresce junto [6].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">15</p>
+        </div>
+      </section>
+
+      <!-- 16 - Pratica 2 -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; O GridSearch da dupla</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Rodar a grade da seção 3 do notebook sobre o próprio modelo, com dois ou três
+          hiperparâmetros, e anotar a escolha e o MAPE de teste.</li>
+          <li>Medir o modelo sem ajuste antes, para ter a referência: sem o número de partida, o
+          ganho não existe.</li>
+          <li>Repetir com <code>RandomizedSearchCV</code> e <code>n_iter</code> igual a um terço da
+          grade. A escolha mudou? E o MAPE?</li>
+          <li>Anotar, para a ART.7: qual grade foi buscada, sob qual validação, e quais
+          hiperparâmetros continuaram no default por decisão e não por esquecimento.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">16</p>
+        </div>
+      </section>
+
+      <!-- 17 - Divisor: validacao cruzada -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Validação cruzada temporal</h2>
+        <h3>O que o default do GridSearchCV faz com uma série</h3>
+      </section>
+
+      <!-- 18 - O default e o KFold -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O default do GridSearchCV é o KFold</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code># sem cv, o GridSearchCV usa
+# KFold(n_splits=5)
+GridSearchCV(modelo, GRADE)
+
+# corta por posicao na tabela,
+# e a tabela esta em ordem
+# de calendario
+
+# o que a aula usa:
+TimeSeriesSplit(n_splits=5)
+
+# treino sempre antes da
+# validacao, janela crescente</code></pre>
+          <div>
+            <p>O <code>KFold</code> corta os 315 meses em cinco blocos, usa um como validação e os
+            outros quatro como treino, cinco vezes [5].</p>
+            <p>Em dado tabular sem ordem, isso é correto. Aqui, a linha 300 é março de 2023 e a
+            linha 10 é novembro de 1998, e quatro dos cinco blocos de treino contêm meses
+            posteriores ao bloco de validação [2].</p>
+            <p>A Aula 05 fez a versão manual disso, repetindo janelas à mão; a Aula 09 usou o corte
+            único por data. O <code>TimeSeriesSplit</code> é as duas coisas [12].</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">18</p>
+        </div>
+      </section>
+
+      <!-- 19 - Figura 3: as dobras -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A primeira dobra treina 252 no futuro</h2>
+        </div>
+        <img src="../assets/img/aula10-dobras-kfold-vs-timeseries.png" alt="Dois painéis empilhados. No de cima, as cinco dobras do KFold sobre os 315 meses de treino, com a faixa de validação mudando de posição e a contagem de meses de treino posteriores ao início da validação: 252 de 252, 189, 126, 63 e 0. No de baixo, as cinco dobras do TimeSeriesSplit, com a janela de treino crescendo de 55 para 263 meses e a contagem em zero nas cinco" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 348px;">
+        <p>Na primeira dobra do <code>KFold</code>, o modelo estuda de 2003 a 2024 e é cobrado sobre
+        1998 a 2003 [2].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">19</p>
+        </div>
+      </section>
+
+      <!-- 20 - A tabela das dobras -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Quatro das cinco dobras veem o futuro</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Dobra</th><th>KFold: treino, validação</th><th>No futuro</th><th>TimeSeriesSplit: treino</th><th>No futuro</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>252, 1998-01 a 2003-03</td><td>252</td><td>55, valida 2002-08 a 2006-11</td><td>0</td></tr>
+            <tr><td>2</td><td>252, 2003-04 a 2008-06</td><td>189</td><td>107, valida até 2011-03</td><td>0</td></tr>
+            <tr><td>3</td><td>252, 2008-07 a 2013-09</td><td>126</td><td>159, valida até 2015-07</td><td>0</td></tr>
+            <tr><td>4</td><td>252, 2013-10 a 2018-12</td><td>63</td><td>211, valida até 2019-11</td><td>0</td></tr>
+            <tr><td>5</td><td>252, 2019-01 a 2024-03</td><td>0</td><td>263, valida até 2024-03</td><td>0</td></tr>
+          </tbody>
+        </table>
+        <p>O <code>TimeSeriesSplit</code> paga um preço por isso: as primeiras dobras treinam com 55
+        meses, contra os 252 fixos do <code>KFold</code>. Em troca, nenhuma das cinco estimativas
+        vem de um modelo que estudou o futuro [2].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">20</p>
+        </div>
+      </section>
+
+      <!-- 21 - O resultado que contraria a expectativa -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O KFold ganha 0,08 e perde 0,04</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Base</th><th>Validador</th><th>Escolha</th><th>Estimativa</th><th>Teste</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>11 features</td><td><code>KFold</code></td><td>4 / 5 / 300</td><td>6,03%</td><td><strong>4,13%</strong></td></tr>
+            <tr><td>11 features</td><td><code>TimeSeriesSplit</code></td><td>4 / 5 / 600</td><td>5,87%</td><td>4,21%</td></tr>
+            <tr><td>4 features</td><td><code>KFold</code></td><td>4 / 5 / 300</td><td>5,66%</td><td>3,99%</td></tr>
+            <tr><td>4 features</td><td><code>TimeSeriesSplit</code></td><td>4 / 5 / 100</td><td>5,76%</td><td><strong>3,95%</strong></td></tr>
+          </tbody>
+        </table>
+        <p>Com onze features o <code>KFold</code> termina à frente no teste; com quatro, atrás. A
+        vantagem <strong>troca de sinal</strong> conforme o conjunto de features, e as duas
+        diferenças são menores que um décimo de ponto percentual: isso é ruído de um teste de 24
+        meses, não evidência sobre o validador [2][3].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">21</p>
+        </div>
+      </section>
+
+      <!-- 22 - Por que trocar mesmo assim -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Trocar o validador é regra de protocolo</h2>
+        </div>
+        <p>O que o <code>KFold</code> entrega aqui não é um resultado pior: é uma
+        <strong>estimativa que não se pode auditar</strong>. Quando ele diz que o modelo erra 6,03%
+        na validação, esse número saiu de um procedimento em que o modelo estudou 2024 para ser
+        cobrado sobre 1998. Nenhum modelo em produção terá esse privilégio [2].</p>
+        <p>A estimativa do <code>TimeSeriesSplit</code> responde à pergunta que a LDC vai fazer, que
+        é como o modelo se comporta sobre meses que ele nunca viu e que vieram depois [3].</p>
+        <p>É o mesmo raciocínio da Aula 09: lá, a regressão sobre a razão não melhorava com o
+        sorteio aleatório, e mesmo assim o corte por data virou regra, porque regra de protocolo
+        vale <strong>antes</strong> de saber quem vai ganhar [12]. Escolher o validador depois de
+        ver o resultado é a mesma armadilha de escolher o modelo pela métrica de teste.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">22</p>
+        </div>
+      </section>
+
+      <!-- 23 - Pratica 3 -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; O TimeSeriesSplit da dupla</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Trocar o <code>cv</code> do próprio <code>GridSearchCV</code> pelo
+          <code>TimeSeriesSplit(n_splits=5)</code> e comparar a escolha e a estimativa de
+          validação com as do default.</li>
+          <li>Percorrer <code>cv.split(Xtr)</code> e imprimir, por dobra, o primeiro e o último mês
+          de treino e de validação. Confirmar que o treino termina antes de a validação começar.</li>
+          <li>Contar, em cada dobra do <code>KFold</code>, quantos meses de treino são posteriores
+          ao início da validação, e conferir o 252 de 252 da primeira [2].</li>
+          <li>Responder: a estimativa de validação do próprio modelo ficou mais perto ou mais longe
+          do MAPE de teste depois da troca? E isso é argumento a favor de qual validador?</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">23</p>
+        </div>
+      </section>
+
+      <!-- 24 - Divisor: explicabilidade -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Explicabilidade</h2>
+        <h3>SHAP e partial dependence sobre a floresta ajustada</h3>
+      </section>
+
+      <!-- 25 - Duas leituras de importancia -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Duas leituras para a mesma pergunta</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>melhor = busca.best_estimator_
+
+# vem de graca com a floresta,
+# medida sobre o TREINO
+melhor.feature_importances_
+
+# medida por linha, sobre os
+# 24 meses de TESTE
+import shap
+valores = (shap.TreeExplainer(melhor)
+           .shap_values(X[corte:]))
+np.abs(valores).mean(axis=0)</code></pre>
+          <div>
+            <p>A <strong>importância por impureza</strong> soma, por feature, quanto cada corte que
+            a usou reduziu o erro dentro do treino. Ela tende a inflar features com muitos valores
+            distintos, porque elas oferecem mais cortes possíveis [5].</p>
+            <p>O <strong>SHAP</strong> responde outra coisa: para cada previsão, quanto cada feature
+            empurrou o resultado em relação à previsão média. É leitura por linha, aqui medida
+            sobre os 24 meses de teste, que são as previsões que o modelo vai de fato entregar
+            [7].</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">25</p>
+        </div>
+      </section>
+
+      <!-- 26 - Figura 4: SHAP contra impureza -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>lag12 responde por 49,7% do SHAP</h2>
+        </div>
+        <img src="../assets/img/aula10-shap-vs-impureza.png" alt="Dois painéis. No da esquerda, barras pareadas do SHAP médio absoluto sobre o teste e da importância por impureza sobre o treino, para as seis features de maior SHAP, ordenadas por SHAP: as duas leituras concordam em lag12 e lag3 e divergem da terceira posição em diante. No da direita, o partial dependence de lag12, uma curva decrescente que cai de 1,093 para 1,010" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 348px;">
+        <p>As duas leituras concordam no que mais importa e se separam no resto [2].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">26</p>
+        </div>
+      </section>
+
+      <!-- 27 - A tabela das duas ordens -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>As listas se separam na terceira</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Posição</th><th>Por SHAP, sobre o teste</th><th>Por impureza, sobre o treino</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td><code>lag12</code></td><td><code>lag12</code></td></tr>
+            <tr><td>2</td><td><code>lag3</code></td><td><code>lag3</code></td></tr>
+            <tr><td>3</td><td><strong><code>abate_bovinos_lag1</code></strong></td><td><code>lag2</code></td></tr>
+            <tr><td>4</td><td><code>lag2</code></td><td><code>lag1</code></td></tr>
+            <tr><td>5</td><td><code>lag1</code></td><td><code>producao_ovos_lag1</code></td></tr>
+            <tr><td>6</td><td><code>abate_suinos_lag1</code></td><td><strong><code>abate_bovinos_lag1</code></strong></td></tr>
+          </tbody>
+        </table>
+        <p>Nenhuma das duas está errada: elas medem coisas diferentes, sobre conjuntos diferentes
+        [7]. Mas uma dupla que relatar "a feature mais influente do nosso modelo" sem dizer qual
+        leitura usou dá uma resposta que ninguém consegue conferir, e a ART.7 pede resposta
+        conferível [10].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">27</p>
+        </div>
+      </section>
+
+      <!-- 28 - O partial dependence -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>De 9,3% para 1,0% de crescimento</h2>
+        </div>
+        <p>O partial dependence segura todas as outras features e pergunta o que acontece com a
+        previsão quando uma delas varia. Para o <code>lag12</code>, a curva é decrescente: nos meses
+        de base pequena a floresta prevê cerca de <strong>9,3%</strong> de crescimento sobre o ano
+        anterior, e nos de base grande, cerca de <strong>1,0%</strong> [2][9].</p>
+        <p>Isso se lê em uma frase para a LDC, e é uma frase que dá para discutir com quem entende
+        do negócio: a produção de frango no Brasil cresceu rápido enquanto a base era pequena e
+        desacelerou conforme ela cresceu, e a floresta aprendeu esse formato sem que ninguém a
+        tenha programado para isso.</p>
+        <p>É o tipo de explicação que o TAPI pediu, e é o oposto de dizer que o modelo tem 600
+        árvores [4].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">28</p>
+        </div>
+      </section>
+
+      <!-- 29 - Pratica 4 -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; O SHAP da dupla</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Rodar <code>shap.TreeExplainer</code> sobre o modelo ajustado da própria dupla e
+          listar as features por SHAP médio absoluto no conjunto de teste.</li>
+          <li>Listar as mesmas features por <code>feature_importances_</code> e marcar em que
+          posição as duas ordens se separam.</li>
+          <li>Gerar o partial dependence da feature mais influente e escrever <strong>uma
+          frase</strong> que descreva o formato da curva em linguagem de negócio, sem citar nome de
+          algoritmo.</li>
+          <li>Levar essa frase para o daily da Aula 11: ela é o ponto de partida da comparação com
+          o PyCaret [12].</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">29</p>
+        </div>
+      </section>
+
+      <!-- 30 - Quiz 1 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pergunta 1 &middot; A AUC de 0,500</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">A árvore de entropia tem 83,3% de acurácia e AUC 0,500. O que
+          esses dois números, juntos, dizem sobre ela?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="AUC 0,500 é o valor de quem não ordena nada, e não um valor intermediário. O SVM RBF tem a mesma acurácia e AUC 0,738, então 83,3% não obriga a AUC a ficar em 0,500.">Que ela acerta bem, e a AUC ficou baixa porque a base é desbalanceada</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: ela prevê a mesma classe nos 24 meses, então não existe limiar intermediário para varrer e a curva dela tem dois pontos. Não há ordenação a ajustar."
+                data-incorrect-msg="Era esta: ela prevê a mesma classe nos 24 meses, então não existe limiar intermediário para varrer e a curva dela tem dois pontos. Não há ordenação a ajustar.">Que ela não ordena os meses, e mexer no limiar não a melhoraria</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="É o contrário: um limiar mal escolhido é o caso do SVM RBF, que tem AUC 0,738. Quando a AUC é 0,500, não existe limiar que produza um resultado melhor.">Que o limiar dela está mal escolhido, e outro limiar resolveria</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="AUC menor que 0,500 significaria ordenação invertida, que se conserta trocando o sinal do escore. 0,500 exato é ausência de ordenação, que é o caso aqui.">Que ela ordena ao contrário, e inverter o escore a tornaria útil</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">30</p>
+        </div>
+      </section>
+
+      <!-- 31 - Quiz 2 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pergunta 2 &middot; O KFold no teste</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">Com as onze features, o <code>KFold</code> escolheu um modelo que
+          erra 4,13% no teste, contra 4,21% do <code>TimeSeriesSplit</code>. O que fazer com esse
+          resultado?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Com as quatro features da Aula 07 a ordem se inverte, 3,99% contra 3,95%. Uma vantagem que troca de sinal conforme a base não é evidência sobre o validador.">Adotar o <code>KFold</code>, porque nesta base ele escolheu melhor</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Esconder um resultado medido porque ele contraria a expectativa é o erro que a Aula 09 inteira tratou. O número entra no relatório, com a leitura correta ao lado.">Não relatar, porque contraria o que a aula quis ensinar</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: a diferença troca de sinal com o conjunto de features e é menor que 0,1 ponto percentual, então é ruído. O que decide é a estimativa de validação ser auditável, e a do KFold não é."
+                data-incorrect-msg="Era esta: a diferença troca de sinal com o conjunto de features e é menor que 0,1 ponto percentual, então é ruído. O que decide é a estimativa de validação ser auditável, e a do KFold não é.">Relatar como ruído e decidir pelo protocolo, não pelo resultado</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Rodar as duas e ficar com a melhor no teste é escolher pela resposta, que é o mesmo erro do melhor ponto da grade em 4,07%. O conjunto de teste responde uma vez, no fim.">Rodar os dois sempre e ficar com o que der melhor MAPE de teste</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">31</p>
+        </div>
+      </section>
+
+      <!-- 32 - Amarracao com a ART.7 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que a dupla leva para a ART.7, peso 8</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>O default responde</th><th>O que ele esconde</th><th>O que a comparação exige</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Acurácia de 83,3%</td><td>Três modelos empatados, um deles a baseline</td><td>AUC no alvo categórico, baseline no de regressão</td></tr>
+            <tr><td>Hiperparâmetro não escolhido</td><td>0,83 ponto de MAPE, de 5,04% para 4,21%</td><td>Grade declarada, e default declarado como escolha</td></tr>
+            <tr><td><code>KFold</code> como <code>cv</code></td><td>252 meses de treino no futuro na dobra 1</td><td>Validação cruzada que respeita o tempo</td></tr>
+            <tr><td><code>feature_importances_</code></td><td>Ordem diferente do SHAP da terceira em diante</td><td>Leitura de importância declarada junto do resultado</td></tr>
+          </tbody>
+        </table>
+        <p><strong>ART.7 Comparação de modelos, peso 8</strong>, na Sprint 4, com planning em 14/09
+        e review em 25/09 [10]. O modelo que sai daqui, floresta com <code>max_depth=4</code>,
+        <code>min_samples_leaf=5</code> e <code>n_estimators=600</code> a 4,21%, é o candidato
+        ajustado à mão. Na Aula 11 ele vira o termo de comparação contra o PyCaret.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">32</p>
+        </div>
+      </section>
+
+      <!-- 33 - Referencias -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Referências</h2>
+        </div>
+        <ol class="exercise-steps lista-longa">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite:
+          tabelas 1092, 1093, 1094, 7524 e 1086 do SIDRA.</li>
+          <li>As treze conclusões da aula, em <code>tools/tests/test_ajuste_aula10.py</code>.</li>
+          <li>Escopo, base de ajuste e os 105 minutos em <code>docs/adrs/ADR-013</code>.</li>
+          <li><a href="../materiais/aula10.html">Material de apoio da Aula 10</a>.</li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn</em>. JMLR, 2011.</li>
+          <li>Bergstra, J.; Bengio, Y. <em>Random Search for Hyper-Parameter
+          Optimization</em>. JMLR, 13, 2012.</li>
+          <li>Lundberg, S. M.; Lee, S.-I. <em>A Unified Approach to Interpreting Model
+          Predictions</em>. NeurIPS, 2017.</li>
+          <li>Fawcett, T. <em>An Introduction to ROC Analysis</em>. Pattern Recognition
+          Letters, 27(8), 2006.</li>
+          <li>Friedman, J. H. <em>Greedy Function Approximation</em>. Annals of Statistics,
+          29(5), 2001, seção 8.</li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seções 4 e 6: peso 8 da ART.7.</li>
+          <li>Autoestudos da Semana 07 em
+          <a href="../referencias/aula10.html">referencias/aula10.html</a>.</li>
+          <li><a href="../aulas/aula09.html">Aula 09</a>, de onde vem o resgate, e
+          <a href="../notebooks/aula07.ipynb">o notebook da Aula 07</a>, de onde vem o 4,48%.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 10 &middot; Sprint 4</p>
+          <p class="footer-page">33</p>
+        </div>
+      </section>
+
+      <!-- 34 - Encerramento -->
+      <section class="end-slide">
+        <h1>Até 24/09</h1>
+        <h3>Aula 11: AutoML com PyCaret, Sprint 4</h3>
+        <p>Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot; 2026-2A</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      width: 1280, height: 720, center: false, margin: 0,
+      hash: true, slideNumber: false, transition: 'fade'
+    });
+  </script>
+  <script src="../assets/js/inteli-quiz.js"></script>
+  <script src="../assets/js/inteli-zoom.js"></script>
+  <script src="../assets/js/inteli-print.js"></script>
+</body>
+</html>

@@ -149,6 +149,28 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
   slides e os quatro botões do card no portal estão habilitados. A aula abre a Sprint 4 com cinco
   erros silenciosos medidos na base mensal: vazamento temporal, acurácia em alvo desbalanceado,
   entropia, imputação e dimensionalidade.
+- **Aula 10 completa, os quatro artefatos** (`aulas/aula10.html`, `materiais/aula10.html`,
+  `referencias/aula10.html`, `notebooks/aula10.ipynb`) mais as notas do professor
+  (`docs/notas-do-professor/aula10.md`), a `docs/adrs/ADR-013`, as quatro figuras
+  (`tools/graficos_aula10.py`) e a suíte `tools/tests/test_ajuste_aula10.py`, com treze conclusões
+  travadas e quatro versões propositalmente quebradas documentadas. O deck tem 34 slides e os
+  quatro botões do card no portal estão habilitados. A aula fecha a Semana 07 e é a primeira do
+  acervo **sem bloco de resgate separado**: ver a seção da dívida da ADR-012 abaixo.
+- **Os achados medidos antes do primeiro slide da Aula 10.** (1) A AUC desfaz o empate da Aula 09:
+  baseline majoritária 0,500, árvore de entropia 0,500 (a curva dela tem dois pontos, porque ela
+  prevê a mesma classe nos 24 meses) e SVM RBF 0,738, com os três marcando 83,3% de acurácia. A
+  regressão logística tem a pior acurácia entre as que não desabam (79,2%) e a melhor AUC das cinco
+  (0,800): ordenar por acurácia e ordenar por AUC dão listas diferentes. (2) O ajuste de
+  hiperparâmetros leva a floresta de 5,04% para 4,21% de MAPE, e o ganho vem de podar, não de mais
+  árvores: só `max_depth=4` vale 0,59 ponto, só `min_samples_leaf=5` vale 0,64, as duas juntas
+  valem 0,91, e dobrar `n_estimators` sem podar **piora** de 5,04% para 5,20%. O
+  `RandomizedSearchCV` com nove sorteios acha a mesma combinação da grade cheia, com 45 treinos em
+  vez de 135. (3) Na primeira dobra do `KFold(5)`, os 252 meses de treino são todos posteriores ao
+  início da validação, e quatro das cinco dobras têm treino no futuro; no `TimeSeriesSplit(5)` esse
+  número é zero nas cinco. (4) O SHAP sobre os 24 meses de teste e a importância por impureza sobre
+  o treino concordam em `lag12` e `lag3` e se separam da terceira posição: `abate_bovinos_lag1` é a
+  terceira por SHAP e a sexta por impureza. O partial dependence de `lag12` cai de 1,0931 para
+  1,0101, ou seja de 9,3% para 1,0% de crescimento previsto.
 - **Os achados medidos antes do primeiro slide da Aula 09.** (1) O sorteio aleatório melhora o
   MAPE de quem memoriza vizinho e piora quem não memoriza: KNN de 7,64% para 5,29%, árvore de
   8,81% para 6,31%, random forest de 5,70% para 4,04%, e a regressão linear sobre a razão de 3,32%
@@ -201,11 +223,11 @@ saída, abaixo.
   `github-pages` foi corrigida pelo professor em 07/08/2026, e o `static.yml` passou a
   publicar normalmente a cada push em `main` (run 31142595526, 22s).
 
-- **Aulas 10 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
-  `aria-disabled="true"`. As Aulas 01 a 09 já existem. A **Aula 10, em 17/09**, é a próxima da
-  fila, fecha a Semana 07 e traz hiperparâmetros, validação cruzada e explicabilidade, mais a
-  dívida abaixo. O agente `construtor-aulas` existe para esse fan-out, mas as nove primeiras aulas
-  foram escritas sem ele, à mão, seguindo as mesmas skills.
+- **Aulas 11 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
+  `aria-disabled="true"`. As Aulas 01 a 10 já existem. A **Aula 11, em 24/09**, é a próxima da
+  fila, fecha a Sprint 4 e traz AutoML com PyCaret, mais o risco de dependência registrado abaixo.
+  O agente `construtor-aulas` existe para esse fan-out, mas as dez primeiras aulas foram escritas
+  sem ele, à mão, seguindo as mesmas skills.
 - **O que a Aula 05 deixa marcado para as aulas seguintes.** As quatro séries defasadas em um
   trimestre derrubam o MAPE de teste para 1,14%, contra 1,60% do modelo de hoje, e ficaram de
   fora de propósito: entram como candidata declarada na Aula 07. O reajuste do modelo sobre a
@@ -236,33 +258,95 @@ A `docs/adrs/ADR-009` moveu Elbow Plot e Silhouette Analysis da Aula 06 para a A
   método só é ensinado em sala em 10/09, na Aula 08. A Aula 06 usa a silhueta como número lido nos
   dois agrupamentos, sem ensinar o método, o que ameniza mas não fecha o descompasso.
 
-## Dívida herdada pela Aula 10, por causa da ADR-012
+## Dívida da ADR-012, quitada na construção da Aula 10 em 16/09/2026
 
-A `docs/adrs/ADR-012` deslocou tempo para a Aula 10, para quem construir a Aula 10 não descobrir
-isso tarde:
+A `docs/adrs/ADR-012` deslocou curva ROC e AUC para a Aula 10, que já tinha GridSearch,
+RandomSearch, `TimeSeriesSplit`, SHAP e partial dependence nos mesmos 105 minutos. A
+`docs/adrs/ADR-013` registrou como a aula os acomodou:
 
-- **Curva ROC e AUC entram na Aula 10.** "Curva ROC e AUC" e "Opcional: ROC e AUC na prática" são
-  autoestudos da Semana 07 e conversam com o bloco de classificação da Aula 09, mas a Aula 09 já
-  entrou com onze assuntos em 105 minutos. A Aula 10 recebe os dois em cima de GridSearch,
-  validação cruzada, SHAP e partial dependence, que já estavam no escopo dela.
-- **O exemplo que a Aula 10 herda já está medido**, e não precisa ser refeito: a baseline
-  majoritária acerta 83,3% dos 24 meses com revocação 1,000, e SVM RBF e árvore de entropia
-  repetem as quatro métricas dela. É um caso em que a curva ROC separa o que a acurácia não
-  separa, e serve de motivação de abertura.
-- **`TimeSeriesSplit` chega à Aula 10 com dois ganchos.** A repetição em janelas feita à mão na
-  Aula 05 e o corte único por data da Aula 09 são as duas pontas que a validação cruzada temporal
-  fecha.
-- **A Semana 07 tem dezenove autoestudos na fonte** (`docs/autoestudos-por-semana.md`), e a
-  `referencias/aula09.html` reivindica nove (Desbalanceamento das Classes · Formas de lidar com o
-  desbalanceamento de Classes · Maldição de dimensionalidade · Modelagem do problema: Domain
-  Knowledge · Estudo de caso: Netflix (Learning a Personalized homepage) · Opcional: Estudo de
-  caso - Airbnb · Tratando valores nulos com Imputer · PCA - Resolvendo o problema da
-  dimensionalidade · PCA: o que é e como usar em Python). A `referencias/aula10.html`, quando
-  construída, precisa listar os dez restantes para a semana fechar a conta: Além da Transparência:
-  Contextualizando a Necessidade de Explicabilidade na IA · Como escolher um modelo preditivo ·
-  Curva ROC e AUC · Exemplo I: GridSearch e RandomSearch · Exemplo II: GridSearch e RandomSearch ·
-  Explicabilidade de Modelo com SHAP · O que é hiperparâmetro? · Opcional: Prática com GridSearch
-  e RandomSearch · Opcional: ROC e AUC na prática · Validação Cruzada.
+- **ROC e AUC ocuparam o bloco de resgate, em vez de virar um sexto bloco.** Esta é a primeira aula
+  do acervo **sem bloco de resgate separado**: os 15 minutos de abertura desfazem o empate que a
+  Aula 09 mediu, e com isso a retomada da aula anterior e o primeiro conteúdo novo são a mesma
+  coisa. Quem comparar a anatomia dos decks vai encontrar uma ordem diferente aqui, e ela é
+  deliberada.
+- **O empate que a Aula 09 deixou já estava medido**, e não precisou ser refeito: baseline
+  majoritária, SVM RBF e árvore de entropia marcam 83,3% de acurácia, 0,833 de precisão, 1,000 de
+  revocação e 0,909 de F1, os quatro valores idênticos. A AUC separa: 0,500 na baseline, 0,500 na
+  árvore (a curva dela tem dois pontos) e 0,738 no SVM RBF. E a regressão logística tem a pior
+  acurácia entre as que não desabam (79,2%) e a melhor AUC das cinco (0,800).
+- **A Semana 07 fechou em dezenove autoestudos.** `referencias/aula09.html` reivindica nove e
+  `referencias/aula10.html` os dez restantes, com título exato da fonte.
+
+## Duas listas de features convivem a partir da Aula 10
+
+Confundi-las inverte conclusão, e isso precisa ser dito toda vez que os números aparecerem juntos:
+
+- A **Aula 07** treinou a floresta de 300 árvores sobre **quatro** colunas (`lag1`, `lag12`, `sen`,
+  `cos`) e publicou **4,48%** de MAPE de teste em `notebooks/aula07.ipynb`.
+- A **Aula 09** expandiu a base para **onze** features e nunca republicou a floresta sobre elas. A
+  mesma floresta, sem ajuste, erra **5,04%** ali: as sete features acrescentadas pioram o modelo que
+  ninguém ajustou, que é a maldição de dimensionalidade daquela aula medida no modelo do case.
+- A **Aula 10** ajusta sobre as onze, e leva o erro a **4,21%**. A floresta ajustada sobre as quatro
+  da Aula 07 erra **3,95%**, então o ajuste recupera a maior parte do custo das features novas, não
+  todo. Escolher features não é assunto da Aula 10, e fica como gancho aberto.
+
+## O que a Aula 10 deixa marcado para as aulas seguintes
+
+- **A Aula 11 recebe o termo de comparação pronto:** floresta com `max_depth=4`,
+  `min_samples_leaf=5` e `n_estimators=600` a 4,21% de MAPE, ajustada à mão. A pergunta de abertura
+  daquela aula é se o PyCaret bate isso.
+- **A vantagem do `KFold` no teste é ruído medido, e está dita em sala.** Com onze features ele
+  termina 0,08 ponto à frente do `TimeSeriesSplit`; com quatro, 0,04 atrás. A vantagem troca de
+  sinal conforme o conjunto de features, e os dois validadores escolhem a mesma poda nos quatro
+  casos. O argumento para trocar é a estimativa ser auditável (252 dos 252 meses de treino da
+  primeira dobra do `KFold` são posteriores ao início da validação), não ser melhor. Ver a seção 11
+  de `materiais/aula10.html` e a seção de pergunta difícil em `docs/notas-do-professor/aula10.md`.
+- **`shap` entrou no `requirements-ci.txt`**, e é a única dependência nova do módulo inteiro. O
+  notebook da Aula 10 instala o pacote com mensagem em português quando ele não está presente, e a
+  primeira checagem das notas do professor manda instalar no começo da aula, não às 11h30.
+
+## Achados que valem para o acervo inteiro, da construção da Aula 10
+
+Dois achados que apareceram construindo a Aula 10 e não são específicos dela:
+
+1. **Corpo 18 numa figura densa chega ilegível à projeção, e nenhum validador pega isso.** Os
+   scripts de figura do acervo fixam corpo 18, que é o piso de legibilidade do tema. Isso funciona
+   para figura esparsa (a da Aula 09 tem quatro barras e dez rótulos curtos) e falhou nas quatro
+   primeiras versões das figuras da Aula 10. A conta: a `section` limita a figura a cerca de 350px
+   de altura, uma imagem 16:9 cabe então em cerca de 620px de largura numa tela de 1280, e o corpo
+   18 chega com menos da metade do tamanho. `check_slides.py` aprova, porque a figura cabe; o
+   problema só aparece em captura de tela do slide, que é o passo 3 do fluxo da
+   `inteli-deck-design`. As figuras da Aula 10 subiram para corpo 26 e perderam elementos até
+   caber: a grade deixou de rotular as 27 barras, o painel das dobras trocou dez frases por dez
+   números, e o painel de SHAP passou a mostrar seis features em vez de onze. **A regra prática:
+   contar os elementos de texto da figura antes de escolher o corpo, e conferir por captura de
+   tela dentro do deck, nunca olhando o PNG isolado.** Isto provavelmente pertence à seção 8 da
+   skill `inteli-deck-design`, junto com a armadilha 8.8 (`max-height` em imagem), e ainda não foi
+   levado para lá.
+2. **A folga vertical do slide no macOS prevê a reprovação no Ubuntu, e dá para medi-la.** O
+   `CLAUDE.md` já registra que o CI mede com métricas de fonte diferentes, sem dizer como
+   antecipar. Medindo a distância entre o elemento mais baixo de cada slide e o topo do rodapé,
+   com Playwright: a Aula 04, que ficou com o CI vermelho de 19/08 a 24/08, tem 39px e 73px nos
+   dois slides que reprovaram; a Aula 09, que passou, tem 120px no pior slide. A Aula 10 foi
+   construída com 97px e 103px nos dois piores, foi apertada de propósito (figura menor,
+   referências mais curtas) e ficou com 142px. **Abaixo de 120px, apertar antes de commitar.**
+
+## Bloqueio conhecido da Aula 11: o PyCaret não roda em Python 3.12
+
+Medido em 16/09/2026, durante a construção da Aula 10, antes de a Aula 11 começar:
+
+- **`pycaret` 3.3.2 recusa Python 3.12 na importação**, com `RuntimeError: Pycaret only supports
+  python 3.9, 3.10, 3.11`. Não é incompatibilidade silenciosa: é uma checagem explícita no
+  `__init__.py` do pacote, então nenhum ajuste de versão de dependência contorna.
+- **A instalação arrasta o resto do acervo para trás.** No venv de teste, o `pip install pycaret`
+  fixou `scikit-learn` 1.4.2, `numpy` 1.26.4 e `pandas` 2.1.4, contra 1.9.1, 2.x e 3.0.5 do
+  ambiente atual. Pôr `pycaret` no `requirements-ci.txt` sem isolamento muda a versão sob a qual os
+  outros dez notebooks são executados no CI.
+- **Consequências a decidir quando a Aula 11 for construída**, e que precisam de uma ADR própria:
+  se o notebook da Aula 11 fica fora da execução do CI, se o Colab (que hoje roda 3.12+) consegue
+  rodar PyCaret, e se o roteiro da aula sobrevive com outro comparador automático caso não consiga.
+  O roteiro em `PLANEJAMENTO_AULA_A_AULA.md` pede `setup()` e `compare_models()` do PyCaret sobre a
+  base de frango, e a Aula 11 fecha a Sprint 4 em 24/09.
 
 ## Achados que valem para o acervo inteiro, da construção da Aula 06
 
