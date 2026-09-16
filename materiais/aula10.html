@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material de apoio &middot; Aula 10 &middot; Hiperparâmetros e Explicabilidade do Modelo</title>
+  <meta name="description" content="Material de apoio da Aula 10 do Módulo 03 IN: a curva ROC que desfaz o empate da Aula 09, a busca em grade que leva a floresta de 5,04% para 4,21%, o TimeSeriesSplit contra o KFold default do GridSearchCV, e o SHAP que discorda da importância por impureza.">
+
+  <!-- Este material NAO e o roteiro do deck em prosa. Ele aprofunda o que o
+       slide so pode apontar, e e o lugar onde a dupla confere cada numero com
+       calma. Todo numero citado aqui esta travado nos treze testes de
+       tools/tests/test_ajuste_aula10.py e reproduzido por
+       tools/graficos_aula10.py, sobre os CSVs de dados/mensal/.
+       O escopo, a base de ajuste e a divisao dos 105 minutos estao em
+       docs/adrs/ADR-013-escopo-e-base-de-ajuste-da-aula-10.md.
+
+       CUIDADO com as duas listas de features: a Aula 07 treinou a floresta
+       sobre quatro colunas e publicou 4,48%; esta aula ajusta sobre as onze
+       que a Aula 09 deixou, onde a mesma floresta sem ajuste erra 5,04%. Citar
+       um numero com a base do outro inverte conclusao. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 10 &middot; 17/09/2026 &middot; Sprint 4</p>
+      <h1>Material de apoio: Hiperparâmetros e Explicabilidade do Modelo</h1>
+      <p class="doc-subtitulo">A Aula 09 terminou com três modelos marcando os quatro mesmos valores
+      de acurácia, precisão, revocação e F1, sem instrumento para dizer qual deles tinha aprendido
+      alguma coisa. Esta aula desfaz esse empate com a curva ROC e depois faz com a floresta do case
+      o que ninguém tinha feito até aqui: escolher os hiperparâmetros dela, validar essa escolha sem
+      olhar para o futuro, e perguntar ao modelo pronto quais features ele usou. Cada seção registra
+      a medição, o mecanismo por trás dela e o escopo exato da conclusão.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#empate">O empate que a Aula 09 deixou medido</a></li>
+        <li><a href="#roc">O que a curva ROC varre, e o que a AUC resume</a></li>
+        <li><a href="#auc">A AUC separa 0,738 de 0,500, e reordena a lista inteira</a></li>
+        <li><a href="#hiperparametro">Parâmetro é calculado, hiperparâmetro é escolhido</a></li>
+        <li><a href="#duas-bases">Sete features a mais custam 0,56 ponto à floresta sem ajuste</a></li>
+        <li><a href="#grade">A grade de 27 combinações, e o que o scoring mede</a></li>
+        <li><a href="#poda">As duas podas juntas valem 0,91 ponto, e mais árvores piora</a></li>
+        <li><a href="#randomsearch">Nove sorteios chegam onde 27 combinações chegam</a></li>
+        <li><a href="#kfold">O default do GridSearchCV treina com 252 meses no futuro</a></li>
+        <li><a href="#ruido">A vantagem do KFold troca de sinal, e por isso é ruído</a></li>
+        <li><a href="#protocolo">Por que trocar de validador mesmo assim</a></li>
+        <li><a href="#shap">SHAP e impureza medem coisas diferentes, sobre conjuntos diferentes</a></li>
+        <li><a href="#pdp">O partial dependence de lag12 vira uma frase de negócio</a></li>
+        <li><a href="#escopo">Escopo das conclusões desta aula</a></li>
+        <li><a href="#art7">O que a dupla leva para a ART.7</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="empate">
+        <h2>1. O empate que a Aula 09 deixou medido</h2>
+        <p>A Aula 09 criou um alvo binário a partir das próprias séries do SIDRA, "o abate do mês
+        supera o mesmo mês do ano anterior", e mediu cinco classificadores contra a baseline que
+        prevê sempre a classe majoritária. Nenhum superou os 83,3% de acurácia dela. Três deles
+        marcaram os <strong>quatro mesmos valores</strong>, até a quarta casa decimal.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>modelo, sobre os 24 meses de teste</th><th>acurácia</th><th>precisão</th><th>revocação</th><th>F1</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>baseline majoritária</td><td>83,3%</td><td>0,833</td><td>1,000</td><td>0,909</td></tr>
+              <tr><td>SVM RBF</td><td>83,3%</td><td>0,833</td><td>1,000</td><td>0,909</td></tr>
+              <tr><td>árvore de entropia <code>max_depth=3</code></td><td>83,3%</td><td>0,833</td><td>1,000</td><td>0,909</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O empate não é coincidência de arredondamento: as quatro métricas são funções da matriz
+        de confusão, e os três modelos produzem a <strong>mesma matriz</strong>. Todos os 24 meses
+        recebem a previsão "cresce", os 20 que de fato cresceram viram verdadeiro positivo e os 4
+        que não cresceram viram falso positivo. Nenhuma função dessa matriz pode distinguir os três,
+        porque não há nada na matriz que os distinga.</p>
+        <p>E há uma diferença real entre eles: a baseline não é um modelo, é uma constante, e o SVM
+        RBF é um modelo treinado com onze features padronizadas. Alguma coisa aconteceu no
+        <code>fit</code> do SVM que não aconteceu na baseline, e as quatro métricas não conseguem
+        mostrar o quê.</p>
+        <div class="doc-nota">
+          <p>Os números desta seção são copiados de <a href="aula09.html#classificadores">materiais/aula09.html</a>
+          e de <code>aulas/aula09.html</code>, não reescritos de memória. É o achado registrado da
+          revisão da Aula 06: slide que revisa outra aula copia do arquivo de origem.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="roc">
+        <h2>2. O que a curva ROC varre, e o que a AUC resume</h2>
+        <p>As quatro métricas da Aula 09 têm uma coisa em comum que não aparece ao olhar para elas
+        separadamente: <strong>todas são medidas depois da decisão</strong>. O modelo calcula alguma
+        quantidade contínua, compara com um limiar, produz um rótulo, e só então a métrica existe.</p>
+        <p>O que cada modelo calcula antes de decidir:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>modelo</th><th>quantidade contínua</th><th>como virar rótulo</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>SVM</td><td><code>decision_function</code>, a distância com sinal até a fronteira</td><td>positivo se maior que zero</td></tr>
+              <tr><td>árvore e floresta</td><td><code>predict_proba</code>, a proporção de positivos na folha</td><td>positivo se maior que 0,5</td></tr>
+              <tr><td>regressão logística</td><td><code>predict_proba</code>, a probabilidade estimada</td><td>positivo se maior que 0,5</td></tr>
+              <tr><td>baseline majoritária</td><td>nenhuma: o escore é constante</td><td>sempre a classe majoritária</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A curva ROC não aceita o limiar como dado. Ela percorre todos os limiares possíveis, do
+        mais permissivo ao mais restritivo, e marca em cada um o par (taxa de falso positivo, taxa de
+        verdadeiro positivo). Quando o escore assume poucos valores distintos, a curva tem poucos
+        pontos, porque limiares entre dois valores consecutivos produzem exatamente a mesma decisão.</p>
+        <p>A <strong>AUC</strong> é a área sob essa curva, e tem uma leitura que dispensa geometria:
+        é a probabilidade de o modelo atribuir escore maior a um mês que cresceu do que a um mês que
+        não cresceu, sorteando um de cada. AUC 0,5 é o que se obtém sorteando; AUC 1,0 é ordenação
+        perfeita; AUC menor que 0,5 é ordenação invertida, que se conserta trocando o sinal do
+        escore.</p>
+        <div class="doc-nota">
+          <p><strong>A armadilha de implementação vale mais que a definição.</strong>
+          <code>roc_auc_score(real, previsto)</code> aceita o rótulo de <code>predict</code> sem
+          reclamar, e devolve um número que parece razoável. Mas com dois valores possíveis a curva
+          tem dois pontos, e a AUC do SVM RBF cai de 0,738 para 0,500: o próprio instrumento que
+          deveria desfazer o empate volta a empatar. É a primeira quebra documentada em
+          <code>tools/tests/test_ajuste_aula10.py</code>.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="auc">
+        <h2>3. A AUC separa 0,738 de 0,500, e reordena a lista inteira</h2>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>modelo</th><th>acurácia</th><th>AUC</th><th>pontos da curva</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>baseline majoritária</td><td>83,3%</td><td>0,500</td><td>2</td></tr>
+              <tr><td>árvore de entropia</td><td>83,3%</td><td>0,500</td><td>2</td></tr>
+              <tr><td>SVM RBF</td><td>83,3%</td><td>0,738</td><td>10</td></tr>
+              <tr><td>SVM linear</td><td>83,3%</td><td>0,800</td><td>9</td></tr>
+              <tr><td>regressão logística</td><td><strong>79,2%</strong></td><td><strong>0,800</strong></td><td>7</td></tr>
+              <tr><td>Naive Bayes gaussiano</td><td>16,7%</td><td>0,587</td><td>9</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Três leituras, em ordem de importância.</p>
+        <p><strong>A árvore de entropia tem AUC 0,500 e dois pontos na curva.</strong> Isso não é
+        uma AUC baixa: é a ausência de ordenação. A árvore, com <code>max_depth=3</code> sobre um
+        treino com 78,1% de positivos, acaba prevendo a classe majoritária para os 24 meses de teste,
+        e não existe limiar intermediário para varrer. Em termos de ordenação, ela <em>é</em> a
+        baseline. Mexer no limiar não a melhoraria, porque não há nada para reordenar.</p>
+        <p><strong>O SVM RBF tem AUC 0,738 com a mesma acurácia.</strong> Ele decide igual à baseline
+        no limiar padrão, e por isso empata nas quatro métricas, mas a distância até a fronteira que
+        ele calcula ordena os meses melhor que o acaso em quase três de cada quatro pares. É um
+        modelo que aprendeu e está com o limiar no lugar errado, o que tem conserto: mover o limiar
+        produz decisões diferentes e potencialmente úteis. A árvore não oferece essa possibilidade.</p>
+        <p><strong>A regressão logística tem a pior acurácia entre as que não desabam e a melhor
+        AUC.</strong> Ela é a única, junto com o SVM linear, que chega a 0,800, e a única que prevê
+        queda alguma vez, acertando 2 dos 4 meses de queda (Aula 09). Ordenar por acurácia e ordenar
+        por AUC dão listas diferentes, e <strong>escolher a métrica é escolher o vencedor</strong>.</p>
+        <p>O Naive Bayes gaussiano é o caso extremo do mesmo fenômeno pelo avesso: acurácia de 16,7%,
+        a pior de todas, e AUC 0,587, acima do acaso. Ele ordena um pouco e decide catastroficamente
+        mal, porque a suposição de independência das onze features é falsa nesta base, onde
+        <code>lag1</code>, <code>lag2</code> e <code>lag3</code> são fortemente correlacionadas entre
+        si.</p>
+        <div class="doc-nota">
+          <p><strong>Escopo.</strong> Este bloco usa o alvo binário criado pela Aula 09, que existe
+          para ensinar métricas de classificação sobre dado real. Os três modelos encadeados que o
+          TAPI da LDC pede continuam sendo de <strong>regressão</strong>, e a ART.7 compara modelos
+          de regressão. O equivalente da AUC nesse caso é a baseline declarada ao lado de cada
+          métrica, protocolo fixado na <code>ADR-008</code>.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="hiperparametro">
+        <h2>4. Parâmetro é calculado, hiperparâmetro é escolhido</h2>
+        <p>Um <strong>parâmetro</strong> é o que o modelo aprende a partir dos dados: o coeficiente
+        de cada feature na regressão linear, o valor de corte de cada nó de cada árvore da floresta.
+        O <code>fit</code> é o ato de calcular isso, e ninguém escreve esses valores à mão.</p>
+        <p>Um <strong>hiperparâmetro</strong> decide como o <code>fit</code> vai acontecer. Ele
+        precisa existir antes de o cálculo começar, e o <code>fit</code> não o escolhe. Quando
+        ninguém escolhe, o scikit-learn preenche com um default.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>hiperparâmetro da floresta</th><th>valor na Aula 07</th><th>quem escolheu</th><th>o que ele controla</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>n_estimators</code></td><td>300</td><td>a aula</td><td>quantas árvores entram na média</td></tr>
+              <tr><td><code>max_depth</code></td><td><code>None</code></td><td>o default</td><td>até onde cada árvore pode crescer</td></tr>
+              <tr><td><code>min_samples_leaf</code></td><td>1</td><td>o default</td><td>quantas linhas uma folha precisa ter</td></tr>
+              <tr><td><code>min_samples_split</code></td><td>2</td><td>o default</td><td>quantas linhas um nó precisa para dividir</td></tr>
+              <tr><td><code>max_features</code></td><td>1.0</td><td>o default</td><td>quantas colunas cada divisão considera</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A combinação <code>max_depth=None</code> com <code>min_samples_leaf=1</code> tem uma
+        consequência concreta: cada árvore cresce até isolar uma linha por folha. Em uma base de 315
+        linhas com quatro colunas, o espaço para fazer isso é limitado; com onze colunas, há muito
+        mais maneiras de separar uma linha das outras usando alguma combinação de cortes, e boa parte
+        dessas maneiras separa ruído em vez de padrão.</p>
+        <p>Aceitar o default é uma escolha. O que a ART.7 cobra não é que a dupla ajuste tudo, é que
+        ela <strong>declare o que foi ajustado e o que ficou no default por decisão</strong>, em vez
+        de por esquecimento.</p>
+      </section>
+
+      <section class="doc-secao" id="duas-bases">
+        <h2>5. Sete features a mais custam 0,56 ponto à floresta sem ajuste</h2>
+        <p>A Aula 07 treinou a floresta sobre quatro colunas e publicou 4,48% de MAPE de teste. A
+        Aula 09 expandiu a base para onze e nunca republicou a floresta sobre elas. Medindo agora, com
+        o mesmo modelo, a mesma semente e o mesmo corte por data:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>floresta de 300 árvores, alvo em razão, sem ajuste</th><th>features</th><th>MAPE de teste</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>base da Aula 07: <code>lag1</code>, <code>lag12</code>, <code>sen</code>, <code>cos</code></td><td>4</td><td>4,48%</td></tr>
+              <tr><td>base que a Aula 09 deixou</td><td>11</td><td>5,04%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Só a largura da base mudou, e as sete features acrescentadas <strong>pioraram</strong> o
+        modelo. É a maldição de dimensionalidade que a Aula 09 ensinou, agora medida no modelo do
+        case em vez de numa distância euclidiana média.</p>
+        <p>A pergunta que abre o bloco de busca é se a culpa é das features ou da floresta. Se for das
+        features, nada que se faça com hiperparâmetro resolve. Se for da floresta crescendo sem
+        limite sobre uma base larga, o ajuste resolve. Adivinhar não responde, e é isso que o
+        <code>GridSearchCV</code> existe para decidir.</p>
+        <div class="doc-nota">
+          <p><strong>Cuidado ao citar estes dois números juntos.</strong> 4,48% e 5,04% são a mesma
+          floresta sobre bases diferentes, e não uma discrepância de medição. Sempre que aparecerem
+          lado a lado, a base precisa vir junto, sob pena de parecer erro. A <code>ADR-013</code>
+          registra essa consequência negativa da decisão de ajustar sobre as onze features.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="grade">
+        <h2>6. A grade de 27 combinações, e o que o scoring mede</h2>
+        <p>O <code>GridSearchCV</code> recebe um dicionário de listas, monta o produto cartesiano
+        delas, treina cada combinação em cada dobra de validação, e devolve a que teve o melhor
+        escore médio. A grade desta aula:</p>
+        <pre class="doc-codigo"><code>GRADE = {
+    "n_estimators": [100, 300, 600],
+    "max_depth": [None, 4, 8],
+    "min_samples_leaf": [1, 2, 5],
+}
+
+busca = GridSearchCV(
+    RandomForestRegressor(random_state=42),
+    GRADE,
+    scoring="neg_mean_absolute_percentage_error",
+    cv=TimeSeriesSplit(n_splits=5),
+    n_jobs=-1)
+
+busca.fit(X[:corte], razao[:corte])
+busca.best_params_
+# {'max_depth': 4, 'min_samples_leaf': 5, 'n_estimators': 600}</code></pre>
+        <p>São 3 x 3 x 3 = 27 combinações, cada uma treinada em 5 dobras: <strong>135 treinos</strong>.
+        Na base do case, com 315 linhas de treino, isso leva 9 segundos com <code>n_jobs=-1</code> e
+        19 segundos em um único núcleo.</p>
+        <p>Duas decisões dessa chamada merecem explicação.</p>
+        <p><strong>O <code>scoring</code> mede MAPE sobre a razão, e isso dá o mesmo número do MAPE
+        em nível.</strong> O modelo é treinado para prever a razão entre o mês e o mesmo mês do ano
+        anterior, e a previsão em nível é essa razão multiplicada pelo <code>lag12</code>. No erro
+        percentual, o <code>lag12</code> aparece no numerador e no denominador e se cancela:</p>
+        <pre class="doc-codigo"><code>|y - ŷ| / y  =  |r·lag12 - r̂·lag12| / (r·lag12)  =  |r - r̂| / r</code></pre>
+        <p>A igualdade é exata, não aproximada, e por isso dá para usar o scorer pronto do
+        scikit-learn em vez de escrever um scorer próprio. Está travada em
+        <code>test_o_mape_na_razao_e_o_mesmo_mape_em_nivel</code>, com tolerância de 1e-9.</p>
+        <p><strong>O <code>cv</code> está explícito.</strong> Sem esse argumento, o
+        <code>GridSearchCV</code> usaria <code>KFold(n_splits=5)</code>, que é o assunto da seção 9.
+        Deixar o default aqui produziria a mesma escolha de poda nesta base, mas por um procedimento
+        que não se pode auditar.</p>
+      </section>
+
+      <section class="doc-secao" id="poda">
+        <h2>7. As duas podas juntas valem 0,91 ponto, e mais árvores piora</h2>
+        <p>Saber que o ajuste levou o MAPE de 5,04% para 4,21% não diz de onde veio o ganho. A tabela
+        abaixo sai do default e muda uma coisa de cada vez:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>combinação (<code>max_depth</code> / <code>min_samples_leaf</code> / <code>n_estimators</code>)</th><th>MAPE de teste</th><th>diferença</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>default da Aula 07 (<code>None</code> / 1 / 300)</td><td>5,04%</td><td>referência</td></tr>
+              <tr><td>só podar a profundidade (4 / 1 / 300)</td><td>4,45%</td><td>0,59 ponto melhor</td></tr>
+              <tr><td>só exigir folha maior (<code>None</code> / 5 / 300)</td><td>4,40%</td><td>0,64 ponto melhor</td></tr>
+              <tr><td><strong>as duas podas juntas (4 / 5 / 300)</strong></td><td><strong>4,13%</strong></td><td><strong>0,91 ponto melhor</strong></td></tr>
+              <tr><td>dobrar as árvores, sem podar (<code>None</code> / 1 / 600)</td><td>5,20%</td><td>0,16 ponto pior</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>As duas podas atacam o mesmo problema por caminhos diferentes, e por isso somam menos que
+        a soma: 0,59 mais 0,64 daria 1,23, e juntas valem 0,91. As duas limitam o quanto cada árvore
+        pode se especializar em linhas individuais do treino, uma pela altura e outra pelo tamanho
+        mínimo da folha.</p>
+        <p>Dobrar o número de árvores sem podar nada <strong>piora</strong> o erro. Isso não contraria
+        a teoria da floresta aleatória: mais árvores reduzem a variância da média, mas não corrigem o
+        viés de cada árvore individual, e aqui cada árvore está decorando. Fazer a média de 600
+        árvores que decoram não desfaz a decoração.</p>
+        <p>A consequência prática é sobre orçamento de busca. Das três dimensões da grade, uma quase
+        não muda o resultado, e um terço dos 135 treinos foi gasto varrendo os três valores dela. Em
+        uma grade maior, esse desperdício cresce multiplicativamente.</p>
+        <div class="doc-nota">
+          <p><strong>A combinação que o GridSearchCV escolhe não é a melhor do teste.</strong> A busca
+          escolhe 4 / 5 / 600, que erra 4,21%; a melhor das 27 no conjunto de teste é 4 / 5 / 100, com
+          4,07%. Isso é como tem que ser: escolher a combinação pela métrica de teste é escolher pela
+          resposta, o mesmo erro de protocolo que a Aula 09 tratou no bloco de vazamento. O conjunto
+          de teste responde uma vez, no fim.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="randomsearch">
+        <h2>8. Nove sorteios chegam onde 27 combinações chegam</h2>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>busca</th><th>treinos</th><th>escolha</th><th>estimativa de validação</th><th>MAPE de teste</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>GridSearchCV</code>, 27 combinações</td><td>135</td><td>4 / 5 / 600</td><td>5,87%</td><td>4,21%</td></tr>
+              <tr><td><code>RandomizedSearchCV</code>, <code>n_iter=9</code></td><td>45</td><td>4 / 5 / 600</td><td>5,87%</td><td>4,21%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Mesma escolha, mesma estimativa, um terço do orçamento. A razão está na seção anterior: a
+        grade tem três dimensões e só duas importam. A busca em grade gasta três treinos varrendo
+        <code>n_estimators</code> para cada par de podas; a busca aleatória sorteia combinações
+        inteiras, então cada sorteio traz informação nova sobre as duas dimensões que importam.</p>
+        <p>O argumento é de Bergstra e Bengio (2012), e cresce com o tamanho da grade. Com três
+        valores em cinco hiperparâmetros seriam 243 combinações e 1.215 treinos, e a fração que o
+        sorteio precisa visitar para cair na mesma região não cresce na mesma proporção, porque ela
+        depende de quantas dimensões de fato importam, não de quantas existem.</p>
+        <div class="doc-nota">
+          <p><strong>Escopo.</strong> Este resultado vale para esta grade, nesta base, com esta
+          semente. Nove sorteios acertarem a mesma combinação da grade cheia não é garantia: é o
+          comportamento esperado quando poucas dimensões importam, e aqui isso foi medido antes, na
+          seção 7. Uma dupla que rodar <code>RandomizedSearchCV</code> sem ter medido quais dimensões
+          importam está apostando, não economizando.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="kfold">
+        <h2>9. O default do GridSearchCV treina com 252 meses no futuro</h2>
+        <p>Sem o argumento <code>cv</code>, o <code>GridSearchCV</code> usa
+        <code>KFold(n_splits=5)</code>: corta os dados em cinco blocos de tamanho igual por posição
+        na tabela, usa um como validação e os outros quatro como treino, cinco vezes. A tabela do
+        case está em ordem de calendário, então cortar por posição é cortar por data.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>dobra</th><th>KFold: validação</th><th>treino</th><th>meses de treino posteriores ao início da validação</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>1998-01 a 2003-03</td><td>252</td><td><strong>252 de 252</strong></td></tr>
+              <tr><td>2</td><td>2003-04 a 2008-06</td><td>252</td><td>189</td></tr>
+              <tr><td>3</td><td>2008-07 a 2013-09</td><td>252</td><td>126</td></tr>
+              <tr><td>4</td><td>2013-10 a 2018-12</td><td>252</td><td>63</td></tr>
+              <tr><td>5</td><td>2019-01 a 2024-03</td><td>252</td><td>0</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Na primeira dobra, <strong>todos</strong> os meses de treino vêm depois do início da
+        validação: o modelo estuda de abril de 2003 a março de 2024 e é cobrado sobre janeiro de 1998
+        a março de 2003. Quatro das cinco dobras têm treino no futuro.</p>
+        <p>O <code>TimeSeriesSplit(5)</code> constrói as dobras de outro jeito: a janela de treino
+        começa pequena e cresce, e a validação é sempre o trecho imediatamente seguinte.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>dobra</th><th>TimeSeriesSplit: treino</th><th>validação</th><th>meses de treino no futuro</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>55 meses, até 2002-07</td><td>2002-08 a 2006-11</td><td>0</td></tr>
+              <tr><td>2</td><td>107 meses, até 2006-11</td><td>2006-12 a 2011-03</td><td>0</td></tr>
+              <tr><td>3</td><td>159 meses, até 2011-03</td><td>2011-04 a 2015-07</td><td>0</td></tr>
+              <tr><td>4</td><td>211 meses, até 2015-07</td><td>2015-08 a 2019-11</td><td>0</td></tr>
+              <tr><td>5</td><td>263 meses, até 2019-11</td><td>2019-12 a 2024-03</td><td>0</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O preço é visível: as primeiras dobras treinam com 55 e 107 meses, contra os 252 fixos do
+        <code>KFold</code>. Um modelo treinado com 55 meses é pior que um treinado com 252, e a
+        estimativa da primeira dobra reflete isso. Em troca, nenhuma das cinco estimativas vem de um
+        modelo que estudou o futuro.</p>
+        <p>Esta é a generalização de duas coisas que o acervo já fez à mão: a repetição em janelas da
+        Aula 05 e o corte único por data da Aula 09.</p>
+      </section>
+
+      <section class="doc-secao" id="ruido">
+        <h2>10. A vantagem do KFold troca de sinal, e por isso é ruído</h2>
+        <p>A expectativa natural é que trocar o validador melhore o modelo escolhido. A medição diz
+        outra coisa, e o resultado precisa ser relatado como ele é.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>base</th><th>validador</th><th>escolha</th><th>estimativa de validação</th><th>MAPE de teste</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>11 features</td><td><code>KFold</code></td><td>4 / 5 / 300</td><td>6,03%</td><td><strong>4,13%</strong></td></tr>
+              <tr><td>11 features</td><td><code>TimeSeriesSplit</code></td><td>4 / 5 / 600</td><td>5,87%</td><td>4,21%</td></tr>
+              <tr><td>4 features</td><td><code>KFold</code></td><td>4 / 5 / 300</td><td>5,66%</td><td>3,99%</td></tr>
+              <tr><td>4 features</td><td><code>TimeSeriesSplit</code></td><td>4 / 5 / 100</td><td>5,76%</td><td><strong>3,95%</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Com onze features, o <code>KFold</code> termina 0,08 ponto à frente no teste. Com quatro,
+        termina 0,04 atrás. <strong>A vantagem troca de sinal conforme o conjunto de features</strong>,
+        e as duas diferenças são menores que um décimo de ponto percentual sobre um teste de 24 meses.
+        Isso é ruído, e não evidência sobre o validador.</p>
+        <p>Repare também que os dois validadores escolhem a <strong>mesma poda</strong> em todos os
+        quatro casos: <code>max_depth=4</code> e <code>min_samples_leaf=5</code>. A única diferença é
+        o número de árvores, que a seção 7 mostrou ser a dimensão que quase não importa. O vazamento
+        do <code>KFold</code> não mudou a decisão relevante nesta base.</p>
+        <p>Onde os dois diferem de verdade é na <strong>estimativa</strong>. O <code>KFold</code> diz
+        6,03% e o <code>TimeSeriesSplit</code> diz 5,87% para as onze features, e as duas são
+        pessimistas em relação ao teste, porque as dobras incluem períodos antigos e mais difíceis e
+        o modelo final treina com mais dados do que qualquer modelo de dobra.</p>
+        <div class="doc-nota">
+          <p><strong>Esconder este resultado seria o erro que a Aula 09 inteira tratou.</strong> Um
+          número medido que contraria a expectativa entra no relatório com a leitura correta ao lado,
+          e a <code>ADR-013</code> registra essa decisão. A alternativa, mostrar só o caso de quatro
+          features em que o <code>TimeSeriesSplit</code> ganha, seria escolher a evidência pela
+          conclusão desejada.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="protocolo">
+        <h2>11. Por que trocar de validador mesmo assim</h2>
+        <p>Se o <code>KFold</code> não produziu um modelo pior nesta base, o argumento para trocar não
+        pode ser o resultado. Ele é outro, e é mais forte.</p>
+        <p>O que o <code>GridSearchCV</code> devolve em <code>best_score_</code> é uma
+        <strong>estimativa de desempenho</strong>, e é ela que a dupla vai reportar antes de ter
+        acesso ao teste. Quando o <code>KFold</code> diz que o modelo erra 6,03%, esse número saiu de
+        um procedimento em que o modelo estudou 2024 para ser cobrado sobre 1998. Nenhum modelo em
+        produção terá esse privilégio. A estimativa não é auditável: não existe pergunta de negócio à
+        qual ela responda.</p>
+        <p>A estimativa do <code>TimeSeriesSplit</code> responde à pergunta que a LDC vai fazer, que é
+        como o modelo se comporta sobre meses que ele nunca viu e que vieram depois dos que ele viu.</p>
+        <p>É o mesmo raciocínio que a Aula 09 usou para fixar o corte por data. Lá, a regressão linear
+        sobre a razão não melhorava com o sorteio aleatório, e mesmo assim o corte por data virou
+        regra do acervo, porque <strong>regra de protocolo vale antes de saber qual modelo vai
+        ganhar</strong>. Escolher o validador depois de ver qual deu o melhor MAPE de teste é
+        exatamente a mesma armadilha que escolher a combinação de hiperparâmetros pela métrica de
+        teste.</p>
+        <div class="doc-nota">
+          <p><strong>Uma variação que parece inofensiva e não é.</strong> Passar
+          <code>KFold(n_splits=5, shuffle=True)</code> piora o quadro em vez de melhorar: com o
+          embaralhamento, as cinco dobras passam a ter treino no futuro, entre 246 e 252 meses cada,
+          em vez de quatro das cinco. É a terceira quebra documentada em
+          <code>tools/tests/test_ajuste_aula10.py</code>.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="shap">
+        <h2>12. SHAP e impureza medem coisas diferentes, sobre conjuntos diferentes</h2>
+        <p>Uma floresta de 600 árvores podadas não é inspecionável a olho. O que dá para perguntar a
+        ela é quanto cada feature contribuiu, e existem duas respostas que não concordam.</p>
+        <p>A <strong>importância por impureza</strong> (<code>feature_importances_</code>) vem de
+        graça com a floresta. Ela soma, por feature, o quanto cada corte que a usou reduziu o erro
+        dentro do treino, ponderado pelo número de amostras que passaram por aquele nó. É uma leitura
+        sobre o <strong>treino</strong>, e tem um viés conhecido: features com muitos valores
+        distintos oferecem mais cortes possíveis e tendem a acumular mais reduções de impureza.</p>
+        <p>O <strong>SHAP</strong> responde outra pergunta: para cada previsão individual, quanto cada
+        feature empurrou o resultado para cima ou para baixo em relação à previsão média. Aqui, a
+        leitura é sobre os <strong>24 meses de teste</strong>, que são as previsões que o modelo vai de
+        fato entregar.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>posição</th><th>por SHAP, sobre o teste</th><th>por impureza, sobre o treino</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td><code>lag12</code></td><td><code>lag12</code></td></tr>
+              <tr><td>2</td><td><code>lag3</code></td><td><code>lag3</code></td></tr>
+              <tr><td>3</td><td><strong><code>abate_bovinos_lag1</code></strong></td><td><code>lag2</code></td></tr>
+              <tr><td>4</td><td><code>lag2</code></td><td><code>lag1</code></td></tr>
+              <tr><td>5</td><td><code>lag1</code></td><td><code>producao_ovos_lag1</code></td></tr>
+              <tr><td>6</td><td><code>abate_suinos_lag1</code></td><td><strong><code>abate_bovinos_lag1</code></strong></td></tr>
+              <tr><td>7</td><td><code>producao_ovos_lag1</code></td><td><code>abate_suinos_lag1</code></td></tr>
+              <tr><td>8</td><td><code>producao_leite_lag1</code></td><td><code>producao_leite_lag1</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>As duas listas concordam nas duas primeiras posições e se separam a partir da terceira.
+        <code>abate_bovinos_lag1</code> é a terceira por SHAP e a sexta por impureza;
+        <code>producao_ovos_lag1</code> é a quinta por impureza e a sétima por SHAP. O
+        <code>lag12</code> responde por 49,7% do SHAP total, quase metade.</p>
+        <p>Nenhuma das duas está errada. Elas respondem a perguntas diferentes, sobre conjuntos
+        diferentes, e uma dupla que relatar "a feature mais influente do nosso modelo" sem dizer qual
+        leitura usou dá uma resposta que ninguém consegue conferir.</p>
+        <div class="doc-nota">
+          <p><strong>Trocar o conjunto desfaz o achado.</strong> Medindo o SHAP sobre o treino em vez
+          do teste, a terceira posição passa a ser <code>lag1</code> e a discordância com a impureza
+          encolhe. É a quarta quebra documentada em <code>tools/tests/test_ajuste_aula10.py</code>, e
+          a razão de o conjunto de medição entrar na declaração junto com o método.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="pdp">
+        <h2>13. O partial dependence de lag12 vira uma frase de negócio</h2>
+        <p>Saber que <code>lag12</code> domina não diz <em>como</em> a floresta o usa. O partial
+        dependence responde isso: ele fixa uma feature em cada valor de uma grade, deixa as demais
+        como estão nos dados, e devolve a previsão média.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th><code>lag12</code>, em bilhões de quilogramas</th><th>razão prevista</th><th>crescimento previsto</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>0,315</td><td>1,0931</td><td>9,3%</td></tr>
+              <tr><td>0,527</td><td>1,0820</td><td>8,2%</td></tr>
+              <tr><td>0,739</td><td>1,0490</td><td>4,9%</td></tr>
+              <tr><td>0,950</td><td>1,0268</td><td>2,7%</td></tr>
+              <tr><td>1,056</td><td>1,0101</td><td>1,0%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A curva é monótona decrescente: quanto maior o abate de doze meses atrás, menor o
+        crescimento que a floresta prevê. Nos meses de base pequena ela prevê cerca de 9,3% de
+        crescimento sobre o ano anterior, e nos de base grande, cerca de 1,0%.</p>
+        <p>Isso se lê em uma frase, e é uma frase que dá para discutir com quem entende do negócio: a
+        produção de frango no Brasil cresceu rápido enquanto a base era pequena e desacelerou conforme
+        ela cresceu, e a floresta aprendeu esse formato sem que ninguém a tenha programado para isso.
+        É o tipo de explicação que o TAPI pediu, e é o oposto de informar que o modelo tem 600
+        árvores.</p>
+        <div class="doc-nota">
+          <p><strong>Uma ressalva de leitura que vale para todo partial dependence.</strong> A curva
+          descreve o que o modelo faz, não o que o mundo faz. Aqui as duas coisas coincidem, porque a
+          desaceleração é um fato conhecido do setor, e essa coincidência é o que torna a explicação
+          convincente. Quando a curva contrariar o que o especialista sabe, o achado é sobre o
+          modelo, e vira pergunta para o parceiro em vez de resultado a reportar.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="escopo">
+        <h2>14. Escopo das conclusões desta aula</h2>
+        <p>Quatro limites que precisam viajar junto com os números.</p>
+        <p><strong>O ajuste recupera a maior parte do custo das features novas, não todo.</strong> A
+        floresta ajustada sobre as onze features erra 4,21%, e a ajustada sobre as quatro da Aula 07
+        erra 3,95%. Escolher features não é assunto desta aula, e essa diferença continua na mesa
+        como gancho para a Aula 11.</p>
+        <p><strong>A ordem das estratégias de busca vale para esta grade.</strong> O
+        <code>RandomizedSearchCV</code> achar a mesma combinação com um terço do orçamento depende de
+        poucas dimensões importarem, o que foi medido aqui e não é lei geral.</p>
+        <p><strong>A comparação entre validadores é sobre estimativa, não sobre resultado.</strong> O
+        <code>KFold</code> terminou à frente no teste com onze features e atrás com quatro. Quem citar
+        um dos dois casos sem o outro está relatando meia medição.</p>
+        <p><strong>O alvo binário segue sendo conteúdo criado para ensinar.</strong> Ele existe desde
+        a Aula 09 para dar às métricas de classificação um dado real sobre o que rodar. Os três
+        modelos encadeados do TAPI preveem quantidade, e a ART.7 compara modelos de regressão.</p>
+      </section>
+
+      <section class="doc-secao" id="art7">
+        <h2>15. O que a dupla leva para a ART.7</h2>
+        <p><strong>ART.7 Comparação de modelos, peso 8</strong>, é a entrega da Sprint 4, com planning
+        em 14/09 e review em 25/09 (<code>PLANO_DE_ENSINO.md</code>, seções 4 e 6). O que esta aula
+        acrescenta ao protocolo que a Aula 09 fixou:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>o default responde</th><th>o que ele esconde</th><th>o que a comparação exige</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>acurácia de 83,3%</td><td>três modelos empatados, um deles a baseline</td><td>AUC no alvo categórico, baseline declarada no de regressão</td></tr>
+              <tr><td>hiperparâmetro não escolhido</td><td>0,83 ponto de MAPE, de 5,04% para 4,21%</td><td>grade declarada, e default declarado como escolha</td></tr>
+              <tr><td><code>KFold</code> como <code>cv</code></td><td>252 meses de treino no futuro na primeira dobra</td><td>validação cruzada que respeita o tempo</td></tr>
+              <tr><td><code>feature_importances_</code></td><td>ordem diferente do SHAP a partir da terceira</td><td>leitura de importância declarada junto do resultado</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O modelo que sai daqui, floresta com <code>max_depth=4</code>,
+        <code>min_samples_leaf=5</code> e <code>n_estimators=600</code> a 4,21% de MAPE, é o candidato
+        ajustado à mão. Na Aula 11 ele vira o termo de comparação contra o PyCaret, e a pergunta de
+        abertura daquele encontro é se um comparador automático bate o que a dupla ajustou sabendo o
+        que estava fazendo.</p>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula10.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../referencias/aula10.html"><span class="material-symbols-outlined" aria-hidden="true">menu_book</span>Referências</a>
+  </nav>
+</body>
+</html>
