@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referências &middot; Aula 10 &middot; Hiperparâmetros e Explicabilidade do Modelo</title>
+  <meta name="description" content="Autoestudos da Semana 07 na Adalove e leitura complementar da Aula 10 do Módulo 03 IN, com as fontes primárias de busca de hiperparâmetros, validação cruzada, análise ROC e explicabilidade.">
+
+  <!-- Duas secoes fixas, nesta ordem, em TODAS as 14 aulas:
+       1. Autoestudos da semana (Adalove), copiados de
+          docs/autoestudos-por-semana.md, titulo por titulo, sem inventar
+          nenhum e sem alterar caractere.
+       2. Leitura complementar do professor.
+       A segunda secao nunca e omitida, mesmo sem curadoria fechada.
+
+       ATENCAO: a Semana 07 tem dezenove autoestudos e dois Encontros de
+       Instrucao (15/09, a Aula 09, e 17/09, esta aula). Nove itens pertencem a
+       Aula 09 e os dez listados aqui a esta aula: e AQUI que a contagem da
+       semana fecha. A conferencia e 9 + 10 = 19, contra
+       docs/autoestudos-por-semana.md.
+
+       "Curva ROC e AUC" e "Opcional: ROC e AUC na pratica" conversam com o
+       bloco de classificacao da Aula 09 e vieram para ca por decisao da
+       ADR-012, que registrou que a Aula 09 ja entrava com onze assuntos em 105
+       minutos. A ADR-013 registra como esta aula os acomodou: no lugar do
+       bloco de resgate, sobre o empate que a Aula 09 deixou medido. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 10 &middot; 17/09/2026 &middot; Semana 07</p>
+      <h1>Referências: Hiperparâmetros e Explicabilidade do Modelo</h1>
+      <p class="doc-subtitulo">A Semana 07 tem dois Encontros de Instrução, em 15/09 e 17/09, e
+      dezenove autoestudos na fonte. Nove pertencem à Aula 09 e os dez desta página a este
+      encontro, onde a contagem da semana fecha. A seção 1 lista os dez com o título exato da fonte;
+      a seção 2 traz as fontes primárias de busca de hiperparâmetros, validação cruzada em série
+      temporal, análise ROC e explicabilidade, que os autoestudos não cobrem em profundidade.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#autoestudos">Autoestudos da semana (Adalove)</a></li>
+        <li><a href="#complementar">Leitura complementar do professor</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="autoestudos">
+        <h2>1. Autoestudos da semana (Adalove)</h2>
+        <p>Semana 07, os dez itens que pertencem ao encontro de 17/09:</p>
+        <ol class="doc-referencias">
+          <li>O que é hiperparâmetro?
+            <span class="doc-porque">Abre o segundo bloco da aula. A distinção que importa em sala
+            é entre o que o <code>fit</code> calcula a partir dos dados e o que precisa ser
+            escolhido antes dele. A floresta da Aula 07 tem cinco hiperparâmetros relevantes e
+            apenas um escolhido, <code>n_estimators=300</code>: os outros quatro são default do
+            scikit-learn, e aceitar default é uma escolha que ninguém mediu.</span></li>
+          <li>Exemplo I: GridSearch e RandomSearch
+            <span class="doc-porque">Primeiro dos dois exemplos da busca em grade. A aula roda 27
+            combinações de <code>n_estimators</code>, <code>max_depth</code> e
+            <code>min_samples_leaf</code> sobre o modelo do case, em 135 treinos e 9 segundos, e o
+            ajuste leva o MAPE de teste de 5,04% para 4,21%.</span></li>
+          <li>Exemplo II: GridSearch e RandomSearch
+            <span class="doc-porque">Segundo exemplo, com a variação aleatória. Na base do case,
+            nove sorteios das mesmas 27 combinações chegam à mesma escolha da grade cheia, com 45
+            treinos em vez de 135: é o argumento do RandomSearch medido no case, e não uma
+            afirmação genérica sobre espaços grandes de busca.</span></li>
+          <li>Opcional: Prática com GridSearch e RandomSearch
+            <span class="doc-porque">Roteiro prático marcado como opcional na fonte. Cobre o mesmo
+            terreno da segunda prática da aula, em que cada dupla roda a busca sobre o próprio
+            modelo e anota qual grade foi buscada, sob qual validação, e quais hiperparâmetros
+            continuaram no default por decisão.</span></li>
+          <li>Validação Cruzada
+            <span class="doc-porque">Sustenta o terceiro bloco. A leitura apresenta o
+            <code>KFold</code>, que é o default do <code>GridSearchCV</code>, e a aula mede o que
+            esse default faz numa série: na primeira das cinco dobras, os 252 meses de treino são
+            todos posteriores ao início da validação, e quatro das cinco dobras têm treino no
+            futuro.</span></li>
+          <li>Curva ROC e AUC
+            <span class="doc-porque">Sustenta o bloco de abertura, que é onde a aula paga a dívida
+            registrada na <code>ADR-012</code>. A Aula 09 deixou três modelos com os quatro mesmos
+            valores de acurácia, precisão, revocação e F1, e a AUC os separa: 0,500 na baseline
+            majoritária, 0,500 na árvore de entropia e 0,738 no SVM RBF.</span></li>
+          <li>Opcional: ROC e AUC na prática
+            <span class="doc-porque">Roteiro prático de ROC, opcional na fonte, e o complemento
+            direto do item anterior. A armadilha que a primeira prática da aula cobra é a mesma que
+            esse roteiro mostra: <code>roc_auc_score</code> precisa do escore contínuo
+            (<code>decision_function</code> ou <code>predict_proba</code>), e passar o rótulo de
+            <code>predict</code> devolve 0,500 para um modelo que vale 0,738.</span></li>
+          <li>Explicabilidade de Modelo com SHAP
+            <span class="doc-porque">Sustenta o quarto bloco, e responde a um requisito explícito do
+            TAPI da LDC. Sobre a floresta ajustada, o SHAP médio absoluto nos 24 meses de teste e a
+            importância por impureza no treino concordam nas duas primeiras features e se separam a
+            partir da terceira: <code>abate_bovinos_lag1</code> é a terceira por SHAP e a sexta por
+            impureza.</span></li>
+          <li>Além da Transparência: Contextualizando a Necessidade de Explicabilidade na IA
+            <span class="doc-porque">Enquadramento do bloco de explicabilidade. A leitura separa
+            transparência, que é poder inspecionar o modelo, de explicabilidade, que é produzir uma
+            justificativa utilizável por quem decide. Uma floresta de 600 árvores podadas não é
+            inspecionável a olho, e mesmo assim o partial dependence de <code>lag12</code> produz
+            uma frase discutível com quem entende do negócio.</span></li>
+          <li>Como escolher um modelo preditivo
+            <span class="doc-porque">Fecha a amarração com a ART.7. A aula acrescenta ao critério de
+            escolha três exigências que o default esconde: métrica de desempate quando dois
+            candidatos empatam, validação que respeita o tempo, e leitura de importância declarada
+            junto do resultado.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>Estes títulos são cópia literal de <code>docs/autoestudos-por-semana.md</code>, que é
+          gerado do <code>Turma.xlsx</code> oficial. Autoestudo que não está lá não entra aqui. O
+          acesso ao conteúdo é pela Adalove, com o login institucional.</p>
+        </div>
+        <div class="doc-nota">
+          <p><strong>Aqui a Semana 07 fecha em dezenove.</strong> A semana tem dois Encontros de
+          Instrução e uma lista única de autoestudos. Os nove itens do encontro de 15/09
+          (desbalanceamento das classes, formas de lidar com ele, maldição de dimensionalidade,
+          domain knowledge, os casos Netflix e Airbnb, <code>Imputer</code> e os dois de PCA) estão
+          em <a href="aula09.html#autoestudos">referencias/aula09.html</a>. Nove mais os dez desta
+          página fecham os dezenove da fonte.</p>
+          <p><strong>Os dois itens de ROC chegam um encontro depois do assunto que eles servem.</strong>
+          "Curva ROC e AUC" e "Opcional: ROC e AUC na prática" conversam diretamente com o bloco de
+          classificação de 15/09, e a <code>ADR-012</code> registrou por que ficaram para cá: a Aula
+          09 entrou com onze assuntos em 105 minutos e a dívida de tempo se deslocou em vez de
+          desaparecer. A <code>ADR-013</code> registra como esta aula a pagou, usando os quinze
+          minutos de abertura para desfazer o empate que a Aula 09 mediu, em vez de abrir um bloco
+          de resgate separado.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="complementar">
+        <h2>2. Leitura complementar do professor</h2>
+        <p>A curadoria definitiva desta seção ainda será fechada pelo professor. Até lá, ficam aqui,
+        numeradas, as fontes que sustentam o deck e o material de apoio desta aula. O slide de
+        referências do deck traz uma lista mais curta, com numeração própria, e esta página é a
+        lista completa.</p>
+        <ol class="doc-referencias">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite, tabelas
+            1092, 1093, 1094, 7524 e 1086 do SIDRA, com a classificação c12716 (Referência temporal)
+            aberta em No 1º mês, No 2º mês e No 3º mês.
+            <span class="doc-porque">Origem de todo número desta aula, com o contrato de colunas e a
+            checagem de sanidade dos valores em <code>dados/README.md</code>. A base é a mesma das
+            Aulas 07 a 09: junção interna das cinco séries de <code>dados/mensal/</code>, 339 linhas
+            de 1998-01 a 2026-03, treino de 315 meses e teste de 24 meses.</span></li>
+          <li>Bergstra, J.; Bengio, Y. <em>Random Search for Hyper-Parameter Optimization</em>.
+            Journal of Machine Learning Research, v. 13, p. 281-305, 2012.
+            <span class="doc-porque">Fonte primária do bloco de busca. O argumento do artigo é
+            exatamente o que a aula mede: quando poucas dimensões da grade importam de fato, a busca
+            aleatória cobre as que importam com a mesma densidade e gasta uma fração do orçamento. Na
+            base do case, das três dimensões da grade uma quase não move o erro, e um terço dos 135
+            treinos foi gasto nela.</span></li>
+          <li>Fawcett, T. <em>An Introduction to ROC Analysis</em>. Pattern Recognition Letters,
+            v. 27, n. 8, p. 861-874, 2006.
+            <span class="doc-porque">Fonte primária do bloco de abertura, e a origem da leitura da
+            AUC que a aula usa: a probabilidade de o classificador dar escore maior a um exemplo
+            positivo sorteado do que a um negativo sorteado. O artigo também trata do caso
+            degenerado que a árvore de entropia produz aqui, em que o classificador devolve uma
+            única classe e a curva se reduz a dois pontos sobre a diagonal.</span></li>
+          <li>Lundberg, S. M.; Lee, S.-I. <em>A Unified Approach to Interpreting Model
+            Predictions</em>. Advances in Neural Information Processing Systems (NeurIPS) 30,
+            p. 4765-4774, 2017.
+            <span class="doc-porque">Fonte primária do SHAP, citada pelo autoestudo de mesmo tema.
+            Define a atribuição por valores de Shapley e demonstra que ela é a única que satisfaz
+            simultaneamente as propriedades de consistência local, o que é o argumento para preferi-la
+            à importância por impureza quando as duas discordam, como acontece nesta base a partir da
+            terceira feature.</span></li>
+          <li>Lundberg, S. M. et al. <em>From Local Explanations to Global Understanding with
+            Explainable AI for Trees</em>. Nature Machine Intelligence, v. 2, p. 56-67, 2020.
+            <span class="doc-porque">O algoritmo exato para árvores que o <code>TreeExplainer</code>
+            usa, e a razão de o SHAP da aula rodar em segundos sobre uma floresta de 600 árvores. O
+            artigo também documenta o viés da importância por impureza a favor de features com muitos
+            valores distintos, que é a explicação mais provável para a discordância medida
+            aqui.</span></li>
+          <li>Friedman, J. H. <em>Greedy Function Approximation: A Gradient Boosting Machine</em>.
+            Annals of Statistics, v. 29, n. 5, p. 1189-1232, 2001, seção 8.
+            <span class="doc-porque">Origem do partial dependence plot. A seção 8 define a curva que
+            a aula usa no fecho: a previsão média do modelo com uma feature fixada em cada valor da
+            grade e as demais integradas sobre os dados. Para <code>lag12</code>, a curva cai de
+            1,0931 para 1,0101 e vira uma frase de negócio.</span></li>
+          <li>Bergmeir, C.; Benítez, J. M. <em>On the Use of Cross-validation for Time Series
+            Predictor Evaluation</em>. Information Sciences, v. 191, p. 192-213, 2012.
+            <span class="doc-porque">Fonte primária do bloco de validação cruzada temporal, e a
+            leitura que enquadra o resultado desconfortável da aula. O artigo trata de quando a
+            validação cruzada comum é e não é aceitável em série temporal, e sustenta o argumento
+            usado em sala: a razão de preferir a validação que respeita o tempo é a estimativa ser
+            auditável, e não ela produzir o melhor número numa rodada específica.</span></li>
+          <li>Hyndman, R. J.; Athanasopoulos, G. <em>Forecasting: Principles and Practice</em>.
+            3. ed. Melbourne: OTexts, 2021, seção sobre avaliação em origem móvel.
+            <span class="doc-porque">A formulação clássica do que o <code>TimeSeriesSplit</code>
+            implementa: janela de treino que cresce e validação sempre no trecho seguinte. É também
+            a ligação com a Aula 05, que fez essa repetição em janelas à mão antes de o objeto do
+            scikit-learn entrar em cena.</span></li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn: Machine Learning in Python</em>. Journal of
+            Machine Learning Research, v. 12, p. 2825-2830, 2011.
+            <span class="doc-porque">A biblioteca de todas as aulas do módulo. Nesta, entram
+            <code>GridSearchCV</code>, <code>RandomizedSearchCV</code>, <code>KFold</code>,
+            <code>TimeSeriesSplit</code>, <code>roc_curve</code>, <code>roc_auc_score</code> e
+            <code>partial_dependence</code>, todos com o comportamento de default documentado, que é
+            o que a aula compara contra a escolha explícita.</span></li>
+          <li>Artefatos internos desta aula:
+            <code>docs/adrs/ADR-013-escopo-e-base-de-ajuste-da-aula-10.md</code>,
+            <code>tools/tests/test_ajuste_aula10.py</code> e
+            <code>tools/graficos_aula10.py</code>.
+            <span class="doc-porque">A ADR registra as três decisões de escopo: abrir com ROC no
+            lugar do resgate, ajustar sobre as onze features da Aula 09 em vez das quatro da Aula 07,
+            e declarar em sala que a vantagem do <code>KFold</code> no teste desta rodada é ruído
+            medido. As treze conclusões estão travadas no arquivo de teste, com quatro versões
+            propositalmente quebradas documentadas, e as quatro figuras saem do script de
+            gráficos.</span></li>
+        </ol>
+        <div class="doc-nota">
+          <p>O item 1 vai sem link de propósito: a URL de consulta da API do SIDRA, para cada
+          tabela, está documentada em <code>dados/README.md</code>, e apontar direto para ela aqui
+          duplicaria a mesma informação em dois lugares que podem divergir com o tempo.</p>
+          <p>Os itens 2 a 9 vão sem link e sem DOI de propósito: a citação traz periódico, volume,
+          número e páginas, que é o suficiente para localizar cada obra, e uma URL ou um
+          identificador digitado de memória mandaria quem for conferir procurar no lugar errado. Os
+          oito são leitura de fundo, dispensáveis como preparação para o encontro: a aula mede o
+          comportamento de cada técnica sobre a base do case, sem exigir a formulação dos textos
+          originais.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula10.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../materiais/aula10.html"><span class="material-symbols-outlined" aria-hidden="true">menu_book</span>Material</a>
+  </nav>
+</body>
+</html>
