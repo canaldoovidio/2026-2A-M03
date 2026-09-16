@@ -22,3 +22,11 @@ seaborn           # Aula 03
 scipy             # Aula 04, teste de Shapiro-Wilk
 scikit-learn      # Aula 04, StandardScaler e LinearRegression
 shap              # Aula 10, TreeExplainer no notebook e em graficos_aula10.py
+
+# A UNICA versao fixada do arquivo, e a excecao existe por um motivo medido:
+# o pycaret estavel (3.3.2) recusa Python 3.12 na importacao, com uma checagem
+# explicita no __init__.py do pacote, e instala-lo rebaixa scikit-learn para
+# 1.4.2, numpy para 1.26.4 e pandas para 2.1.4. A linha 4.0 roda no Python
+# atual sem mexer em nenhuma das tres, mas e pre-release: sem o pin exato o
+# pip nem a considera. O motivo completo esta em docs/adrs/ADR-014.
+pycaret==4.0.0a8  # Aula 11, compare_models no notebook e em graficos_aula11.py
