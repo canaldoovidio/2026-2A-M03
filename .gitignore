@@ -19,3 +19,10 @@ TURMA-*-TAPI-*.pdf
 Ponderada*.pdf
 ponderada*.pdf
 *-gabarito*.pdf
+
+# O pycaret escreve um logs.log no diretorio de trabalho a cada experimento,
+# tanto pelo notebook da Aula 11 quanto por tools/graficos_aula11.py. Sem esta
+# entrada, o passo "A arvore de trabalho precisa continuar limpa" do CI reprova
+# depois da execucao dos notebooks. Ver docs/adrs/ADR-014.
+logs.log
+**/logs.log
