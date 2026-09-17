@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 12 &middot; Deploy de modelo e pipeline de processamento &middot; Módulo 03 IN</title>
+
+  <!-- Aula 12, 29/09/2026, Sprint 5 (planning em 28/09, review em 07/10).
+       Abre a Sprint 5, a ultima do modulo. Escopo, backend do MLflow e a
+       divisao dos 105 minutos estao em
+       docs/adrs/ADR-015-empacotamento-do-modelo-e-escopo-da-aula-12.md. As
+       quinze conclusoes da aula estao travadas em
+       tools/tests/test_pipeline_aula12.py, e as tres figuras saem de
+       tools/graficos_aula12.py.
+
+       Tese unica, medida nos tres blocos: empacotar um modelo nao muda o que
+       ele preve, e muda o que se pode afirmar sobre ele. O Pipeline devolve
+       previsao identica bit a bit; o reajuste sobre a base completa move os
+       coeficientes numa mediana de 17,2% e a previsao em 0,97%; e a
+       divergencia de versao emite tres avisos sem alterar um digito. Nos tres
+       casos o numero nao se mexe e a afirmacao que o acompanha muda.
+
+       Divisao dos 105 minutos (ADR-015):
+         15  Resgate da Aula 11 e pergunta disparada        (slides 3 a 4)
+         15  O que o Pipeline encapsula, e o que nao muda   (slides 5 a 8)
+         15  Pratica: montar o Pipeline do modelo da dupla  (slide 9)
+         15  O que se exporta, e o que se pode afirmar dele (slides 10 a 17)
+         15  Pratica: exportar e recarregar                 (slide 18)
+         15  MLflow: o que registrar                        (slides 19 a 22)
+         15  Quiz e amarracao com a ART.8                   (slides 23 a 27)
+
+       O bloco das 11h00 e o mais denso da aula, e isso e deliberado: ele
+       carrega o reajuste sobre a base completa (7 min), o joblib (3 min) e a
+       divergencia de versao (5 min). A profundidade de cada um esta no
+       notebook, secoes 3 e 4. O ADR-015 registra por que nao foi dividido.
+
+       BACKEND DO MLFLOW, e o motivo (ADR-015): sqlite:///mlflow.db, e nao a
+       pasta mlruns/ que os autoestudos ensinam. O MLflow atual RECUSA o
+       backend de arquivos, com MlflowException: "The filesystem tracking
+       backend is in maintenance mode". E o mesmo tipo de descompasso entre
+       autoestudo e biblioteca que a Aula 11 encontrou no PyCaret.
+
+       Base: a mesma das Aulas 07 a 11. 339 linhas (1998-01 a 2026-03), treino
+       de 315 meses, teste de 24 meses (2024-04 a 2026-03), 11 features.
+
+       O que foi medido, tudo em tools/tests/test_pipeline_aula12.py:
+         Pipeline x passo a passo      previsao IDENTICA bit a bit, MAPE 2,8620%
+         reajuste, coeficientes        mediana 17,2%, abate_bovinos_lag1 3.439%
+                                       e troca de sinal (-93.404 -> +3.118.714)
+         reajuste, previsao            media 0,65%, maximo 0,97%
+         causa                         20 pares com r > 0,90, VIF ate 69,0
+         condicionamento               3,22e9 cru -> 28,5 padronizado
+         joblib round-trip             1.481 bytes, previsao identica
+         gravar 1.7.2 / carregar 1.9.1 3 InconsistentVersionWarning, identica
+         caminho inverso               no Python 3.14 o pip so oferece
+                                       scikit-learn a partir da 1.7.2
+         MAPE do reajustado no teste   2,6492%, e NAO e estimativa honesta
+
+       CUIDADO, e e a armadilha central da aula: o 2,86% descreve o modelo
+       AVALIADO, e o objeto exportado e o REAJUSTADO. Os dois numeros convivem
+       de proposito, e o slide 11 existe para a dupla nao publicar o 2,65%.
+
+       CUIDADO 2: a Aula 05 mediu numero de condicao de 1,08e10 e resolveu
+       padronizando. Aqui padronizar NAO resolve, porque o problema e outro
+       (colinearidade estatistica, nao condicionamento numerico). O slide 14
+       existe para a dupla nao concluir que a Aula 05 estava errada.
+
+       O resgate da Aula 11 (slide 3) copia os numeros de aulas/aula11.html,
+       sem reescrever de memoria: achado registrado da revisao da Aula 06.
+
+       ART.8 Modelo Final, peso 4, sprint com planning em 28/09 e review em
+       07/10. Prova 02/10, peso 20 (PLANO_DE_ENSINO.md secao 4). -->
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-theme.css">
+  <link rel="stylesheet" href="../assets/css/inteli-print.css" media="print">
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- 1 - Capa -->
+      <section class="cover-slide">
+        <div class="cover-panel">
+          <div class="cover-content">
+            <p class="cover-eyebrow">Módulo 03 IN &middot; Aula 12 &middot; 29/09/2026</p>
+            <h1>Deploy de modelo e pipeline de processamento</h1>
+            <h3>O que viaja junto com o modelo, o que se pode afirmar sobre ele e
+            como registrar de onde ele veio</h3>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 - Agenda -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Agenda do encontro</h2>
+        </div>
+        <div class="concept-cards">
+          <div class="concept-card">
+            <h3>08h00 &middot; 10h00</h3>
+            <p>Autoestudo na Adalove: pipelines no scikit-learn, exportação de modelo e os
+            primeiros passos do MLflow [11].</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h00 &middot; 10h15</h3>
+            <p>Daily. Abertura da Sprint 5, a última do módulo, com planning ontem, 28/09.</p>
+          </div>
+          <div class="concept-card">
+            <h3>10h15 &middot; 12h00</h3>
+            <p>O <code>Pipeline</code> (30 min), o que se exporta e o que se pode afirmar dele
+            (30 min), o MLflow (15 min) e a amarração com a ART.8 (15 min).</p>
+          </div>
+        </div>
+        <p>A Sprint 5 fecha em <strong>07/10</strong>, e a <strong>Prova 02/10</strong> vale 20 [10].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">2</p>
+        </div>
+      </section>
+
+      <!-- 3 - Resgate da Aula 11, numeros copiados de aulas/aula11.html -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A Aula 11 fechou com 2,86% de MAPE</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>escalador = StandardScaler()
+escalador.fit(X_treino)
+
+modelo = LinearRegression()
+modelo.fit(
+    escalador.transform(X_treino),
+    y_treino)
+
+previsto = modelo.predict(
+    escalador.transform(X_teste))
+# MAPE de teste: 2,86%</code></pre>
+          <div>
+            <p>O <code>compare_models()</code> varreu 22 candidatos e colocou modelos lineares no
+            topo. O vencedor, sobre o alvo em nível, erra <strong>2,86%</strong> nos 24 meses de
+            teste e bate a floresta que duas aulas ajustaram à mão [12].</p>
+            <p>O trecho ao lado é o da Aula 11, sem alteração. Ele roda, e entrega o melhor número
+            do acervo.</p>
+            <p>A Sprint 5 pede que esse modelo saia do notebook. E aí aparece a primeira pergunta
+            [2].</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">3</p>
+        </div>
+      </section>
+
+      <!-- 4 - Pergunta disparada -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O escalador faz parte do modelo</h2>
+        </div>
+        <p>Suponha que a dupla mande só o objeto <code>modelo</code> para a LDC, por e-mail. Do
+        outro lado, alguém carrega o arquivo, passa a base de setembro e recebe
+        <code>2,63e17</code> quilogramas de frango abatido no mês, quando o valor medido pelo IBGE
+        é <code>1,19e9</code> [1]. A previsão sai <strong>231 milhões de vezes maior</strong>, e
+        nada no código acusa [2].</p>
+        <p>O motivo é que o modelo foi ajustado sobre entradas padronizadas, e a padronização
+        usa as <strong>onze médias e onze desvios medidos no treino</strong>. Esses 22 números
+        não estão no objeto <code>modelo</code>. Eles estão no <code>escalador</code>, que ficou
+        para trás [5].</p>
+        <p><strong>Pergunta disparada:</strong> o que mais precisa viajar junto com o modelo para
+        ele funcionar fora do notebook? Listem tudo antes de a gente abrir o código.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">4</p>
+        </div>
+      </section>
+
+      <!-- 5 - Divisor: Pipeline -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Pipeline</h2>
+        <h3>Dois objetos, uma ordem, um arquivo</h3>
+      </section>
+
+      <!-- 6 - O que o Pipeline e -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Dois objetos viram um, com a ordem fixada</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>from sklearn.pipeline import Pipeline
+
+pipe = Pipeline([
+    ("escala", StandardScaler()),
+    ("modelo", LinearRegression()),
+])
+
+pipe.fit(X_treino, y_treino)
+previsto = pipe.predict(X_teste)</code></pre>
+          <div>
+            <p>O <code>Pipeline</code> recebe uma lista de passos nomeados e os executa em ordem.
+            O <code>fit</code> ajusta cada passo com a saída do anterior; o <code>predict</code>
+            aplica os mesmos passos, na mesma ordem [5][6].</p>
+            <p>Cada passo continua acessível, por <code>pipe.named_steps["escala"]</code>, o que
+            importa quando alguém precisar auditar o que foi gravado.</p>
+            <p>O objeto inteiro é um só. Quando ele for para disco, os 22 números do escalador vão
+            junto [2].</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">6</p>
+        </div>
+      </section>
+
+      <!-- 7 - O Pipeline nao muda numero nenhum -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O Pipeline devolve previsão idêntica bit a bit</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Caminho</th><th>MAPE nos 24 meses de teste</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Escalador e modelo separados, como na Aula 11</td><td><code>2,8620136234%</code></td></tr>
+            <tr><td>Os mesmos dois dentro de um <code>Pipeline</code></td><td><code>2,8620136234%</code></td></tr>
+            <tr><td><strong>Maior diferença entre as 24 previsões</strong></td><td><strong><code>0,0e+00</code></strong></td></tr>
+          </tbody>
+        </table>
+        <p>Não há ganho de precisão aqui, e quem esperava um não vai encontrar [2]. O
+        <code>Pipeline</code> reordena o mesmo cálculo, e o resultado é igual até o último bit.</p>
+        <p>O que muda é outra coisa, e ela só aparece quando o dado é repartido.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">7</p>
+        </div>
+      </section>
+
+      <!-- 8 - Onde a ordem importa -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A ordem importa dentro do TimeSeriesSplit</h2>
+        </div>
+        <p>Na Aula 10, o <code>TimeSeriesSplit</code> treina cinco vezes, cada uma num recorte
+        diferente do histórico [12]. Com escalador solto, cada uma dessas cinco vezes precisa
+        reajustar o escalador na dobra certa, e lembrar disso é responsabilidade de quem escreve o
+        laço.</p>
+        <p>Com o <code>Pipeline</code>, o <code>cross_val_score</code> reajusta o objeto inteiro
+        por dobra. A disciplina deixa de depender de memória e passa a ser propriedade do
+        objeto [5].</p>
+        <p>Vale dizer o que a medição desta base <strong>não</strong> sustenta: ajustar o escalador
+        sobre treino e teste juntos aqui devolve MAPE idêntico até a nona casa, porque regressão
+        linear sem regularização é invariante a transformação afim das entradas. A Aula 05 já tinha
+        medido isso [12]. O argumento do <code>Pipeline</code> é a validação por dobra, e não um
+        ganho de erro nesta base.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">8</p>
+        </div>
+      </section>
+
+      <!-- 9 - Pratica 1 -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; O Pipeline do modelo da dupla</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Abrir a seção 2 do <a href="https://github.com/canaldoovidio/2026-2A-M03/blob/main/notebooks/aula12.ipynb">notebook da aula</a> e montar o
+          <code>Pipeline</code> do modelo que a dupla escolheu na Aula 11.</li>
+          <li>Rodar o caminho antigo, com escalador solto, e o novo, e conferir se as previsões
+          batem. Se não baterem, a ordem dos passos está diferente da original.</li>
+          <li>Inspecionar <code>pipe.named_steps</code> e contar quantos números o objeto carrega
+          além dos coeficientes.</li>
+          <li>Repetir para a segunda etapa do pipeline do case, Modelo 2 ou Modelo 3, conforme a
+          escolha da dupla.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">9</p>
+        </div>
+      </section>
+
+      <!-- 10 - Divisor: o que se exporta -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>O que se exporta</h2>
+        <h3>A avaliação terminou, e o modelo muda</h3>
+      </section>
+
+      <!-- 11 - O modelo de producao nao e o avaliado -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O modelo exportado treina com as 339 linhas</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Objeto</th><th>Treina com</th><th>MAPE nos 24 meses de teste</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>O <strong>avaliado</strong>, das Aulas 07 a 11</td><td>315 meses</td><td><strong>2,86%</strong>, o número honesto</td></tr>
+            <tr><td>O <strong>exportado</strong>, que vai para a LDC</td><td>339 meses</td><td><code>2,65%</code>, sem significado</td></tr>
+          </tbody>
+        </table>
+        <p>A avaliação acabou na Aula 11: não há mais nada a decidir, e deixar 24 meses de dado
+        real parados fora do modelo de produção seria desperdício. Por isso o objeto exportado é
+        reajustado sobre a base inteira [2].</p>
+        <p>O 2,65% da segunda linha é melhor porque o modelo treinou com esses 24 meses. Publicá-lo
+        é o vazamento que a Aula 09 ensinou a reconhecer [12]. <strong>O número que acompanha o
+        modelo exportado é o 2,86%</strong>, medido no objeto avaliado.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">11</p>
+        </div>
+      </section>
+
+      <!-- 12 - Figura 1: coeficiente x previsao -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O coeficiente se desloca 17,2% e a previsão 0,97%</h2>
+        </div>
+        <img src="../assets/img/aula12-coeficiente-x-previsao.png" alt="Barras horizontais em escala logarítmica do deslocamento provocado pelo reajuste de 315 para 339 meses. Os onze coeficientes se deslocam entre 0,9% e 3.439%, com mediana de 17,2%, e o de abate de bovinos defasado, destacado em coral, troca de sinal. Separada por um vão, a pior das 24 previsões se desloca 0,97%" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 348px;">
+        <p>O coeficiente de bovinos sai de negativo para positivo, e nenhuma das 24 previsões se
+        move 1% [2].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">12</p>
+        </div>
+      </section>
+
+      <!-- 13 - Figura 2: a causa -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Sete das onze features passam de VIF 10</h2>
+        </div>
+        <img src="../assets/img/aula12-colinearidade.png" alt="Barras horizontais do fator de inflação da variância de cada uma das onze features, com linha tracejada no limiar usual de 10. Sete passam do limiar e aparecem em coral: lag1 com 69,0, suínos com 47,2, lag3 com 38,9, lag12 com 36,8, lag2 com 27,9, ovos com 23,9 e leite com 23,4. Bovinos com 7,4, cos com 1,8, dias com 1,6 e sen com 1,3 ficam abaixo" style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 348px;">
+        <p>São vinte pares de features com correlação acima de 0,90. Com entradas colineares, muitas
+        combinações de coeficientes produzem quase o mesmo ajuste, e o modelo troca peso entre
+        elas [2][7].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">13</p>
+        </div>
+      </section>
+
+      <!-- 14 - A distincao com a Aula 05 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O VIF de 69 sobrevive à padronização</h2>
+        </div>
+        <p>A Aula 05 mediu um número de condição de 1,08e10 nesta mesma família de dados e resolveu
+        o problema padronizando [12]. É natural supor que a padronização resolva este também.</p>
+        <table class="data-table">
+          <thead>
+            <tr><th>Medida</th><th>Antes de padronizar</th><th>Depois</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Número de condição da matriz</td><td><code>3,22e9</code></td><td><code>28,5</code></td></tr>
+            <tr><td>Maior VIF entre as onze features</td><td><code>69,0</code></td><td><code>69,0</code></td></tr>
+          </tbody>
+        </table>
+        <p>São dois problemas diferentes com a mesma aparência. Condicionamento numérico é sobre a
+        escala das colunas, e a padronização o resolve. Colinearidade é sobre a
+        <strong>correlação</strong> entre elas, e escala nenhuma desfaz correlação [7].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">14</p>
+        </div>
+      </section>
+
+      <!-- 15 - O que isso muda no que a dupla publica -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A explicação inverte de sinal com dado novo</h2>
+        </div>
+        <p>A previsão do modelo reajustado se move menos de 1% [2], então nada do que a LDC recebe
+        como número muda de forma relevante. O reajuste é legítimo e o modelo está bom.</p>
+        <p>A frase explicativa tem outro destino. Se o relatório da dupla disser que abate de
+        bovinos no mês anterior <strong>puxa a produção de frango para baixo</strong>, essa
+        afirmação inverte na próxima vez que o modelo for reajustado com dado novo, sem que nada
+        tenha piorado e sem que nenhum alarme dispare.</p>
+        <p>A Aula 10 ensinou SHAP e partial dependence em vez de leitura direta de coeficiente [12].
+        Esta é a demonstração de por quê. A literatura de dívida técnica em aprendizado de máquina
+        chama isso de emaranhamento: mexer em qualquer entrada redistribui todas as outras [9].</p>
+        <p>Para a ART.8 sai um critério: <strong>o que a dupla publica como explicação precisa ser
+        tão estável quanto o número que ela publica</strong>.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">15</p>
+        </div>
+      </section>
+
+      <!-- 16 - joblib, e o que o arquivo entrega -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O arquivo exportado tem 1.481 bytes</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>import joblib
+
+joblib.dump(pipe,
+            "modelo.joblib")
+
+recarregado = joblib.load(
+    "modelo.joblib")
+
+# previsao identica
+# bit a bit</code></pre>
+          <div>
+            <p>São onze coeficientes, onze médias e onze desvios, mais o metadado do objeto. O
+            <code>joblib</code> grava o Python inteiro, e recarregar devolve previsão idêntica bit
+            a bit [2][5].</p>
+            <p>Este arquivo está versionado em <code>app/modelo_aula12.joblib</code>, e é o que a
+            Aula 13 carrega dentro do app Streamlit.</p>
+            <p>Um arquivo de 1,5 KB que atravessa a empresa inteira também atravessa versões de
+            biblioteca. E aí aparece o aviso [3].</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">16</p>
+        </div>
+      </section>
+
+      <!-- 17 - Divergencia de versao -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A carga prossegue com três avisos de versão</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>O que foi medido</th><th>Resultado</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Gravar com <code>scikit-learn 1.7.2</code>, carregar com <code>1.9.1</code></td><td>3 <code>InconsistentVersionWarning</code>, um por estimador</td></tr>
+            <tr><td>Previsão do objeto carregado</td><td><strong>idêntica bit a bit</strong></td></tr>
+            <tr><td>Voltar para o <code>scikit-learn 1.6.1</code> no Python 3.14</td><td><strong>não existe wheel</strong>, o <code>pip</code> só oferece da 1.7.2 em diante</td></tr>
+          </tbody>
+        </table>
+        <p>O aviso é a única sinalização de que houve divergência, e a execução segue normalmente
+        depois dele. Quem roda com <code>warnings</code> silenciados perde até essa sinalização
+        [2][3].</p>
+        <p>A mitigação usual, instalar a versão antiga, tem prazo de validade dado pelo
+        interpretador. A Aula 11 esbarrou no mesmo muro pelo outro lado, quando o PyCaret estável
+        recusou o Python do acervo [12]. Por isso a versão vai declarada junto com o modelo.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">17</p>
+        </div>
+      </section>
+
+      <!-- 18 - Pratica 2 -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; Exportar e recarregar</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Reajustar o <code>Pipeline</code> da dupla sobre a base completa, e só depois
+          exportar com <code>joblib.dump</code>.</li>
+          <li>Recarregar numa célula nova, sem as variáveis anteriores, e confirmar que a previsão
+          é a mesma. Anotar o tamanho do arquivo.</li>
+          <li>Anotar, junto do arquivo, os três números que descrevem o modelo: o MAPE medido no
+          objeto <strong>avaliado</strong>, a versão do <code>scikit-learn</code> e o último mês da
+          base.</li>
+          <li>Comparar os coeficientes do modelo avaliado com os do reajustado. Algum troca de
+          sinal na base da dupla?</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">18</p>
+        </div>
+      </section>
+
+      <!-- 19 - Divisor: MLflow -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>MLflow</h2>
+        <h3>De onde veio este número, três meses depois</h3>
+      </section>
+
+      <!-- 20 - O que registrar, e o backend -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O MLflow atual recusa o backend do autoestudo</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Autoestudo, MLflow com pasta</th><th>Aula, MLflow com banco</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>mlflow.set_tracking_uri("file:./mlruns")</code></td><td><code>mlflow.set_tracking_uri("sqlite:///mlflow.db")</code></td></tr>
+            <tr><td><code>mlflow ui --backend-store-uri file:./mlruns</code></td><td><code>mlflow ui --backend-store-uri sqlite:///mlflow.db</code></td></tr>
+          </tbody>
+        </table>
+        <p>A pasta <code>mlruns/</code> é o padrão histórico da ferramenta e o que os autoestudos
+        ensinam [11]. A versão atual <strong>recusa</strong> esse backend, com
+        <code>MlflowException: The filesystem tracking backend is in maintenance mode</code> [8].</p>
+        <p>O <code>sqlite</code> é um arquivo só, não exige servidor e roda igual no Colab. É o
+        mesmo descompasso entre tutorial e biblioteca que a Aula 11 encontrou no PyCaret [12], e
+        ele já é conteúdo da ART.8: a versão faz parte da descrição do experimento [10].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">20</p>
+        </div>
+      </section>
+
+      <!-- 21 - A execucao de producao nao tem MAPE -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A execução de produção não registra MAPE</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Execução</th><th>Meses de treino</th><th><code>mape_teste</code></th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>avaliado</code></td><td>315</td><td><code>2,862014</code></td></tr>
+            <tr><td><code>producao</code></td><td>339</td><td><code>NaN</code>, com tag explicando</td></tr>
+          </tbody>
+        </table>
+        <p>A execução de produção não pode ter essa métrica, porque não existe conjunto fora da
+        amostra para ela. No lugar do número entra uma tag dizendo exatamente isso [2].</p>
+        <p>É uma decisão pequena e é o coração do rastreamento honesto: o registro precisa
+        conseguir dizer <strong>que uma execução não tem determinada métrica</strong>, em vez de
+        repetir o número da execução vizinha e deixar quem ler três meses depois concluir o que
+        quiser [4].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">21</p>
+        </div>
+      </section>
+
+      <!-- 22 - Pratica 3 -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; Registrar o experimento</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Rodar a seção 5 do notebook e registrar as duas execuções da dupla, a avaliada e a de
+          produção, no <code>mlflow.db</code> local.</li>
+          <li>Registrar, no mínimo: o modelo, o alvo, o número de features, os meses de treino, o
+          corte de teste, a versão do <code>scikit-learn</code> e o último mês da base.</li>
+          <li>Abrir <code>mlflow ui --backend-store-uri sqlite:///mlflow.db</code> e comparar as
+          duas execuções lado a lado.</li>
+          <li>Responder, olhando só para a interface: daqui a três meses, alguém consegue refazer
+          este modelo? O que está faltando na tela?</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">22</p>
+        </div>
+      </section>
+
+      <!-- 23 - Quiz 1 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pergunta 1 &middot; Os dois MAPE</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">O modelo exportado, reajustado sobre as 339 linhas, erra 2,65%
+          nos 24 meses de teste. O avaliado erra 2,86%. Qual número vai no relatório da ART.8?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O 2,65% saiu de um modelo que treinou com esses mesmos 24 meses. Ele mede o erro sobre dado já visto, e não estima desempenho futuro.">2,65%, porque descreve o objeto que de fato foi exportado</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: o 2,86% é o único medido fora da amostra. O modelo exportado é outro objeto, e a estimativa honesta de desempenho dele continua sendo a do objeto avaliado."
+                data-incorrect-msg="Era esta: o 2,86% é o único medido fora da amostra. O modelo exportado é outro objeto, e a estimativa honesta de desempenho dele continua sendo a do objeto avaliado.">2,86%, porque é o único medido em dado que o modelo não viu</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Média entre uma estimativa honesta e um número contaminado devolve outro número contaminado, e ainda por cima sem interpretação possível.">A média dos dois, já que cada um descreve uma metade do processo</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Reajustar sobre a base completa é a decisão certa: a avaliação terminou, e deixar 24 meses de dado real fora do modelo de produção seria desperdício. O que não se faz é medir esse objeto no conjunto que ele viu.">Nenhum, porque reajustar sobre a base completa invalida a avaliação</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">23</p>
+        </div>
+      </section>
+
+      <!-- 24 - Quiz 2 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pergunta 2 &middot; O coeficiente que troca de sinal</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">Ao reajustar com 24 meses a mais, o coeficiente de
+          <code>abate_bovinos_lag1</code> troca de sinal, e a previsão se move menos de 1%. O que
+          isso indica?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="A previsão se moveu menos de 1% em todos os 24 meses. Se o modelo tivesse quebrado, o erro teria subido junto.">Que o modelo quebrou e o reajuste precisa ser desfeito</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Os 24 meses novos são dado real do IBGE, medido como todos os outros. Não há nada de anômalo neles.">Que os 24 meses novos contêm algum erro de medição do IBGE</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: com vinte pares de features acima de 0,90 de correlação, muitas combinações de coeficientes produzem quase o mesmo ajuste. O modelo redistribuiu peso entre features que dizem a mesma coisa, e a soma delas não mudou."
+                data-incorrect-msg="Era esta: com vinte pares de features acima de 0,90 de correlação, muitas combinações de coeficientes produzem quase o mesmo ajuste. O modelo redistribuiu peso entre features que dizem a mesma coisa, e a soma delas não mudou.">Que as features são colineares, e o peso entre elas é intercambiável</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Padronizar já está sendo feito, dentro do Pipeline. Ele levou o número de condição de 3,22e9 para 28,5 e deixou o VIF de lag1 em 69,0: colinearidade não se resolve com escala.">Que faltou padronizar as entradas antes de ajustar o modelo</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">24</p>
+        </div>
+      </section>
+
+      <!-- 25 - Amarracao com a ART.8 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O que a dupla entrega na ART.8, peso 4</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Item</th><th>O que é</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>O <code>Pipeline</code> exportado</td><td>pré-processamento e modelo num arquivo, reajustado sobre a base completa</td></tr>
+            <tr><td>O número que o acompanha</td><td>o MAPE medido no objeto avaliado, com o corte declarado</td></tr>
+            <tr><td>As versões</td><td>Python, <code>scikit-learn</code> e o último mês da base</td></tr>
+            <tr><td>O registro no MLflow</td><td>parâmetros, métricas, e o que cada execução não tem</td></tr>
+          </tbody>
+        </table>
+        <p><strong>ART.8 Modelo Final, peso 4</strong>, na Sprint 5, com review em
+        <strong>07/10</strong>. A <strong>Prova 02/10</strong> vale 20 e cobre a trilha inteira [10].</p>
+        <p>Amanhã, na Aula 13, este mesmo arquivo de 1,5 KB vira a tela que a LDC vê.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">25</p>
+        </div>
+      </section>
+
+      <!-- 26 - Referencias -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Referências</h2>
+        </div>
+        <ol class="exercise-steps lista-longa">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite:
+          tabelas 1092, 1093, 1094, 7524 e 1086 do SIDRA.</li>
+          <li>As quinze conclusões da aula, em <code>tools/tests/test_pipeline_aula12.py</code>.</li>
+          <li>Escopo, backend do MLflow e os 105 minutos em <code>docs/adrs/ADR-015</code>.</li>
+          <li><a href="../materiais/aula12.html">Material de apoio da Aula 12</a>.</li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn</em>. JMLR, 2011.</li>
+          <li>Buitinck, L. et al. <em>API design for machine learning software</em>. ECML PKDD,
+          2013.</li>
+          <li>Belsley, D.; Kuh, E.; Welsch, R. <em>Regression Diagnostics</em>. Wiley, 1980.</li>
+          <li>Zaharia, M. et al. <em>Accelerating the Machine Learning Lifecycle with MLflow</em>.
+          IEEE Data Eng. Bull., 2018.</li>
+          <li>Sculley, D. et al. <em>Hidden Technical Debt in Machine Learning Systems</em>.
+          NeurIPS, 2015.</li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seções 4 e 6: peso 4 da ART.8, Prova 02/10 e review
+          em 07/10.</li>
+          <li>Autoestudos da Semana 09 em
+          <a href="../referencias/aula12.html">referencias/aula12.html</a>.</li>
+          <li><a href="../aulas/aula11.html">Aula 11</a>, de onde vem o modelo,
+          <a href="../aulas/aula10.html">a Aula 10</a>, da explicabilidade e do
+          <code>TimeSeriesSplit</code>, <a href="../aulas/aula09.html">a Aula 09</a>, do
+          vazamento, e <a href="../aulas/aula05.html">a Aula 05</a>, do condicionamento.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 12 &middot; Sprint 5</p>
+          <p class="footer-page">26</p>
+        </div>
+      </section>
+
+      <!-- 27 - Encerramento -->
+      <section class="end-slide">
+        <h1>Até 30/09</h1>
+        <h3>Aula 13: Deploy de modelos de Machine Learning, Sprint 5</h3>
+        <p>Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot; 2026-2A</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      width: 1280, height: 720, center: false, margin: 0,
+      hash: true, slideNumber: false, transition: 'fade'
+    });
+  </script>
+  <script src="../assets/js/inteli-quiz.js"></script>
+  <script src="../assets/js/inteli-zoom.js"></script>
+  <script src="../assets/js/inteli-print.js"></script>
+</body>
+</html>

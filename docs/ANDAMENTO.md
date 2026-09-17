@@ -152,7 +152,7 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
 - **Aula 10 completa, os quatro artefatos** (`aulas/aula10.html`, `materiais/aula10.html`,
   `referencias/aula10.html`, `notebooks/aula10.ipynb`) mais as notas do professor
   (`docs/notas-do-professor/aula10.md`), a `docs/adrs/ADR-013`, as quatro figuras
-  (`tools/graficos_aula10.py`) e a suíte `tools/tests/test_ajuste_aula10.py`, com treze conclusões
+  (`tools/graficos_aula10.py`) e a suíte `tools/tests/test_ajuste_aula10.py`, com quinze conclusões
   travadas e quatro versões propositalmente quebradas documentadas. O deck tem 34 slides e os
   quatro botões do card no portal estão habilitados. A aula fecha a Semana 07 e é a primeira do
   acervo **sem bloco de resgate separado**: ver a seção da dívida da ADR-012 abaixo.
@@ -163,6 +163,32 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
   travadas. O deck tem 26 slides e os quatro botões do card no portal estão habilitados. A aula
   fecha a Sprint 4, e a tese dela é que o AutoML varre a família de modelos e não conserta o
   protocolo.
+- **Aula 12 completa, os quatro artefatos** (`aulas/aula12.html`, `materiais/aula12.html`,
+  `referencias/aula12.html`, `notebooks/aula12.ipynb`) mais as notas do professor
+  (`docs/notas-do-professor/aula12.md`), a `docs/adrs/ADR-015`, as três figuras
+  (`tools/graficos_aula12.py`), a suíte `tools/tests/test_pipeline_aula12.py` com quinze conclusões
+  travadas, e o script de export (`tools/exportar_modelo_aula12.py`). O deck tem 27 slides e os
+  quatro botões do card no portal estão habilitados. A aula abre a Sprint 5, e a tese dela é que
+  empacotar um modelo não muda o que ele prevê e muda o que se pode afirmar sobre ele.
+- **O achado da Aula 12, medido antes do primeiro slide, e ele não estava no roteiro.** Reajustar o
+  modelo de 315 para 339 meses, que é o que se exporta depois de a avaliação terminar, desloca os
+  coeficientes numa **mediana de 17,2%** e faz `abate_bovinos_lag1` **trocar de sinal** (de -93.404
+  para +3.118.714, 3.439%), enquanto a previsão nos mesmos 24 meses se move **0,65% em média e
+  0,97% no máximo**. A causa está medida: vinte pares de features acima de r = 0,90 e VIF de até
+  69,0, com sete das onze acima do limiar de 10. A consequência é o critério que a aula leva para a
+  ART.8: a previsão que a dupla publica é estável, e a explicação por coeficiente precisa ser
+  conferida contra um reajuste antes de ir para o relatório. É o que amarra a explicabilidade da
+  Aula 10 ao empacotamento da Sprint 5.
+- **A distinção que a Aula 12 precisou fazer contra a Aula 05.** Padronizar leva o número de
+  condição de 3,22e9 para 28,5 e **deixa o VIF em 69,0**. Condicionamento numérico e colinearidade
+  estatística são problemas diferentes com a mesma aparência, e a Aula 05 continua certa: o
+  problema dela foi resolvido, este é outro. A seção 6 do material existe só para desarmar essa
+  conclusão errada.
+- **Dois binários versionados em `app/`**, novidade no acervo: `modelo_aula12.joblib` (1.481 bytes),
+  que é o `Pipeline` de produção que a Aula 13 vai carregar, e `modelo_aula12_sk172.joblib`, gravado
+  com scikit-learn 1.7.2, que é o fixture do teste de divergência de versão. Os dois têm comando
+  gerador declarado, e o teste compara coeficientes e previsões, nunca o hash do arquivo. Ver
+  `ADR-015`.
 - **Os achados medidos antes do primeiro slide da Aula 10.** (1) A AUC desfaz o empate da Aula 09:
   baseline majoritária 0,500, árvore de entropia 0,500 (a curva dela tem dois pontos, porque ela
   prevê a mesma classe nos 24 meses) e SVM RBF 0,738, com os três marcando 83,3% de acurácia. A
@@ -230,15 +256,18 @@ saída, abaixo.
   `github-pages` foi corrigida pelo professor em 07/08/2026, e o `static.yml` passou a
   publicar normalmente a cada push em `main` (run 31142595526, 22s).
 
-- **Aulas 12 a 14**: os cards dessas aulas no portal seguem com os quatro botões em
-  `aria-disabled="true"`. As Aulas 01 a 11 já existem, e a Sprint 4 está fechada. A **Aula 12, em
-  29/09**, é a próxima da fila, abre a Sprint 5 e traz `Pipeline` do scikit-learn, export do modelo
-  e MLflow. O agente `construtor-aulas` existe para esse fan-out, mas as onze primeiras aulas foram
-  escritas sem ele, à mão, seguindo as mesmas skills.
+- **Aulas 13 e 14**: os cards dessas duas no portal seguem com os quatro botões em
+  `aria-disabled="true"`. As Aulas 01 a 12 já existem. A **Aula 13, em 30/09**, é a próxima da fila
+  e monta o app Streamlit em cima do `app/modelo_aula12.joblib` que a Aula 12 deixou versionado. A
+  decisão de forma já está tomada: o app entra como **código versionado mais notebook**, sem
+  publicar serviço externo, para o acervo continuar sendo site estático (ver `ADR-015`). O agente
+  `construtor-aulas` existe para esse fan-out, mas as doze primeiras aulas foram escritas sem ele,
+  à mão, seguindo as mesmas skills.
 - **O que a Aula 05 deixa marcado para as aulas seguintes.** As quatro séries defasadas em um
   trimestre derrubam o MAPE de teste para 1,14%, contra 1,60% do modelo de hoje, e ficaram de
   fora de propósito: entram como candidata declarada na Aula 07. O reajuste do modelo sobre a
-  base completa, depois de a avaliação terminar, fica para a Aula 12 junto com o `Pipeline`. A
+  base completa, depois de a avaliação terminar, **foi quitado na Aula 12** e virou o achado
+  central dela. A
   repetição em janelas feita à mão hoje vira `TimeSeriesSplit` na Aula 10.
 - **O que a Aula 06 deixa marcado para as aulas seguintes.** Os quatro perfis de trimestre do
   calendário (K=4 sobre a participação de cada série no total do ano) ficam prontos para a Aula 07

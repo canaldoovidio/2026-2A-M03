@@ -26,3 +26,13 @@ ponderada*.pdf
 # depois da execucao dos notebooks. Ver docs/adrs/ADR-014.
 logs.log
 **/logs.log
+
+# O notebook da Aula 12 grava o modelo exportado em notebooks/saida/ e registra
+# os experimentos num mlflow.db local. Os tres sao reescritos a cada execucao e
+# reprovariam o passo "A arvore de trabalho precisa continuar limpa" do CI. O
+# que entra no repositorio e o modelo versionado de app/, gerado pelo comando
+# declarado em tools/exportar_modelo_aula12.py. Ver docs/adrs/ADR-015.
+saida/
+mlflow.db
+mlruns/
+mlartifacts/

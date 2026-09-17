@@ -22,6 +22,8 @@ seaborn           # Aula 03
 scipy             # Aula 04, teste de Shapiro-Wilk
 scikit-learn      # Aula 04, StandardScaler e LinearRegression
 shap              # Aula 10, TreeExplainer no notebook e em graficos_aula10.py
+joblib            # Aula 12, export do Pipeline em app/modelo_aula12.joblib
+mlflow            # Aula 12, rastreamento dos experimentos no notebook
 
 # A UNICA versao fixada do arquivo, e a excecao existe por um motivo medido:
 # o pycaret estavel (3.3.2) recusa Python 3.12 na importacao, com uma checagem
