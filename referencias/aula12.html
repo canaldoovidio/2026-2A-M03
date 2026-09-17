@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referências &middot; Aula 12 &middot; Deploy de modelo e pipeline de processamento</title>
+  <meta name="description" content="Autoestudos da Semana 09 na Adalove e leitura complementar da Aula 12 do Módulo 03 IN, com as fontes primárias de pipeline, persistência de modelo, colinearidade e rastreamento de experimentos.">
+
+  <!-- Duas secoes fixas, nesta ordem, em TODAS as 14 aulas:
+       1. Autoestudos da semana (Adalove), copiados de
+          docs/autoestudos-por-semana.md, titulo por titulo, sem inventar
+          nenhum e sem alterar caractere.
+       2. Leitura complementar do professor.
+       A segunda secao nunca e omitida, mesmo sem curadoria fechada.
+
+       A Semana 09 tem CINCO autoestudos e DOIS Encontros de Instrucao (29/09 e
+       30/09), entao HA rateio a declarar, como nas Semanas 05 e 07: tres itens
+       servem a Aula 12 e dois a Aula 13.
+
+       ATENCAO: o autoestudo de MLflow ensina o backend de arquivos (mlruns/),
+       e a versao atual da biblioteca RECUSA esse backend. O descompasso e
+       declarado na secao 1, com a mensagem de erro medida, e a tabela de
+       conversao esta no slide 20 do deck. Motivo completo em ADR-015. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 12 &middot; 29/09/2026 &middot; Semana 09</p>
+      <h1>Referências: deploy de modelo e pipeline de processamento</h1>
+      <p class="doc-subtitulo">A Semana 09 tem dois Encontros de Instrução e cinco autoestudos, e
+      a seção 1 declara qual item serve a qual aula. Há também um descompasso de versão, do mesmo
+      tipo que a Aula 11 encontrou no PyCaret: o autoestudo de MLflow ensina um backend que a
+      versão atual da biblioteca recusa. A seção 2 traz as fontes primárias de composição de
+      estimadores, de diagnóstico de colinearidade e de dívida técnica em sistemas de aprendizado
+      de máquina.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#autoestudos">Autoestudos da semana (Adalove)</a></li>
+        <li><a href="#complementar">Leitura complementar do professor</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="autoestudos">
+        <h2>1. Autoestudos da semana (Adalove)</h2>
+        <p>Semana 09, cinco itens para dois encontros. <strong>Os três primeiros servem a esta
+        aula</strong>, em 29/09. Os dois de Streamlit servem à
+        Aula 13, em 30/09, e estão listados aqui porque a
+        Adalove os entrega na mesma semana.</p>
+        <ol class="doc-referencias">
+          <li>Como Usar Pipelines no Scikit-Learn
+            <span class="doc-porque">O conteúdo do primeiro bloco da aula. A leitura mostra a
+            mecânica do <code>Pipeline</code>, e o que a aula acrescenta é a medição: encapsular
+            devolve previsão idêntica bit a bit, então o argumento a favor dele não é precisão. É
+            a validação por dobra, onde o escalador precisa ser reajustado dentro de cada recorte
+            do <code>TimeSeriesSplit</code> da Aula 10.</span></li>
+          <li>Como exportar um modelo preditivo
+            <span class="doc-porque">O segundo bloco. A leitura cobre <code>joblib</code> e
+            <code>pickle</code>, e a aula mede o que costuma ficar no abstrato: gravar com
+            <code>scikit-learn</code> 1.7.2 e carregar com 1.9.1 emite três avisos e devolve
+            previsão idêntica, e voltar para uma versão anterior à 1.7.2 no Python 3.14 não é
+            possível, porque não existe wheel.</span></li>
+          <li>MLflow: primeiros passos (rastreamento de experimentos)
+            <span class="doc-porque">O terceiro bloco, e o item com o descompasso de versão
+            declarado abaixo. O que a leitura ensina sobre o que registrar continua valendo
+            inteiro; o que mudou é onde isso é gravado.</span></li>
+          <li>How to Build a Machine Learning App using Streamlit
+            <span class="doc-porque">Serve à Aula 13, em 30/09. Vale adiantar a leitura: o app
+            daquela aula carrega exatamente o arquivo <code>.joblib</code> que esta aula
+            exporta.</span></li>
+          <li>Streamlit 101 - A faster way to build and share data apps
+            <span class="doc-porque">Serve à Aula 13, em 30/09.</span></li>
+        </ol>
+
+        <div class="doc-nota">
+          <p>Estes títulos são cópia literal de <code>docs/autoestudos-por-semana.md</code>, que é
+          gerado do <code>Turma.xlsx</code> oficial. Autoestudo que não está lá não entra aqui. O
+          acesso ao conteúdo é pela Adalove, com o login institucional.</p>
+        </div>
+        <div class="doc-nota">
+          <p><strong>O autoestudo de MLflow ensina um backend que a biblioteca recusa.</strong></p>
+          <p>O item "MLflow: primeiros passos" ensina o backend de arquivos, a pasta
+          <code>mlruns/</code>, que foi o padrão da ferramenta por anos. A versão atual
+          <strong>recusa esse backend na abertura</strong>, com a exceção:</p>
+          <p><code>MlflowException: The filesystem tracking backend (e.g., './mlruns') is in
+          maintenance mode and will not receive further updates. Please migrate to a database
+          backend (e.g., 'sqlite:///mlflow.db')</code></p>
+          <p>A aula usa <code>sqlite:///mlflow.db</code>, que é um arquivo só, não exige servidor
+          e roda igual no Colab. Tudo o que o autoestudo ensina sobre <em>o que</em> registrar
+          continua valendo: mudam as duas linhas que dizem <em>onde</em>. A tabela de conversão
+          está no slide 20 do deck, e o motivo completo em
+          <code>docs/adrs/ADR-015</code>.</p>
+          <p>Vale registrar o padrão, porque ele repete o da Aula 11: um tutorial descreve a
+          biblioteca do ano em que foi escrito. Declarar a versão junto com o resultado é parte da
+          entrega, e não formalidade.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="complementar">
+        <h2>2. Leitura complementar do professor</h2>
+        <p>Nenhum destes é obrigatório. Cada um está aqui porque sustenta uma afirmação específica
+        da aula.</p>
+        <ol class="doc-referencias" start="6">
+          <li>Buitinck, L. et al. <em>API design for machine learning software: experiences from
+          the scikit-learn project</em>. ECML PKDD Workshop, 2013.
+            <span class="doc-porque">O artigo em que os autores explicam por que
+            <code>fit</code>/<code>transform</code>/<code>predict</code> são o que são, e por que
+            compor estimadores num <code>Pipeline</code> é consequência direta dessa escolha de
+            API. É a fonte primária do primeiro bloco.</span></li>
+          <li>Pedregosa, F. et al. <em>Scikit-learn: Machine Learning in Python</em>. JMLR, v. 12,
+          2011.
+            <span class="doc-porque">A referência canônica da biblioteca, citada em todas as aulas
+            do acervo que a usam.</span></li>
+          <li>Belsley, D.; Kuh, E.; Welsch, R. <em>Regression Diagnostics: Identifying Influential
+          Data and Sources of Collinearity</em>. Wiley, 1980.
+            <span class="doc-porque">A fonte do diagnóstico que explica o achado central da aula.
+            É de onde vem o fator de inflação da variância e a distinção, que a aula precisa fazer
+            com cuidado, entre condicionamento numérico da matriz e colinearidade entre
+            colunas.</span></li>
+          <li>Zaharia, M. et al. <em>Accelerating the Machine Learning Lifecycle with MLflow</em>.
+          IEEE Data Engineering Bulletin, v. 41, 2018.
+            <span class="doc-porque">O artigo dos autores da ferramenta, com o problema que ela
+            foi criada para resolver: experimentos que ninguém consegue reproduzir três meses
+            depois. Explica o desenho de execução, parâmetro e métrica que a seção 5 do notebook
+            usa.</span></li>
+          <li>Sculley, D. et al. <em>Hidden Technical Debt in Machine Learning Systems</em>.
+          NeurIPS, 2015.
+            <span class="doc-porque">O texto que nomeou o problema de que esta aula trata: num
+            sistema de aprendizado de máquina, o código do modelo é a menor parte, e o que
+            costuma quebrar é a fronteira entre treino e produção. A seção sobre
+            <em>entanglement</em> descreve exatamente o que a aula mediu quando 24 meses novos
+            trocaram o sinal de um coeficiente.</span></li>
+          <li>Documentação do scikit-learn, <em>Model persistence</em>.
+            <span class="doc-porque">A página oficial sobre gravar e recarregar modelos, com a
+            seção de limitações que descreve o <code>InconsistentVersionWarning</code> medido na
+            aula. É a URL que o próprio aviso imprime.</span></li>
+        </ol>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula12.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../materiais/aula12.html"><span class="material-symbols-outlined" aria-hidden="true">menu_book</span>Material</a>
+  </nav>
+</body>
+</html>
