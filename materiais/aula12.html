@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material de apoio &middot; Aula 12 &middot; Deploy de modelo e pipeline de processamento</title>
+  <meta name="description" content="Material de apoio da Aula 12 do Módulo 03 IN: o Pipeline que não muda número nenhum, o reajuste sobre a base completa que move os coeficientes e não a previsão, a colinearidade que explica isso, o export com joblib e o rastreamento no MLflow.">
+
+  <!-- Este material NAO e o roteiro do deck em prosa. Ele aprofunda o que o
+       slide so pode apontar, e e o lugar onde a dupla confere cada numero com
+       calma. Todo numero citado aqui esta travado nos quinze testes de
+       tools/tests/test_pipeline_aula12.py e reproduzido por
+       tools/graficos_aula12.py, sobre os CSVs de dados/mensal/.
+       O escopo e o backend do MLflow estao em
+       docs/adrs/ADR-015-empacotamento-do-modelo-e-escopo-da-aula-12.md.
+
+       CUIDADO: esta aula tem DOIS objetos em jogo (o avaliado, de 315 meses, e
+       o de producao, de 339) e cada numero precisa vir com o objeto declarado
+       ao lado. O 2,86% e do avaliado; o 2,65% e do de producao e nao e
+       estimativa honesta. Trocar os dois inverte a licao da aula.
+
+       CUIDADO 2: a Aula 05 resolveu um problema de condicionamento
+       padronizando. Aqui padronizar NAO resolve, porque o problema e outro. A
+       secao 5 existe para a dupla nao concluir que a Aula 05 estava errada. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 12 &middot; 29/09/2026 &middot; Sprint 5</p>
+      <h1>Material de apoio: deploy de modelo e pipeline de processamento</h1>
+      <p class="doc-subtitulo">Esta aula empacota o vencedor da Aula 11 para ele sair do notebook,
+      e as três ferramentas que ela usa (<code>Pipeline</code>, <code>joblib</code> e MLflow) têm
+      em comum uma coisa que surpreende: nenhuma delas muda o número que o modelo prevê. O que
+      muda, e muito, é o que se pode afirmar sobre esse número. O achado central apareceu na
+      medição e não estava no roteiro: reajustar o modelo sobre a base completa move os
+      coeficientes numa mediana de 17,2%, faz um deles trocar de sinal, e move a previsão em menos
+      de 1%. Cada seção registra a medição, o mecanismo e o escopo da conclusão.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#escalador">O escalador faz parte do modelo</a></li>
+        <li><a href="#pipeline">O Pipeline devolve previsão idêntica bit a bit</a></li>
+        <li><a href="#dobra">Onde a ordem de fato importa</a></li>
+        <li><a href="#reajuste">O modelo exportado treina com as 339 linhas</a></li>
+        <li><a href="#colinearidade">Por que o coeficiente se move e a previsão não</a></li>
+        <li><a href="#aula05">O VIF de 69 sobrevive à padronização</a></li>
+        <li><a href="#explicacao">O que isso muda no que a dupla publica</a></li>
+        <li><a href="#joblib">O arquivo de 1.481 bytes</a></li>
+        <li><a href="#versao">A divergência de versão, medida</a></li>
+        <li><a href="#mlflow">O MLflow, e o backend que mudou</a></li>
+        <li><a href="#escopo">Escopo das conclusões desta aula</a></li>
+        <li><a href="#art8">O que a dupla entrega na ART.8</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="escalador">
+        <h2>1. O escalador faz parte do modelo</h2>
+        <p>O modelo que a Aula 11 elegeu é uma <code>LinearRegression</code> ajustada sobre
+        entradas padronizadas. Quem olha o código rápido vê um objeto de modelo e supõe que ele
+        seja a entrega. Não é.</p>
+        <p>A padronização subtrai uma média e divide por um desvio, coluna a coluna, e esses
+        valores foram medidos <strong>no conjunto de treino</strong>. São onze médias e onze
+        desvios, 22 números que não estão dentro do objeto <code>modelo</code>. Eles estão dentro
+        do <code>StandardScaler</code>.</p>
+        <p>Mandar só o modelo para a LDC produz um erro silencioso e enorme: do outro lado, alguém
+        passa a base de setembro em unidades originais, na casa de 1e9, a um modelo que espera
+        entradas em torno de zero. A medição: a previsão do primeiro mês de teste sai
+        <code>2,63e17</code> contra <code>1,19e9</code> de valor real, <strong>231 milhões de vezes
+        maior</strong>, e o MAPE vai de 2,86% para <code>2,3e10%</code>. Nada no código acusa.</p>
+        <p>O tamanho do erro é, na verdade, a boa notícia deste caso: um resultado absurdo por oito
+        ordens de grandeza é percebido na hora. O erro perigoso é o que chega plausível, e é dele
+        que trata a seção 9.</p>
+        <div class="doc-nota">
+          <p>Esta é a pergunta disparada da aula, e vale responder antes de ver o código: o que
+          mais precisa viajar junto? Além do escalador, viaja a <strong>ordem das colunas</strong>
+          (o modelo espera as onze features na sequência exata em que foi treinado), a definição
+          de cada feature derivada (as defasagens, o seno e o cosseno do mês, o número de dias) e a
+          versão da biblioteca. Só o primeiro item está dentro de um objeto do scikit-learn.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="pipeline">
+        <h2>2. O <code>Pipeline</code> devolve previsão idêntica bit a bit</h2>
+        <p>O <code>Pipeline</code> recebe uma lista de passos nomeados e os executa em ordem.</p>
+        <pre class="doc-codigo"><code>from sklearn.pipeline import Pipeline
+
+pipe = Pipeline([
+    ("escala", StandardScaler()),
+    ("modelo", LinearRegression()),
+])
+
+pipe.fit(X_treino, y_treino)
+previsto = pipe.predict(X_teste)</code></pre>
+        <p>A primeira pergunta razoável é se encapsular muda alguma coisa. A medição:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Caminho</th><th>MAPE nos 24 meses de teste</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Escalador e modelo separados, como na Aula 11</td><td><code>2,8620136234%</code></td></tr>
+              <tr><td>Os mesmos dois dentro de um <code>Pipeline</code></td><td><code>2,8620136234%</code></td></tr>
+              <tr><td>Maior diferença entre as 24 previsões</td><td><code>0,0e+00</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Idêntico até o último bit, e não por aproximação: o <code>numpy.array_equal</code>
+        devolve verdadeiro. O <code>Pipeline</code> reordena a mesma conta.</p>
+        <p>Isso precisa ser dito com todas as letras porque a expectativa oposta é comum: não há
+        ganho de precisão em encapsular, e um material que insinuasse o contrário estaria
+        vendendo o que a medição não entrega.</p>
+      </section>
+
+      <section class="doc-secao" id="dobra">
+        <h2>3. Onde a ordem de fato importa</h2>
+        <p>O argumento a favor do <code>Pipeline</code> aparece quando o dado é repartido. Na Aula
+        10, o <code>TimeSeriesSplit</code> treina cinco vezes, cada uma num recorte diferente do
+        histórico. Em cada uma dessas cinco vezes, o escalador precisa ser reajustado
+        <strong>dentro</strong> da dobra de treino, e nunca sobre o conjunto inteiro.</p>
+        <p>Com escalador solto, lembrar disso é responsabilidade de quem escreve o laço. Com o
+        <code>Pipeline</code>, o <code>cross_val_score</code> reajusta o objeto inteiro por dobra,
+        e a disciplina passa a ser propriedade do objeto.</p>
+        <div class="doc-nota">
+          <p><strong>O que a medição desta base não sustenta.</strong> É tentador escrever aqui que
+          ajustar o escalador sobre treino e teste juntos "vaza informação e piora o resultado".
+          Nesta base, não piora: a Aula 05 mediu que a mutação desloca a média do escalador em 12%
+          de um desvio e devolve MAPE idêntico até a nona casa, porque regressão linear sem
+          regularização é invariante a transformação afim das entradas.</p>
+          <p>A disciplina continua certa, e o motivo é outro: ela passa a importar de verdade com
+          KNN, SVM, regressão regularizada e PCA, que o acervo usou entre as Aulas 06 e 08, e com
+          validação por dobra, que é o caso aqui. Declarar o motivo verdadeiro custa um parágrafo a
+          mais e evita que a dupla aprenda uma regra pelo argumento errado.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="reajuste">
+        <h2>4. O modelo exportado treina com as 339 linhas</h2>
+        <p>Aqui está a decisão que a aula toma e que o roteiro original não previa em detalhe.</p>
+        <p>O modelo que foi avaliado treinou com 315 meses e foi medido nos 24 que nunca viu. Esse
+        é o protocolo honesto das Aulas 09 a 11, e o <strong>2,86% é o número que descreve o
+        modelo</strong>. Mas a avaliação terminou: não há mais nada a decidir, e deixar 24 meses de
+        dado real do IBGE parados fora do modelo que vai para a LDC seria desperdício. Então o
+        objeto exportado é reajustado sobre a base inteira.</p>
+        <p>O que acontece com os coeficientes ao acrescentar esses 24 meses:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Feature</th><th>Coeficiente, 315 meses</th><th>Coeficiente, 339 meses</th><th>Deslocamento</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>abate_bovinos_lag1</code></td><td><code>-93.404</code></td><td><code>+3.118.714</code></td><td><strong>3.439%</strong>, troca de sinal</td></tr>
+              <tr><td><code>producao_ovos_lag1</code></td><td><code>8.186.586</code></td><td><code>15.310.656</code></td><td>87,0%</td></tr>
+              <tr><td><code>abate_suinos_lag1</code></td><td><code>-9.717.140</code></td><td><code>-15.903.851</code></td><td>63,7%</td></tr>
+              <tr><td><code>producao_leite_lag1</code></td><td><code>7.640.084</code></td><td><code>4.005.305</code></td><td>47,6%</td></tr>
+              <tr><td><code>lag1</code></td><td><code>11.058.622</code></td><td><code>6.298.310</code></td><td>43,0%</td></tr>
+              <tr><td><code>sen</code></td><td><code>5.419.255</code></td><td><code>6.351.252</code></td><td>17,2%</td></tr>
+              <tr><td><code>lag3</code></td><td><code>93.695.989</code></td><td><code>105.597.974</code></td><td>12,7%</td></tr>
+              <tr><td><code>lag12</code></td><td><code>47.561.974</code></td><td><code>52.698.457</code></td><td>10,8%</td></tr>
+              <tr><td><code>cos</code></td><td><code>-7.351.457</code></td><td><code>-6.909.109</code></td><td>6,0%</td></tr>
+              <tr><td><code>lag2</code></td><td><code>86.205.776</code></td><td><code>90.079.110</code></td><td>4,5%</td></tr>
+              <tr><td><code>dias</code></td><td><code>14.865.891</code></td><td><code>14.735.866</code></td><td>0,9%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A mediana é 17,2%. E o que acontece com a previsão, nos mesmos 24 meses:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Grandeza</th><th>Deslocamento médio</th><th>Deslocamento máximo</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Coeficientes</td><td>mediana de 17,2%</td><td>3.439%</td></tr>
+              <tr><td>Previsões dos 24 meses</td><td>0,65%</td><td><strong>0,97%</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O modelo mudou muito por dentro e quase nada por fora. A razão entre as duas grandezas é
+        de cerca de 27 vezes.</p>
+        <div class="doc-nota">
+          <p><strong>O 2,65% e o 2,86% convivem, e só um deles pode ser publicado.</strong> Medir o
+          modelo reajustado nos mesmos 24 meses de teste devolve 2,6492%. É melhor que o 2,86%, e
+          não significa nada: esse objeto treinou com esses 24 meses. Publicá-lo é exatamente o
+          vazamento que a Aula 09 ensinou a reconhecer, agora numa forma nova, que aparece
+          justamente no momento de empacotar.</p>
+          <p>A regra prática: <strong>o número que acompanha o modelo exportado é o do objeto
+          avaliado</strong>, com o corte declarado ao lado.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="colinearidade">
+        <h2>5. Por que o coeficiente se move e a previsão não</h2>
+        <p>A explicação está nas features, e ela é medível.</p>
+        <p>As onze entradas são fortemente correlacionadas entre si. As quatro defasagens são a
+        mesma série deslocada no tempo, e as quatro séries de outras proteínas crescem junto com a
+        de frango ao longo de 28 anos. Na matriz de correlação do conjunto de treino, <strong>vinte
+        pares passam de 0,90</strong>.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Feature</th><th>VIF</th><th>Feature</th><th>VIF</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>lag1</code></td><td><strong>69,0</strong></td><td><code>producao_leite_lag1</code></td><td>23,4</td></tr>
+              <tr><td><code>abate_suinos_lag1</code></td><td>47,2</td><td><code>abate_bovinos_lag1</code></td><td>7,4</td></tr>
+              <tr><td><code>lag3</code></td><td>38,9</td><td><code>cos</code></td><td>1,8</td></tr>
+              <tr><td><code>lag12</code></td><td>36,8</td><td><code>dias</code></td><td>1,6</td></tr>
+              <tr><td><code>lag2</code></td><td>27,9</td><td><code>sen</code></td><td>1,3</td></tr>
+              <tr><td><code>producao_ovos_lag1</code></td><td>23,9</td><td></td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O fator de inflação da variância mede o quanto a variância estimada de um coeficiente
+        cresce por causa da correlação daquela feature com as demais. O limiar usual para declarar
+        colinearidade preocupante é 10, e <strong>sete das onze features passam dele</strong>.</p>
+        <p>O mecanismo é direto: quando duas colunas dizem quase a mesma coisa, existem muitas
+        combinações de pesos que produzem quase o mesmo ajuste. O modelo é livre para escolher
+        entre elas, e um punhado de linhas novas basta para inclinar a escolha. A soma do efeito
+        das features correlacionadas fica praticamente igual, e é por isso que a previsão não se
+        move.</p>
+        <div class="doc-nota">
+          <p>Note o caso de <code>abate_bovinos_lag1</code>: é a feature que mais se desloca
+          (3.439%, trocando de sinal) e tem VIF de apenas 7,4, abaixo do limiar. Não há contradição.
+          O VIF alto explica <em>o mecanismo geral</em>, e o deslocamento relativo enorme desta
+          feature em particular vem de o coeficiente dela ser <strong>pequeno em valor absoluto</strong>,
+          duas ordens de grandeza abaixo dos demais. Um coeficiente perto de zero produz
+          deslocamento relativo gigante com movimento absoluto modesto, e é o primeiro a trocar de
+          sinal. As duas coisas juntas, colinearidade no conjunto e coeficiente pequeno nesta
+          feature, é que produzem o resultado.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="aula05">
+        <h2>6. O VIF de 69 sobrevive à padronização</h2>
+        <p>Existe uma conclusão errada muito à mão aqui, e o acervo precisa desarmá-la, porque ele
+        próprio plantou a semente.</p>
+        <p>A Aula 05 mediu um número de condição de 1,08e10 nesta mesma família de dados, mostrou
+        que o solver zerava os coeficientes de sazonalidade, e resolveu o problema padronizando. É
+        natural supor que a instabilidade desta aula seja a mesma coisa, e que a padronização já a
+        tenha resolvido (ou que devesse ter resolvido, e portanto algo está errado).</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Medida</th><th>Antes de padronizar</th><th>Depois de padronizar</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Número de condição da matriz de treino</td><td><code>3,22e9</code></td><td><code>28,5</code></td></tr>
+              <tr><td>Maior VIF entre as onze features</td><td><code>69,0</code></td><td><code>69,0</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>São dois problemas diferentes com a mesma aparência. <strong>Condicionamento
+        numérico</strong> é sobre a escala relativa das colunas: com defasagens na casa de 1e9 e
+        seno na casa de 1, a decomposição em valores singulares descarta as direções pequenas, e
+        padronizar resolve. <strong>Colinearidade</strong> é sobre a correlação entre as colunas, e
+        padronizar não altera correlação nenhuma: dividir uma coluna por uma constante não muda o
+        quanto ela se parece com a vizinha.</p>
+        <p>A Aula 05 continua certa, e o problema dela foi resolvido. Este é outro, e continua
+        aberto por escolha: as onze features ficam, porque a previsão é boa e estável. O que muda é
+        o que se pode afirmar sobre os coeficientes delas.</p>
+      </section>
+
+      <section class="doc-secao" id="explicacao">
+        <h2>7. O que isso muda no que a dupla publica</h2>
+        <p>A previsão do modelo reajustado é confiável. Nada do que a LDC recebe como número muda
+        de forma relevante, e o modelo de produção é legítimo.</p>
+        <p>O que não sobrevive ao reajuste é a frase explicativa. Se o relatório disser que
+        <em>abate de bovinos no mês anterior puxa a produção de frango para baixo</em>, essa
+        afirmação se inverte na próxima vez que o modelo for reajustado com dado novo. Nada terá
+        piorado, nenhum alarme dispara, e a frase publicada passa a dizer o oposto do modelo em
+        produção.</p>
+        <p>A Aula 10 ensinou SHAP e partial dependence em vez de leitura direta de coeficiente. Esta
+        é a demonstração de por quê, e ela dá um critério prático para a ART.8:</p>
+        <div class="doc-nota">
+          <p><strong>Antes de publicar uma explicação, reajuste o modelo com o dado mais recente e
+          confira se a explicação continua valendo.</strong> Se ela mudar, o que a dupla tem é uma
+          propriedade daquele ajuste específico, e não uma propriedade do fenômeno. Isso não impede
+          de publicar: impede de publicar sem a ressalva.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="joblib">
+        <h2>8. O arquivo de 1.481 bytes</h2>
+        <pre class="doc-codigo"><code>import joblib
+
+joblib.dump(pipe, "modelo.joblib")
+recarregado = joblib.load("modelo.joblib")</code></pre>
+        <p>O <code>Pipeline</code> de produção inteiro cabe em 1.481 bytes: onze coeficientes, onze
+        médias, onze desvios e o metadado do objeto. Recarregar devolve previsão idêntica bit a
+        bit.</p>
+        <p>Esse arquivo está versionado em <code>app/modelo_aula12.joblib</code> e é gerado pelo
+        comando <code>python3 tools/exportar_modelo_aula12.py</code>. Ele é o que a
+        <strong>Aula 13</strong> carrega dentro do app Streamlit.</p>
+        <div class="doc-nota">
+          <p>O <code>joblib</code> grava um objeto Python serializado, o que significa que carregar
+          um <code>.joblib</code> <strong>executa código</strong>. Carregar arquivo de origem
+          desconhecida tem o mesmo risco de rodar um script desconhecido. No case não é problema,
+          porque o arquivo é gerado pela própria dupla, e é a razão pela qual o acervo versiona o
+          script que o produz, e não só o binário: um binário commitado sem comando declarado é um
+          arquivo que ninguém pode auditar.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="versao">
+        <h2>9. A divergência de versão, medida</h2>
+        <p>O <code>joblib</code> grava a versão do scikit-learn que criou cada estimador. Quando
+        quem carrega tem outra, a biblioteca emite um aviso. O que a aula fez foi medir o que
+        acontece de fato, em vez de descrever o risco no abstrato.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Experimento</th><th>Resultado medido</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Gravar com <code>1.7.2</code>, carregar com <code>1.9.1</code></td><td>3 <code>InconsistentVersionWarning</code>, um por estimador</td></tr>
+              <tr><td>Previsão do objeto carregado</td><td>idêntica bit a bit à do modelo atual</td></tr>
+              <tr><td>Instalar <code>scikit-learn 1.6.1</code> no Python 3.14</td><td>não existe wheel; o <code>pip</code> lista a partir da <code>1.7.2</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O texto exato do aviso:</p>
+        <pre class="doc-codigo"><code>InconsistentVersionWarning: Trying to unpickle estimator StandardScaler
+from version 1.7.2 when using version 1.9.1. This might lead to breaking
+code or invalid results. Use at your own risk.</code></pre>
+        <p>Duas leituras saem daqui. A primeira é que <strong>o aviso é a única coisa que denuncia
+        a divergência</strong>, e ele não interrompe nada: quem roda com <code>warnings</code>
+        silenciados, que é o caso de boa parte dos notebooks e de praticamente todo serviço em
+        produção, não vê nem isso.</p>
+        <p>A segunda é sobre a mitigação usual. "É só instalar a versão antiga" tem prazo de
+        validade, e quem o define é o interpretador, não a biblioteca: no Python 3.14 as versões
+        anteriores à 1.7.2 não têm wheel, e resta compilar do zero. A Aula 11 esbarrou no mesmo
+        muro pelo outro lado, quando o PyCaret estável recusou o Python do acervo.</p>
+        <div class="doc-nota">
+          <p><strong>Escopo, e o que esta medição não prova.</strong> O que foi medido é que um
+          <code>Pipeline</code> de <code>StandardScaler</code> e <code>LinearRegression</code>
+          atravessa três versões menores sem alterar um dígito. Isso não generaliza para qualquer
+          modelo: um estimador cujo atributo interno tenha sido renomeado entre versões falha na
+          carga, e a documentação do scikit-learn lista o caso. O que a aula afirma é mais estreito
+          e mais útil: <strong>o aviso não distingue os dois casos</strong>, e por isso versão
+          declarada vale mais que aviso lido.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="mlflow">
+        <h2>10. O MLflow, e o backend que mudou</h2>
+        <p>Um <code>.joblib</code> sozinho não diz de onde veio. Três meses depois, a pergunta "por
+        que este modelo e não outro?" não tem resposta dentro do binário.</p>
+        <p>O MLflow registra cada execução com parâmetros, métricas e ambiente. A aula registra as
+        duas execuções, a avaliada e a de produção, e o que mais importa está no que a segunda
+        <strong>não</strong> tem:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Execução</th><th>Meses de treino</th><th><code>mape_teste</code></th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>avaliado</code></td><td>315</td><td><code>2,862014</code></td></tr>
+              <tr><td><code>producao</code></td><td>339</td><td><code>NaN</code>, com tag explicando a ausência</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A execução de produção não pode ter essa métrica, porque não existe conjunto fora da
+        amostra para ela. No lugar do número entra uma tag dizendo isso. É uma decisão de uma linha
+        e é o coração do rastreamento honesto: o registro precisa conseguir dizer que uma execução
+        não tem determinada métrica, em vez de repetir o número da execução vizinha e deixar quem
+        ler daqui a três meses concluir o que quiser.</p>
+        <div class="doc-nota">
+          <p><strong>O autoestudo ensina um backend que a biblioteca recusa.</strong> O item
+          "MLflow: primeiros passos" usa a pasta <code>mlruns/</code>, que foi o padrão da
+          ferramenta por anos. A versão atual devolve
+          <code>MlflowException: The filesystem tracking backend is in maintenance mode</code> e
+          aponta para um banco. A aula usa <code>sqlite:///mlflow.db</code>, que é um arquivo só,
+          não exige servidor e roda igual no Colab.</p>
+          <p>Mudam duas linhas, a do <code>set_tracking_uri</code> e a do <code>mlflow ui</code>.
+          Tudo o que o autoestudo ensina sobre <em>o que</em> registrar continua valendo.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="escopo">
+        <h2>11. Escopo das conclusões desta aula</h2>
+        <p>O que esta aula mediu vale para o modelo linear do case, sobre esta base. O que ela
+        <strong>não</strong> autoriza a concluir:</p>
+        <ul>
+          <li><strong>Que reajustar sobre a base completa seja sempre seguro.</strong> Aqui é, e a
+          medição mostra por quê: a previsão se move menos de 1%. Num modelo com mais capacidade de
+          se ajustar ao ruído, uma floresta profunda por exemplo, o reajuste pode mudar mais, e a
+          conferência precisa ser refeita.</li>
+          <li><strong>Que coeficiente nunca sirva de explicação.</strong> Serve, quando as features
+          não são colineares. O que a aula mostra é que a estabilidade da explicação é uma
+          propriedade a ser verificada, e não uma garantia.</li>
+          <li><strong>Que o <code>Pipeline</code> melhore modelo.</strong> Ele não melhora, e a
+          medição é explícita: previsão idêntica bit a bit.</li>
+          <li><strong>Que divergência de versão seja inofensiva.</strong> Foi inofensiva neste
+          modelo, atravessando três versões menores. O aviso existe porque nem sempre é.</li>
+        </ul>
+      </section>
+
+      <section class="doc-secao" id="art8">
+        <h2>12. O que a dupla entrega na ART.8</h2>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Item</th><th>O que é</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>O <code>Pipeline</code> exportado</td><td>pré-processamento e modelo num arquivo, reajustado sobre a base completa</td></tr>
+              <tr><td>O número que o acompanha</td><td>o MAPE medido no objeto avaliado, com o corte temporal declarado</td></tr>
+              <tr><td>As versões</td><td>Python, <code>scikit-learn</code> e o último mês da base</td></tr>
+              <tr><td>O registro no MLflow</td><td>parâmetros, métricas, e o que cada execução não tem</td></tr>
+              <tr><td>A ressalva sobre explicação</td><td>se a dupla publicar leitura de coeficiente, a conferência do reajuste vai junto</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>ART.8 Modelo Final, peso 4</strong>, na Sprint 5, com planning em 28/09 e review
+        em 07/10. A <strong>Prova 02/10</strong> vale 20 e cobre a trilha inteira.</p>
+        <p>Na <strong>Aula 13</strong>, em 30/09, este mesmo arquivo de 1,5 KB vira a tela que a
+        LDC vê, com histórico, previsão de oito trimestres e cenários.</p>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula12.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../referencias/aula12.html"><span class="material-symbols-outlined" aria-hidden="true">link</span>Referências</a>
+  </nav>
+</body>
+</html>
