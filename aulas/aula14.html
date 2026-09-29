@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 14 &middot; Revisão e Futuro &middot; Módulo 03 IN</title>
+
+  <!-- Aula 14, 06/10/2026, Sprint 5 (planning em 28/09, review em 07/10).
+       Ultimo Encontro de Instrucao do modulo. Pela ADR-016, recebe o app
+       Streamlit que saiu da Aula 13 (convertida em revisao para a prova). A
+       definicao dos cenarios do app esta em docs/adrs/ADR-017. Todos os
+       numeros estao travados em tools/tests/test_app_aula14.py e saem de
+       app/logica.py, o mesmo codigo que o app e o notebook usam.
+
+       Divisao dos 105 minutos (PLANEJAMENTO_AULA_A_AULA.md, Aula 14):
+         15  Resgate da Aula 12 e pergunta disparada        (slides 3 a 4)
+         15  Streamlit e o app de app/, com quiz 1          (slides 5 a 10)
+         15  Pratica: rodar o app, seletor e grafico        (slide 11)
+         15  Cenarios, com quiz 2 e exercicio               (slides 12 a 17)
+         15  Linha do tempo e criterios de publicacao       (slides 18 a 21)
+         15  IA generativa e debate                         (slides 22 a 25)
+         15  Amarracao e ensaio curto da apresentacao       (slide 26)
+
+       O que foi medido (tools/tests/test_app_aula14.py):
+         MAPE do avaliado nos 24 meses        2,86%  (o que a tela mostra)
+         MAPE do exportado nos mesmos meses   2,65%  (nao aparece na tela)
+         previsao para 2026-04                1.227.063.556 kg
+         +10% no patamar do frango            +9,624% exportado, +9,630% avaliado
+         +10% nas outras 4 series             +0,394% exportado, +0,347% avaliado
+         +10% so em lag1                      +0,241% exportado, +0,453% avaliado
+         +10% so em bovinos                   +0,151% exportado, -0,005% avaliado
+
+       CUIDADO: o app nao tem controle de preco do milho, de proposito. O
+       modelo nao le preco. O slide 13 diz isso e o que faltaria para entrar.
+
+       Nenhum conteudo, questao ou resultado da Prova de 02/10 aparece aqui.
+
+       ART.9 Criterios de Publicacao, peso 3. ART.10 Apresentacao final, peso
+       3. Sprint 5 fecha em 07/10 (PLANO_DE_ENSINO.md secao 4). -->
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-theme.css">
+  <link rel="stylesheet" href="../assets/css/inteli-print.css" media="print">
+
+  <!-- Estilo local desta aula. So tokens, nenhuma cor literal. A animacao so
+       existe em tela, no slide visivel e sem preferencia por movimento
+       reduzido; em qualquer outro caso (impressao, PDF, prefers-reduced-motion)
+       o estado padrao e o estado final, com tudo visivel. -->
+  <style>
+    .reveal .data-table.tabela-projecao { font-size: var(--escala-texto); }
+    .reveal .data-table.tabela-projecao td,
+    .reveal .data-table.tabela-projecao th { padding: 7px 10px; }
+
+    .fluxo svg { display: block; }
+    .fluxo text { fill: var(--seg-texto); }
+    .fluxo .no-caixa { fill: var(--seg-superficie); stroke: var(--seg-borda); stroke-width: 2; }
+    .fluxo .no-tela .no-caixa { fill: var(--seg-base); stroke: var(--seg-destaque); stroke-dasharray: 8 6; stroke-width: 3; }
+    .fluxo .seta { stroke: var(--seg-primaria); stroke-width: 3; fill: none; }
+    .fluxo .ponta { fill: var(--seg-primaria); }
+    .fluxo .destaque { fill: var(--seg-destaque); }
+
+    .linha-tempo {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      list-style: none;
+      margin: 4px 0 0;
+      padding: 0;
+    }
+    .linha-tempo li {
+      border-top: 5px solid var(--seg-secundaria);
+      background: var(--seg-superficie);
+      border-radius: 0 0 8px 8px;
+      padding: 6px 8px 8px;
+      line-height: 1.3;
+    }
+    .linha-tempo li.sprint-par { border-top-color: var(--seg-primaria); }
+    .linha-tempo li.hoje { border-top-color: var(--seg-destaque); background: var(--seg-base); outline: 2px solid var(--seg-destaque); }
+    .linha-tempo .lt-num { display: block; font-weight: 700; font-size: var(--escala-subtitulo); }
+    .linha-tempo .lt-data { display: block; font-size: var(--escala-complementar); }
+
+    @media screen and (prefers-reduced-motion: no-preference) {
+      .reveal .slides section.present .fluxo .no { animation: surgir 0.6s ease-out both; }
+      .reveal .slides section.present .fluxo .no:nth-of-type(2) { animation-delay: 0.7s; }
+      .reveal .slides section.present .fluxo .no:nth-of-type(3) { animation-delay: 1.4s; }
+      .reveal .slides section.present .fluxo .no:nth-of-type(4) { animation-delay: 2.1s; }
+      .reveal .slides section.present .fluxo .seta { stroke-dasharray: 60; animation: tracar 0.6s ease-out both; }
+      .reveal .slides section.present .fluxo .seta-1 { animation-delay: 0.4s; }
+      .reveal .slides section.present .fluxo .seta-2 { animation-delay: 1.1s; }
+      .reveal .slides section.present .fluxo .seta-3 { animation-delay: 1.8s; }
+      .reveal .slides section.present .fluxo .no-tela .no-caixa { animation: pulsar 2.4s ease-in-out 2.8s infinite; }
+
+      .reveal .slides section.present .linha-tempo li { animation: surgir 0.45s ease-out both; }
+      .reveal .slides section.present .linha-tempo li:nth-child(2) { animation-delay: 0.25s; }
+      .reveal .slides section.present .linha-tempo li:nth-child(3) { animation-delay: 0.5s; }
+      .reveal .slides section.present .linha-tempo li:nth-child(4) { animation-delay: 0.75s; }
+      .reveal .slides section.present .linha-tempo li:nth-child(5) { animation-delay: 1s; }
+      .reveal .slides section.present .linha-tempo li:nth-child(6) { animation-delay: 1.25s; }
+      .reveal .slides section.present .linha-tempo li:nth-child(7) { animation-delay: 1.5s; }
+      .reveal .slides section.present .linha-tempo li:nth-child(8) { animation-delay: 1.75s; }
+      .reveal .slides section.present .linha-tempo li:nth-child(9) { animation-delay: 2s; }
+      .reveal .slides section.present .linha-tempo li:nth-child(10) { animation-delay: 2.25s; }
+      .reveal .slides section.present .linha-tempo li:nth-child(11) { animation-delay: 2.5s; }
+      .reveal .slides section.present .linha-tempo li:nth-child(12) { animation-delay: 2.75s; }
+      .reveal .slides section.present .linha-tempo li:nth-child(13) { animation-delay: 3s; }
+      .reveal .slides section.present .linha-tempo li:nth-child(14) { animation-delay: 3.25s; }
+    }
+    @keyframes surgir { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    @keyframes tracar { from { stroke-dashoffset: 60; } to { stroke-dashoffset: 0; } }
+    @keyframes pulsar { 0%, 100% { stroke-width: 3; } 50% { stroke-width: 6; } }
+  </style>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- 1 - Capa -->
+      <section class="cover-slide">
+        <div class="cover-panel">
+          <div class="cover-content">
+            <p class="cover-eyebrow">Módulo 03 IN &middot; Aula 14 &middot; 06/10/2026</p>
+            <h1>Revisão e Futuro</h1>
+            <h3>O app Streamlit sobre o modelo da Aula 12, a linha do tempo do case e a IA
+            generativa como horizonte</h3>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 - Agenda -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Agenda do encontro</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Horário</th><th>Bloco</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>08h00 &middot; 10h00</td><td>Autoestudo: IA Generativa, técnicas, oportunidades e autoria [12]</td></tr>
+            <tr><td>10h00 &middot; 10h15</td><td>Última daily do módulo: o que falta para a apresentação final</td></tr>
+            <tr><td>10h15 &middot; 11h00</td><td>O modelo da Aula 12 ganha uma tela: Streamlit e prática</td></tr>
+            <tr><td>11h00 &middot; 11h15</td><td>Cenários que recalculam a previsão</td></tr>
+            <tr><td>11h15 &middot; 11h45</td><td>Linha do tempo do case, critérios de publicação e IA generativa</td></tr>
+            <tr><td>11h45 &middot; 12h00</td><td>ART.9, ART.10 e ensaio curto da apresentação</td></tr>
+          </tbody>
+        </table>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">2</p>
+        </div>
+      </section>
+
+      <!-- 3 - Resgate da Aula 12 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A Aula 12 deixou um Pipeline de 1.481 bytes</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>import joblib
+
+pipe = joblib.load(
+    "app/modelo_aula12.joblib")
+
+print(pipe)
+# Pipeline(steps=[
+#   ('escala', StandardScaler()),
+#   ('modelo', LinearRegression())])</code></pre>
+          <div>
+            <p>Regressão linear sobre o alvo em nível, com onze features da base mensal do SIDRA [1],
+            reajustada sobre os <strong>339 meses</strong> depois de a avaliação terminar [2][10].</p>
+            <p>O número que acompanha esse arquivo é <strong>2,86%</strong> de MAPE, medido no
+            objeto avaliado, que treinou em 315 meses e nunca viu os 24 de teste [10].</p>
+            <p>Hoje o arquivo ganha uma tela, e o módulo fecha.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">3</p>
+        </div>
+      </section>
+
+      <!-- 4 - Pergunta disparada, com o fluxo animado -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Falta a última etapa: a tela</h2>
+        </div>
+        <div class="fluxo">
+          <svg viewBox="0 0 1168 200" width="100%" height="200" role="img" aria-label="Fluxo em quatro etapas: os cinco CSVs mensais do SIDRA, com 351 meses por série, viram a base analítica de 339 linhas e onze features, que alimenta o Pipeline de 1.481 bytes, que falta virar a tela do app">
+            <g class="no">
+              <rect class="no-caixa" x="0" y="20" width="250" height="150" rx="12"/>
+              <text x="125" y="70" text-anchor="middle" font-size="24" font-weight="700">dados/mensal/</text>
+              <text x="125" y="108" text-anchor="middle" font-size="20">5 CSVs do SIDRA</text>
+              <text x="125" y="138" text-anchor="middle" font-size="20">351 meses por série</text>
+            </g>
+            <g class="no">
+              <rect class="no-caixa" x="306" y="20" width="250" height="150" rx="12"/>
+              <text x="431" y="70" text-anchor="middle" font-size="24" font-weight="700">base analítica</text>
+              <text x="431" y="108" text-anchor="middle" font-size="20">339 linhas</text>
+              <text x="431" y="138" text-anchor="middle" font-size="20">11 features</text>
+            </g>
+            <g class="no">
+              <rect class="no-caixa" x="612" y="20" width="250" height="150" rx="12"/>
+              <text x="737" y="70" text-anchor="middle" font-size="24" font-weight="700">Pipeline</text>
+              <text x="737" y="108" text-anchor="middle" font-size="20">modelo_aula12.joblib</text>
+              <text x="737" y="138" text-anchor="middle" font-size="20">1.481 bytes</text>
+            </g>
+            <g class="no no-tela">
+              <rect class="no-caixa" x="918" y="20" width="250" height="150" rx="12"/>
+              <text x="1043" y="70" text-anchor="middle" font-size="24" font-weight="700">app.py</text>
+              <text x="1043" y="108" text-anchor="middle" font-size="20">a tela da LDC</text>
+              <text class="destaque" x="1043" y="138" text-anchor="middle" font-size="20" font-weight="700">o que mostrar</text>
+            </g>
+            <line class="seta seta-1" x1="254" y1="95" x2="294" y2="95"/>
+            <polygon class="ponta" points="294,86 306,95 294,104"/>
+            <line class="seta seta-2" x1="560" y1="95" x2="600" y2="95"/>
+            <polygon class="ponta" points="600,86 612,95 600,104"/>
+            <line class="seta seta-3" x1="866" y1="95" x2="906" y2="95"/>
+            <polygon class="ponta" points="906,86 918,95 906,104"/>
+          </svg>
+        </div>
+        <p class="quiz-question" style="font-size: var(--escala-subtitulo); font-weight: 600; margin: 8px 0 4px;">Quem vai usar essa previsão na LDC, e o que essa pessoa precisa ver na tela?</p>
+        <p>Dois minutos em dupla. Listem o usuário, a decisão que ele toma e os três elementos que
+        a tela precisa ter para ele tomar essa decisão.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">4</p>
+        </div>
+      </section>
+
+      <!-- 5 - Divisor: Streamlit -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Streamlit</h2>
+        <h3>Um script Python que vira página</h3>
+      </section>
+
+      <!-- 6 - Estrutura minima -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Um app mínimo roda com seis instruções</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>import streamlit as st
+import logica
+
+st.title("Abate de frangos")
+serie = st.selectbox(
+    "Série", logica.SERIES)
+tabela = logica.carregar_series()[serie]
+st.line_chart(
+    tabela.set_index("periodo")["valor"])
+
+# no terminal:
+# streamlit run app/app.py</code></pre>
+          <div>
+            <p><code>st.title</code> escreve, <code>st.selectbox</code> devolve a escolha do usuário
+            e <code>st.line_chart</code> desenha [5].</p>
+            <p>O Streamlit <strong>reexecuta o script inteiro</strong> a cada clique, de cima para
+            baixo. É o que torna o código curto, e é o que obriga a pôr o modelo em cache: sem
+            <code>st.cache_resource</code>, cada movimento de controle relê o
+            <code>.joblib</code> do disco [5].</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">6</p>
+        </div>
+      </section>
+
+      <!-- 7 - Logica separada da tela -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O app de app/ separa a conta da tela</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Arquivo</th><th>O que faz</th><th>Como é testado</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>app/logica.py</code></td><td>monta a base, prevê, aplica o cenário</td><td><code>pytest</code>, sem navegador</td></tr>
+            <tr><td><code>app/app.py</code></td><td>decide o que aparece e em que ordem</td><td><code>AppTest</code> do Streamlit</td></tr>
+            <tr><td><code>notebooks/aula14.ipynb</code></td><td>roda a mesma lógica, sem servidor</td><td>executado no CI</td></tr>
+          </tbody>
+        </table>
+        <p>Nenhuma conta mora em <code>app.py</code>. Cada número da tela sai de uma função de
+        <code>logica.py</code>, e o notebook importa esse mesmo módulo: o que a dupla confere no
+        Colab é o que o app mostra [2][3].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">7</p>
+        </div>
+      </section>
+
+      <!-- 8 - Captura do app -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A tela publica o MAPE de 2,86% do avaliado</h2>
+        </div>
+        <div class="side-by-side" style="grid-template-columns: 1.45fr 1fr; align-items: start;">
+          <img src="../assets/img/aula14-app-streamlit.png" alt="Captura de tela do app Streamlit rodando. Na barra lateral, a série Abate de frangos, 48 meses de histórico, o cenário Patamar do frango e o choque em menos 10%. No corpo, três cartões: MAPE nos 24 meses de teste 2,86%, 339 meses de treino do modelo exportado e previsão para 2026-04 de 1,227 bilhão de kg, e o gráfico com a série medida pelo IBGE, a previsão do modelo e a previsão sob o cenário, tracejada e abaixo" style="display: block; max-width: 100%; max-height: 380px;">
+          <div>
+            <p>O exportado treinou com os 24 meses de teste: medido ali, ele erra 2,65%, um número
+            sem significado. O cartão mostra o <strong>2,86% do avaliado</strong> [10].</p>
+            <p>O eixo começa em 950 milhões de kg. O <code>st.line_chart</code> começa em zero e
+            achata o erro numa linha, por isso o app usa Altair.</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">8</p>
+        </div>
+      </section>
+
+      <!-- 9 - Um passo a frente e o proximo mes -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O modelo prevê um mês além do CSV</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>O que a tela mostra</th><th>De onde vêm as entradas</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>24 previsões de teste, 2024-04 a 2026-03</td><td><code>lag1</code> real de cada mês: um passo à frente</td></tr>
+            <tr><td>Previsão para 2026-04: <strong>1,227 bilhão de kg</strong></td><td>todas as onze entradas já medidas pelo IBGE</td></tr>
+            <tr><td>2026-05 em diante</td><td>não é mostrado: <code>lag1</code> seria a própria previsão</td></tr>
+          </tbody>
+        </table>
+        <p>O TAPI pede 24 meses de horizonte. A Aula 05 mediu que prever o horizonte inteiro de forma
+        recursiva erra mais que prever um passo [10]. A tela precisa dizer qual das duas coisas está
+        mostrando, e diz na legenda do gráfico.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">9</p>
+        </div>
+      </section>
+
+      <!-- 10 - Quiz 1 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pergunta 1 &middot; O cache do modelo</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">Por que <code>carregar_pipeline()</code> fica dentro de uma função
+          com <code>@st.cache_resource</code> no <code>app.py</code>?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O cache não muda o objeto: o modelo carregado com ou sem cache é o mesmo, e a previsão é idêntica.">Porque sem cache o modelo carregado seria diferente</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: o Streamlit reexecuta o script inteiro a cada clique. Sem cache, cada movimento do controle de cenário releria o .joblib do disco."
+                data-incorrect-msg="Era esta: o Streamlit reexecuta o script inteiro a cada clique. Sem cache, cada movimento do controle de cenário releria o .joblib do disco.">Porque o script inteiro roda de novo a cada clique</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O cache vive na memória do processo do Streamlit. Nada é enviado para servidor externo, e o acervo não publica serviço nenhum.">Porque o cache publica o modelo num servidor</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="A divergência de versão só se resolve declarando e instalando a versão. O cache guarda o objeto já carregado, com o aviso que ele tiver emitido.">Porque o cache evita o aviso de versão do scikit-learn</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">10</p>
+        </div>
+      </section>
+
+      <!-- 11 - Pratica 1 -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; Rodar o app e montar a tela</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Na raiz do repositório: <code>pip install -r app/requirements.txt</code> e
+          <code>streamlit run app/app.py</code>. Conferir os três cartões contra a seção 2 do
+          <a href="https://github.com/canaldoovidio/2026-2A-M03/blob/main/notebooks/aula14.ipynb" target="_blank" rel="noopener">notebook</a>.</li>
+          <li>Num arquivo novo, escrever o app mínimo do slide 6 e rodar.</li>
+          <li>Acrescentar ao app mínimo a previsão dos 24 meses de teste, com
+          <code>logica.prever_teste</code>, no mesmo gráfico do histórico.</li>
+          <li>Escolher uma série que não é frango no seletor. O que o app deve mostrar?</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">11</p>
+        </div>
+      </section>
+
+      <!-- 12 - Divisor: cenarios -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Cenários</h2>
+        <h3>Um controle que recalcula a previsão</h3>
+      </section>
+
+      <!-- 13 - O modelo nao tem milho -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Nenhuma das onze entradas é preço de milho</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Grupo de entradas</th><th>Colunas</th><th>No app</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Patamar do frango</td><td><code>lag1</code>, <code>lag2</code>, <code>lag3</code>, <code>lag12</code></td><td>cenário</td></tr>
+            <tr><td>Outras séries, mês anterior</td><td>bovinos, suínos, ovos, leite</td><td>cenário</td></tr>
+            <tr><td>Calendário</td><td><code>sen</code>, <code>cos</code>, <code>dias</code></td><td>fixo</td></tr>
+            <tr><td><strong>Preço do milho</strong></td><td>não existe no modelo</td><td><strong>recusado</strong></td></tr>
+          </tbody>
+        </table>
+        <p>Um controle de milho mexeria num número que o <code>Pipeline</code> nunca lê. Para entrar,
+        o milho precisa de série aberta de preço, defasagem declarada e modelo reavaliado no mesmo
+        corte [3][11]. Cenário, aqui, é análise de sensibilidade do modelo: ele não prevê o que aconteceria na economia.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">13</p>
+        </div>
+      </section>
+
+      <!-- 14 - Figura de estabilidade -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>+10% no patamar move a previsão 9,62% e 9,63%</h2>
+        </div>
+        <img src="../assets/img/aula14-cenarios-estabilidade.png" alt="Efeito médio de um choque de mais 10% nas 24 previsões de teste, no modelo exportado de 339 meses e no avaliado de 315. À esquerda, em escala de 0 a 12%, o patamar do frango: mais 9,62 e mais 9,63. À direita, em escala de menos 0,1 a 0,55%: outras quatro séries, mais 0,39 e mais 0,35; só lag1, mais 0,24 e mais 0,45; só bovinos, mais 0,15 e menos 0,005, com a anotação troca de sinal" style="display: block; margin: 0 auto 4px; max-width: 100%; max-height: 350px;">
+        <p>O mesmo choque, em dois ajustes do mesmo modelo com 24 meses de diferença [2].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">14</p>
+        </div>
+      </section>
+
+      <!-- 15 - Coluna isolada herda a instabilidade -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O cenário só em bovinos troca de sinal</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Choque de +10% em</th><th>Exportado, 339 meses</th><th>Avaliado, 315 meses</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>As quatro defasagens do frango</td><td>+9,624%</td><td>+9,630%</td></tr>
+            <tr><td>Só <code>lag1</code></td><td>+0,241%</td><td>+0,453%</td></tr>
+            <tr><td>Só bovinos no mês anterior</td><td>+0,151%</td><td><strong>-0,005%</strong></td></tr>
+          </tbody>
+        </table>
+        <p>As defasagens são colineares, com VIF de até 69 [10]. A soma dos coeficientes do grupo é
+        estável; a partilha entre eles muda a cada reajuste. Um cenário de coluna isolada lê a
+        partilha, e herda a instabilidade que a Aula 12 mediu.</p>
+        <p><strong>Critério para a ART.9:</strong> o cenário só vai para a apresentação com o mesmo
+        sinal e a mesma ordem de grandeza nos dois ajustes. O app confere e avisa [3].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">15</p>
+        </div>
+      </section>
+
+      <!-- 16 - Quiz 2 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pergunta 2 &middot; O cenário na apresentação</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">A dupla quer mostrar à LDC: "10% a mais de abate de bovinos no mês
+          anterior aumenta o frango previsto em 0,15%". O que fazer?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O número sai do modelo exportado, mas o modelo avaliado, com 24 meses a menos, dá -0,005%. A direção da frase depende de qual ajuste se usa.">Mostrar, porque o número sai do modelo exportado</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: nos dois ajustes o efeito troca de sinal. A frase inverteria no próximo reajuste. O cenário estável é o do grupo, e ele pode ir para a tela."
+                data-incorrect-msg="Era esta: nos dois ajustes o efeito troca de sinal. A frase inverteria no próximo reajuste. O cenário estável é o do grupo, e ele pode ir para a tela.">Não mostrar: o sinal troca entre os dois ajustes</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Aumentar o choque multiplica o efeito, porque o modelo é linear, e mantém o sinal de cada ajuste. A troca de sinal continua lá, só maior.">Mostrar com choque de 20%, para o efeito ficar visível</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Padronizar já acontece dentro do Pipeline, e a Aula 12 mediu que ele não desfaz a colinearidade: o VIF continua em 69.">Padronizar as entradas antes, para o sinal estabilizar</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">16</p>
+        </div>
+      </section>
+
+      <!-- 17 - Exercicio de cenario -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Exercício &middot; Um controle de cenário</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Acrescentar ao app da dupla um <code>st.slider</code> de choque, de -20% a +20%, e uma
+          escolha de entrada entre as onze features.</li>
+          <li>Recalcular a previsão com <code>logica.prever_cenario</code> e desenhá-la como
+          terceira linha do gráfico.</li>
+          <li>Passar o cenário por <code>logica.estabilidade_do_cenario</code>. O sinal se mantém
+          nos dois ajustes?</li>
+          <li>Tentar um cenário de preço de milho, e ler a mensagem de erro.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">17</p>
+        </div>
+      </section>
+
+      <!-- 18 - Divisor: linha do tempo -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Revisão guiada</h2>
+        <h3>A linha do tempo do case e os critérios de publicação</h3>
+      </section>
+
+      <!-- 19 - Linha do tempo animada -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Do CSV trimestral ao app em quatorze aulas</h2>
+        </div>
+        <ol class="linha-tempo">
+          <li><span class="lt-num">01</span><span class="lt-data">04/08 &middot; S1</span>CSV de abate bovino</li>
+          <li><span class="lt-num">02</span><span class="lt-data">07/08 &middot; S1</span>3 modelos no CRISP-DM</li>
+          <li><span class="lt-num">03</span><span class="lt-data">11/08 &middot; S1</span>EDA das 5 séries</li>
+          <li class="sprint-par"><span class="lt-num">04</span><span class="lt-data">19/08 &middot; S2</span>Base com defasagens</li>
+          <li class="sprint-par"><span class="lt-num">05</span><span class="lt-data">24/08 &middot; S2</span>MAPE de 1,60%</li>
+          <li><span class="lt-num">06</span><span class="lt-data">01/09 &middot; S3</span>K=4 acerta 98,3%</li>
+          <li><span class="lt-num">07</span><span class="lt-data">04/09 &middot; S3</span>Base mensal, 339 linhas</li>
+          <li><span class="lt-num">08</span><span class="lt-data">10/09 &middot; S3</span>PC1 com 68,21%</li>
+          <li class="sprint-par"><span class="lt-num">09</span><span class="lt-data">15/09 &middot; S4</span>Baseline de 83,3%</li>
+          <li class="sprint-par"><span class="lt-num">10</span><span class="lt-data">17/09 &middot; S4</span>Floresta a 4,21%</li>
+          <li class="sprint-par"><span class="lt-num">11</span><span class="lt-data">24/09 &middot; S4</span>Linear a 2,86%</li>
+          <li><span class="lt-num">12</span><span class="lt-data">29/09 &middot; S5</span>Pipeline exportado</li>
+          <li><span class="lt-num">13</span><span class="lt-data">30/09 &middot; S5</span>Revisão para a prova</li>
+          <li class="hoje"><span class="lt-num">14</span><span class="lt-data">06/10 &middot; S5</span>App com cenários</li>
+        </ol>
+        <p style="margin-top: 10px;">Números das aulas de origem [10]. Em 04/09 a granularidade foi
+        corrigida de trimestral para mensal, e tudo dali em diante é mensal.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">19</p>
+        </div>
+      </section>
+
+      <!-- 20 - Checklist de publicacao -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Checklist de publicação do app e do notebook</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Critério</th><th>Como conferir</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>O erro publicado foi medido fora da amostra</td><td>MAPE do objeto avaliado, com o corte declarado</td></tr>
+            <tr><td>A tela diz o que está mostrando</td><td>um passo à frente, e só frango tem previsão</td></tr>
+            <tr><td>Cenário só sobre entrada que o modelo lê</td><td>mesmo sinal nos dois ajustes</td></tr>
+            <tr><td>Roda do zero em outra máquina</td><td><code>requirements.txt</code>, versões, último mês da base</td></tr>
+            <tr><td>O que ficou de fora está escrito</td><td>milho, horizonte de 24 meses, Modelos 2 e 3</td></tr>
+          </tbody>
+        </table>
+        <p>Proposta do acervo, montada com os achados das Aulas 09 a 14. A rubrica que avalia a
+        ART.9 é a da Adalove [4].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">20</p>
+        </div>
+      </section>
+
+      <!-- 21 - Exercicio da linha do tempo -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Exercício &middot; A linha do tempo da dupla</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Abrir a tabela da seção 5 do notebook. Cada dupla fica com uma etapa sorteada.</li>
+          <li>Preencher a etapa com o resultado da própria dupla: o número, o arquivo onde ele está e
+          a decisão que ele sustentou.</li>
+          <li>Passar o app da dupla pelo checklist do slide 20 e marcar o critério que ainda não
+          passa.</li>
+          <li>Ler a etapa em voz alta, em até 40 segundos.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">21</p>
+        </div>
+      </section>
+
+      <!-- 22 - Divisor: IA generativa -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>IA generativa</h2>
+        <h3>Um horizonte além deste módulo</h3>
+      </section>
+
+      <!-- 23 - Tecnicas -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Técnicas de IA generativa</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Técnica</th><th>O que produz</th><th>Relação com o módulo</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Modelo de linguagem, <em>transformer</em> [6]</td><td>texto e código, um símbolo por vez</td><td>treinado para prever o próximo símbolo</td></tr>
+            <tr><td>Difusão [7]</td><td>imagem, a partir de ruído</td><td>fora do case</td></tr>
+            <tr><td>Recuperação com geração, RAG [8]</td><td>resposta ancorada em documentos</td><td>boletins do Sindirações, que o TAPI cita [11]</td></tr>
+          </tbody>
+        </table>
+        <p>Nenhuma das três é regressor numérico auditável. Um modelo de linguagem pode escrever o
+        número 1,227 bilhão, e não consegue dizer de que ajuste ele saiu nem medir o erro fora da
+        amostra.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">23</p>
+        </div>
+      </section>
+
+      <!-- 24 - Onde entraria no pipeline da LDC -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>IA generativa no pipeline da LDC</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Etapa</th><th>Uso possível</th><th>Risco</th><th>Como conferir</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Dados</td><td>extrair tabela de boletim em PDF</td><td>número lido errado</td><td>somar contra o total</td></tr>
+            <tr><td>Código</td><td>rascunho de função e de teste</td><td>erro plausível</td><td>teste que já falhou</td></tr>
+            <tr><td>Previsão</td><td>gerar o número do mês</td><td>sem erro medido</td><td>não entra</td></tr>
+            <tr><td>Relatório</td><td>redigir a leitura dos números</td><td>frase sem número</td><td>cada frase com fonte</td></tr>
+          </tbody>
+        </table>
+        <p>A tabela é uma proposta para o debate: a turma pode discordar de qualquer linha.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">24</p>
+        </div>
+      </section>
+
+      <!-- 25 - Debate e autoria -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Debate: onde ela entraria, e quem assina</h2>
+        </div>
+        <p class="quiz-question" style="font-size: var(--escala-subtitulo); font-weight: 600; margin: 0 0 10px;">Em qual etapa do pipeline da LDC a IA generativa poderia entrar, e em qual não deveria?</p>
+        <p>Cinco minutos, votação por etapa e duas defesas por lado. Cada defesa precisa dizer como o
+        resultado seria conferido.</p>
+        <p><strong>Autoria.</strong> As diretrizes do COPE para publicação científica não aceitam
+        ferramenta de IA como autora, porque ela não responde pelo trabalho; quem usa declara o uso
+        e responde pelo resultado [9]. Na ART.10, é a dupla quem responde por cada número da
+        apresentação, tenha ou não usado assistente para escrevê-la.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">25</p>
+        </div>
+      </section>
+
+      <!-- 26 - Amarracao -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A Sprint 5 e o módulo fecham em 07/10</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Entrega</th><th>Peso</th><th>O que sai de hoje</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>ART.9 Critérios de Publicação</td><td>3</td><td>o app, o notebook e o checklist do slide 20</td></tr>
+            <tr><td>ART.10 Apresentação final</td><td>3</td><td>a linha do tempo da dupla, do slide 19</td></tr>
+          </tbody>
+        </table>
+        <p><strong>Ensaio curto, em dupla</strong> (sugestão de roteiro): três minutos, para a dupla vizinha. Uma frase
+        do problema da LDC, o número que sustenta o modelo e o critério que ele passa, a tela e um
+        cenário estável, e o que ficou de fora. A vizinha anota a frase sem número [4].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">26</p>
+        </div>
+      </section>
+
+      <!-- 27 - Referencias -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Referências</h2>
+        </div>
+        <ol class="exercise-steps lista-longa">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite:
+          tabelas 1092, 1093, 1094, 7524 e 1086 do SIDRA, série mensal.</li>
+          <li>Os números da aula, em <code>tools/tests/test_app_aula14.py</code>, calculados por
+          <code>app/logica.py</code>.</li>
+          <li>Definição dos cenários em <code>docs/adrs/ADR-017</code>;
+          <a href="../materiais/aula14.html">material de apoio da Aula 14</a>.</li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seção 4: pesos da ART.9 e da ART.10 e fim da Sprint 5.</li>
+          <li>Documentação do Streamlit: <em>API reference</em> e <em>Caching overview</em>.</li>
+          <li>Vaswani, A. et al. <em>Attention Is All You Need</em>. NeurIPS, 2017.</li>
+          <li>Ho, J.; Jain, A.; Abbeel, P. <em>Denoising Diffusion Probabilistic Models</em>.
+          NeurIPS, 2020.</li>
+          <li>Lewis, P. et al. <em>Retrieval-Augmented Generation for Knowledge-Intensive NLP
+          Tasks</em>. NeurIPS, 2020.</li>
+          <li>COPE. <em>Authorship and AI tools</em>, declaração de posição, 2023.</li>
+          <li><a href="../aulas/aula12.html">Aula 12</a>, do Pipeline e do reajuste;
+          <a href="../aulas/aula05.html">Aula 05</a>, da previsão recursiva; e as aulas da linha do
+          tempo, no <a href="../index.html">portal</a>.</li>
+          <li>TAPI da Louis Dreyfus Company, conforme <code>PLANO_DE_ENSINO.md</code>, seção 2.</li>
+          <li>Autoestudo da Semana 10 em <a href="../referencias/aula14.html">referencias/aula14.html</a>.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 14 &middot; Sprint 5</p>
+          <p class="footer-page">27</p>
+        </div>
+      </section>
+
+      <!-- 28 - Encerramento -->
+      <section class="end-slide">
+        <h1>Fim do Módulo 03 IN</h1>
+        <h3>Apresentação final e encerramento da Sprint 5 em 07/10</h3>
+        <p>Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot; 2026-2A</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      width: 1280, height: 720, center: false, margin: 0,
+      hash: true, slideNumber: false, transition: 'fade'
+    });
+  </script>
+  <script src="../assets/js/inteli-quiz.js"></script>
+  <script src="../assets/js/inteli-zoom.js"></script>
+  <script src="../assets/js/inteli-print.js"></script>
+</body>
+</html>

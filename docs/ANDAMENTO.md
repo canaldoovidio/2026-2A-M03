@@ -170,6 +170,36 @@ Aula 01 como padrão-ouro para as 13 aulas restantes).
   travadas, e o script de export (`tools/exportar_modelo_aula12.py`). O deck tem 27 slides e os
   quatro botões do card no portal estão habilitados. A aula abre a Sprint 5, e a tese dela é que
   empacotar um modelo não muda o que ele prevê e muda o que se pode afirmar sobre ele.
+- **Aula 13 completa, os quatro artefatos** (`aulas/aula13.html`, `materiais/aula13.html`,
+  `referencias/aula13.html`, `notebooks/aula13.ipynb`) mais as notas do professor
+  (`docs/notas-do-professor/aula13.md`), as quatro figuras (`tools/graficos_aula13.py`), as quatro
+  animações CSS/SVG (`tools/svg_aula13.py`) e a suíte `tools/tests/test_revisao_aula13.py`. O deck
+  tem 39 slides e 8 quizzes. Pela `ADR-016`, o encontro de 30/09 virou revisão em sala invertida dos
+  conteúdos de computação da Prova de 02/10 (peso 20): o estudo prévio é o material e o
+  autodiagnóstico do notebook (16 exercícios com `assert`), e a sala é instrução por pares com voto
+  e revoto, mais correção cruzada. Todo exercício usa o case da LDC. **A prova nunca entra no
+  repositório**, e um teste reprova qualquer arquivo da aula que contenha cenário ou número dela,
+  com a lista de termos codificada em base64. As animações usam CSS em vez do SMIL da Aula 05,
+  porque o SMIL ignora `prefers-reduced-motion`.
+- **Os achados medidos na Aula 13.** (1) Trocar as quatro séries do mês anterior pelas do próprio
+  mês leva o MAPE de 2,86% para 2,43%, que é o tamanho do vazamento por coluna que ainda não existe
+  no momento da previsão. (2) Medida sobre dados já vistos, a floresta cai de 5,70% para 1,31%, e
+  continua em 1,31% com 100 meses de avaliação: um teste maior não conserta a estimativa. (3) Na base
+  trimestral, frangos sobre suínos do trimestre anterior têm r = 0,971, e a mesma reta tem R² de 0,95
+  no sorteio e de -5,81 no corte por data.
+- **Aula 14 completa, os quatro artefatos** (`aulas/aula14.html`, `materiais/aula14.html`,
+  `referencias/aula14.html`, `notebooks/aula14.ipynb`) mais as notas do professor
+  (`docs/notas-do-professor/aula14.md`), a `docs/adrs/ADR-017`, as duas figuras
+  (`tools/graficos_aula14.py`, uma delas captura real do app via Playwright) e a suíte
+  `tools/tests/test_app_aula14.py`, com 23 testes, três com `AppTest`. O app vive em `app/app.py`
+  (tela) e `app/logica.py` (lógica pura). O deck tem 28 slides. `streamlit` entrou no
+  `requirements-ci.txt`.
+- **O achado da Aula 14: o cenário do app é uma leitura de coeficiente.** +10% nas quatro defasagens
+  do frango move a previsão em +9,624% no modelo exportado (339 meses) e +9,630% no avaliado (315),
+  porque a soma dos coeficientes é estável (0,976 e 0,970). +10% só em bovinos dá +0,151% contra
+  -0,005%, com troca de sinal: é a colinearidade da Aula 12 vista pela tela. O critério de publicação
+  que sai daqui é o cenário ter o mesmo sinal nos dois ajustes. O cenário de preço do milho é
+  recusado, porque nenhuma das onze features é preço (`ADR-017`).
 - **O achado da Aula 12, medido antes do primeiro slide, e ele não estava no roteiro.** Reajustar o
   modelo de 315 para 339 meses, que é o que se exporta depois de a avaliação terminar, desloca os
   coeficientes numa **mediana de 17,2%** e faz `abate_bovinos_lag1` **trocar de sinal** (de -93.404
@@ -256,13 +286,12 @@ saída, abaixo.
   `github-pages` foi corrigida pelo professor em 07/08/2026, e o `static.yml` passou a
   publicar normalmente a cada push em `main` (run 31142595526, 22s).
 
-- **Aulas 13 e 14**: os cards dessas duas no portal seguem com os quatro botões em
-  `aria-disabled="true"`. As Aulas 01 a 12 já existem. A **Aula 13, em 30/09**, é a próxima da fila
-  e monta o app Streamlit em cima do `app/modelo_aula12.joblib` que a Aula 12 deixou versionado. A
-  decisão de forma já está tomada: o app entra como **código versionado mais notebook**, sem
-  publicar serviço externo, para o acervo continuar sendo site estático (ver `ADR-015`). O agente
-  `construtor-aulas` existe para esse fan-out, mas as doze primeiras aulas foram escritas sem ele,
-  à mão, seguindo as mesmas skills.
+- **As 14 aulas estão construídas**, com os quatro botões de cada card do portal habilitados.
+- **Achado aberto da Aula 13: o `lag1` pode não existir no momento da previsão.** O `dados/README.md`
+  registra que o SIDRA publica o trimestre e os três meses dele na mesma tabela. Se a publicação é
+  única por trimestre, as defasagens de um e dois meses nem sempre estão disponíveis quando a LDC
+  precisaria prever, e isso atinge a base mensal das Aulas 07 a 14. Não foi medido: é pergunta a levar
+  à LDC e ao IBGE, e está no material e nas notas do professor da Aula 13.
 - **O que a Aula 05 deixa marcado para as aulas seguintes.** As quatro séries defasadas em um
   trimestre derrubam o MAPE de teste para 1,14%, contra 1,60% do modelo de hoje, e ficaram de
   fora de propósito: entram como candidata declarada na Aula 07. O reajuste do modelo sobre a
