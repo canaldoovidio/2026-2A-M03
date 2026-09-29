@@ -770,43 +770,52 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 
 ### Aula 13 - 30/09/2026 - Deploy de modelos de Machine Learning  (Sprint 5)
 
+> Encontro convertido em revisão para a Prova de 02/10 (peso 20), em sala invertida. O app
+> Streamlit passa para a Aula 14. Decisão e regras que impedem a revisão de entregar a prova:
+> `docs/adrs/ADR-016`.
+
 08h00 - 10h00  Autoestudo
   How to Build a Machine Learning App using Streamlit
   Streamlit 101 - A faster way to build and share data apps
+  Estudo prévio da revisão (sala invertida): o material de apoio da Aula 13 e o autodiagnóstico do
+  notebook, feitos antes do encontro. Cada dupla chega com as duas dúvidas em que mais errou.
 
 10h00 - 10h15  Daily da equipe
   O que fiz, o que vou fazer, impedimentos. Cada dupla confirma que o `Pipeline` exportado na
-  Aula 12 recarrega sem erro.
+  Aula 12 recarrega sem erro e registra no quadro as duas dúvidas do autodiagnóstico.
 
 10h15 - 12h00  Instrução em metodologia ativa
 
-  10h15 - 10h30  Resgate: o `Pipeline` exportado e rastreado da Aula 12. Hoje: dar uma interface
-    ao modelo. Pergunta disparada: "quem vai usar essa previsão na LDC, e o que essa pessoa
-    precisa ver na tela?"
+  10h15 - 10h30  Resgate e diagnóstico: votação individual em quatro perguntas conceituais, sem
+    discussão. Pergunta disparada: "em que momento cada coluna da base da LDC passa a existir?"
 
-  10h30 - 10h45  Teoria: Streamlit, estrutura mínima de um app (`st.title`, `st.line_chart`,
-    `st.selectbox`).
+  10h30 - 10h45  Revisão 1: variáveis preditoras e alvo, o momento em que cada dado fica
+    disponível, identificador como feature, vazamento, e `fit` só no treino. Instrução por pares:
+    revotar depois de dois minutos de discussão em dupla.
 
-  10h45 - 11h00  Prática: cada dupla monta a primeira tela do app, carregando o `Pipeline` da
-    Aula 12.
+  10h45 - 11h00  Revisão 2: o fluxo dados, qualidade, treino e teste, treinamento, avaliação e
+    previsão numa regressão linear simples; dispersão e Pearson para checar linearidade; MAE,
+    RMSE, MAPE e R2 lidos na unidade certa; divisão aleatória contra divisão cronológica.
 
-  11h00 - 11h15  Teoria: exibir histórico versus previsão de 8 trimestres no mesmo gráfico, com a
-    categoria de proteína animal selecionável.
+  11h00 - 11h15  Revisão 3: matriz de confusão montada à mão, acurácia, precisão, revocação e F1
+    com fórmula, alvo desbalanceado e baseline majoritária, custo de cada tipo de erro e o
+    deslocamento do limiar.
 
-  11h15 - 11h30  Prática: cada dupla implementa o seletor de categoria e o gráfico de histórico
-    versus previsão.
+  11h15 - 11h30  Revisão 4: dados estruturados e não estruturados, ETL e ELT, *data warehouse* e
+    *data lake*; sistemas de recomendação (colaborativa, por conteúdo, demográfica) e *cold start*.
 
-  11h30 - 11h45  Teoria: cenários (por exemplo, variar o preço do milho) como controles
-    interativos que recalculam a previsão. Exercício: cada dupla adiciona um controle de cenário
-    ao próprio app.
+  11h30 - 11h45  Prática: cada dupla resolve um problema aberto do fluxo completo sobre o case, e
+    troca a resposta com a dupla vizinha para correção cruzada por critério declarado.
 
-  11h45 - 12h00  Amarração com a sprint: o app com histórico, previsão e cenários é a peça
-    central de comunicação da entrega final, alimentando **ART.9 Critérios de Publicação**
-    (peso 3).
+  11h45 - 12h00  Amarração com a sprint: como estudar até sexta, o que a Prova (peso 20) cobra
+    por tema, e o estado da **ART.8 Modelo Final** (peso 4). O app Streamlit, que alimenta a
+    **ART.9 Critérios de Publicação** (peso 3), é construído na Aula 14.
 
 ---
 
 ### Aula 14 - 06/10/2026 - Revisão e Futuro  (Sprint 5)
+
+> Recebe o app Streamlit que saiu da Aula 13 (`docs/adrs/ADR-016`).
 
 08h00 - 10h00  Autoestudo
   IA Generativa: técnicas, oportunidades e os desafios de autoria
@@ -817,28 +826,27 @@ citados abaixo têm título exato conferido contra `docs/autoestudos-por-semana.
 
 10h15 - 12h00  Instrução em metodologia ativa
 
-  10h15 - 10h30  Resgate: o app Streamlit da Aula 13. Hoje: revisar a cadeia completa dos três
-    modelos e preparar a apresentação final. Pergunta disparada: "qual foi a decisão mais difícil
-    do módulo, do CSV trimestral até o app?"
+  10h15 - 10h30  Resgate: o `Pipeline` exportado da Aula 12. Hoje: dar uma interface ao modelo e
+    fechar o módulo. Pergunta disparada: "quem vai usar essa previsão na LDC, e o que essa pessoa
+    precisa ver na tela?"
 
-  10h30 - 10h45  Revisão guiada: reconstruir em conjunto, no quadro, a linha do tempo do case,
-    do entendimento do negócio (Aula 02) até o deploy (Aulas 12 e 13). Exercício: cada dupla
-    completa uma etapa da linha do tempo com o próprio resultado.
+  10h30 - 10h45  Teoria: Streamlit, estrutura mínima de um app (`st.title`, `st.line_chart`,
+    `st.selectbox`) e o app de `app/` carregando o `Pipeline` da Aula 12.
 
-  10h45 - 11h00  Prática: ensaio cronometrado da apresentação final em duplas, com feedback
-    cruzado entre duplas vizinhas.
+  10h45 - 11h00  Prática: cada dupla roda o app, e implementa o seletor e o gráfico de histórico
+    versus previsão dos 24 meses de teste.
 
-  11h00 - 11h15  Discussão dirigida: o horizonte de 8 trimestres cobre os mesmos 24 meses
-    pedidos pela LDC, mas não é o único jeito de negociar granularidade com um parceiro. Debate:
-    o que mudaria se a LDC aceitasse esperar por uma série mensal futura do IBGE?
+  11h00 - 11h15  Teoria: cenários como controles interativos que recalculam a previsão.
+    Exercício: cada dupla adiciona um controle de cenário ao próprio app.
 
-  11h15 - 11h30  Teoria: IA generativa, técnicas, oportunidades e desafios de autoria, como
+  11h15 - 11h30  Revisão guiada: a linha do tempo do case, do entendimento do negócio (Aula 02) até
+    o deploy (Aulas 12 e 14), e os critérios de publicação do app e do notebook. Exercício: cada
+    dupla completa uma etapa da linha do tempo com o próprio resultado.
+
+  11h30 - 11h45  Teoria: IA generativa, técnicas, oportunidades e desafios de autoria, como
     horizonte além deste módulo. Exercício: debate rápido sobre onde IA generativa poderia, ou
     não deveria, entrar no pipeline da LDC.
 
-  11h30 - 11h45  Prática: revisão final dos critérios de publicação do app e do notebook antes da
-    apresentação.
-
-  11h45 - 12h00  Amarração com a sprint: o fechamento de hoje organiza a Apresentação final,
-    alimentando **ART.10 Apresentação final** (peso 3), no encerramento da Sprint 5 e do módulo
-    (07/10).
+  11h45 - 12h00  Amarração com a sprint: ensaio curto da apresentação em dupla. O app alimenta a
+    **ART.9 Critérios de Publicação** (peso 3) e o fechamento organiza a **ART.10 Apresentação
+    final** (peso 3), no encerramento da Sprint 5 e do módulo (07/10).

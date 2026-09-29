@@ -89,8 +89,8 @@ errado vire um modelo entregue no compasso errado.
 | 10 | 17/09 | 4 | Hiperparâmetros e Explicabilidade do Modelo | GridSearch, validação cruzada, SHAP, partial dependence |
 | 11 | 24/09 | 4 | AutoML - Pycaret | comparar candidatos para os 3 modelos |
 | 12 | 29/09 | 5 | Deploy de modelo e criação de pipeline de processamento | `Pipeline` do scikit-learn, export do modelo, MLflow |
-| 13 | 30/09 | 5 | Deploy de modelos de Machine Learning | app Streamlit com histórico vs. forecast e cenários |
-| 14 | 06/10 | 5 | Revisão e Futuro | fechamento do módulo e horizontes |
+| 13 | 30/09 | 5 | Deploy de modelos de Machine Learning | revisão para a Prova de 02/10, em sala invertida (`ADR-016`) |
+| 14 | 06/10 | 5 | Revisão e Futuro | app Streamlit com histórico vs. forecast e cenários, fechamento do módulo e horizontes |
 
 As 14 datas conferem, uma a uma, com os Encontros de Instrução do Prof. Ovidio registrados em
 `docs/autoestudos-por-semana.md`.
@@ -129,8 +129,8 @@ tema; a lista completa da semana está em `docs/autoestudos-por-semana.md`.
 | 10 | Hiperparâmetros e Explicabilidade do Modelo | Semana 07 | ART.7 Comparação de modelos |
 | 11 | AutoML - Pycaret | Semana 08 | ART.7 Comparação de modelos |
 | 12 | Deploy de modelo e criação de pipeline de processamento | Semana 09 | ART.8 Modelo Final |
-| 13 | Deploy de modelos de Machine Learning | Semana 09 | ART.9 Critérios de Publicação |
-| 14 | Revisão e Futuro | Semana 10 | ART.10 Apresentação final |
+| 13 | Deploy de modelos de Machine Learning | Semana 09 | Prova 02/10 · ART.8 Modelo Final |
+| 14 | Revisão e Futuro | Semana 10 | ART.9 Critérios de Publicação · ART.10 Apresentação final |
 
 O roteiro minuto a minuto de cada autoestudo citado nesta matriz está em
 `PLANEJAMENTO_AULA_A_AULA.md`, junto com o bloco `08h00 - 10h00 Autoestudo` de cada aula.
@@ -155,4 +155,4 @@ pronto sobre o case da LDC, antes de avançar.
 | 11 | AutoML - Pycaret | A Aula 10 deixou pronto os melhores hiperparâmetros e as explicações via SHAP e partial dependence dos modelos ajustados manualmente. |
 | 12 | Deploy de modelo e criação de pipeline de processamento | A Aula 11 deixou pronto a comparação sistemática de candidatos via PyCaret para os três modelos do case, com o melhor candidato de cada etapa selecionado. |
 | 13 | Deploy de modelos de Machine Learning | A Aula 12 deixou pronto o `Pipeline` do scikit-learn exportado e rastreado no MLflow. |
-| 14 | Revisão e Futuro | A Aula 13 deixou pronto o app Streamlit funcionando com histórico e cenários, encerrando a cadeia de entregas técnicas. |
+| 14 | Revisão e Futuro | A Aula 12 deixou pronto o `Pipeline` exportado em `app/`, e a Aula 13 revisou para a prova os conteúdos de computação do módulo (`ADR-016`). |
