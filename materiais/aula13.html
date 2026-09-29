@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material de apoio &middot; Aula 13 &middot; Revisão para a Prova de 02/10</title>
+  <meta name="description" content="Roteiro de estudo da Aula 13 do Módulo 03 IN: revisão, em sala invertida, dos conteúdos de computação da Prova de 02/10, com exercícios de autoverificação sobre o case da LDC.">
+
+  <!-- Roteiro de estudo previo da revisao (sala invertida). Uma secao por
+       tema de computacao da Prova, na mesma numeracao que o slide 36 do deck
+       aponta. Todo numero aqui e medido por tools/graficos_aula13.py sobre
+       os CSVs de dados/ e travado em tools/tests/test_revisao_aula13.py.
+
+       REGRA DURA (docs/adrs/ADR-016): nenhum cenario, numero ou questao da
+       prova. Os exercicios de autoverificacao usam so o case da LDC. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 13 &middot; 30/09/2026 &middot; Sprint 5</p>
+      <h1>Material de apoio: revisão para a Prova de 02/10</h1>
+      <p class="doc-subtitulo">Este é o roteiro de estudo prévio da revisão. Cada seção cobre um
+      tema de computação da Prova, aponta onde ele foi dado no acervo, explica o conceito com um
+      número medido no case da LDC, registra o erro mais comum e termina numa autoverificação. O
+      encontro de 30/09 pressupõe que o roteiro e o autodiagnóstico do notebook já foram feitos:
+      a sala fica para votação, discussão em dupla e correção cruzada.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#como-usar">Como usar este roteiro</a></li>
+        <li><a href="#variaveis">Variáveis, momento do dado e vazamento</a></li>
+        <li><a href="#holdout">Treino, teste e validade da estimativa</a></li>
+        <li><a href="#metricas">Métricas de regressão</a></li>
+        <li><a href="#simples">Regressão linear simples, do dado à previsão</a></li>
+        <li><a href="#metrica-tarefa">Métrica adequada à tarefa</a></li>
+        <li><a href="#matriz">Matriz de confusão, custo e limiar</a></li>
+        <li><a href="#dados">Tipos de dado, ETL e ELT, lake e warehouse</a></li>
+        <li><a href="#recomendacao">Sistemas de recomendação e cold start</a></li>
+        <li><a href="#acervo">Onde cada tema foi dado no acervo</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="como-usar">
+        <h2>1. Como usar este roteiro</h2>
+        <p>A revisão é em sala invertida: o estudo acontece antes, e o encontro serve para
+        descobrir, por votação, onde a turma ainda erra. Três passos, nesta ordem:</p>
+        <ol>
+          <li><strong>Leia uma seção por vez</strong> e responda a autoverificação do fim dela
+          antes de abrir a resposta. A resposta está recolhida num bloco que só abre com um
+          clique.</li>
+          <li><strong>Rode o autodiagnóstico</strong> do
+          <a href="https://github.com/canaldoovidio/2026-2A-M03/blob/main/notebooks/aula13.ipynb" target="_blank" rel="noopener">notebook
+          da aula</a>. São dezesseis questões com verificação automática: resposta certa imprime
+          <code>correto</code>, resposta errada levanta <code>AssertionError</code> com uma dica. O
+          gabarito não está escrito no notebook, só um resumo criptográfico de cada resposta.</li>
+          <li><strong>Anote as duas questões em que mais errou.</strong> Elas vão para o quadro
+          na daily, e o professor usa essa lista para decidir onde a revisão demora mais.</li>
+        </ol>
+        <div class="doc-nota">
+          <p>Todo exemplo desta página vem do case da LDC, com números medidos nos CSVs de
+          <code>dados/</code>. Os exercícios do notebook usam, de propósito, objetos diferentes dos
+          do deck: se você só decorar os números dos slides, o autodiagnóstico mostra.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="variaveis">
+        <h2>2. Variáveis, momento do dado e vazamento</h2>
+        <p><strong>Onde foi dado:</strong> Aula 05 (aprendizado supervisionado) e Aula 09
+        (vazamento). Material:
+        <a href="aula05.html#supervisionado">aula05, seção de aprendizado supervisionado</a> e
+        <a href="aula09.html#vazamento">aula09, seção de vazamento</a>.</p>
+        <h3>O objetivo define y, e o relógio define X</h3>
+        <p>O Modelo 1 do case prevê o abate de frangos do mês t. Esse é o alvo, y, e ele sai direto
+        do objetivo do TAPI. A pergunta que decide X vem depois e é de outra natureza: <strong>no
+        momento em que a previsão é feita, esta coluna já existe?</strong> A base mensal das Aulas
+        07 a 12 responde assim:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Coluna</th><th>Papel</th><th>Existe no momento da previsão de t?</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>abate de frangos no mês t</td><td>y</td><td>não: é o que se quer prever</td></tr>
+              <tr><td><code>lag1</code>, <code>lag2</code>, <code>lag3</code>, <code>lag12</code></td><td>X</td><td>sim: meses já publicados</td></tr>
+              <tr><td><code>sen</code>, <code>cos</code>, <code>dias</code></td><td>X</td><td>sim: calendário</td></tr>
+              <tr><td>as outras quatro séries em t-1</td><td>X</td><td>sim</td></tr>
+              <tr><td>as outras quatro séries em t</td><td>fora</td><td>não: saem na mesma publicação que o alvo</td></tr>
+              <tr><td>número da linha</td><td>fora</td><td>existe, e não generaliza</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>O vazamento, medido</h3>
+        <p>Trocar as quatro séries do mês anterior pelas do próprio mês leva o MAPE de teste do
+        modelo da Aula 12 de <strong>2,86%</strong> para <strong>2,43%</strong>. A melhora é real
+        no papel e inexistente na prática: no dia em que a LDC rodar o modelo, as quatro colunas
+        do mês t ainda não foram publicadas. O teste não acusa nada, porque dentro do CSV a coluna
+        existe. Por isso a revisão usa esta definição operacional: <strong>vazamento é usar uma
+        coluna registrada depois do momento da previsão</strong>.</p>
+        <h3>O identificador sequencial, e por que o erro dele é pedagógico</h3>
+        <p>Uma árvore de decisão treinada só com o número da linha (0 a 338) erra
+        <strong>0,00%</strong> nos 315 meses de treino e <strong>6,83%</strong> nos 24 de teste, e
+        prevê <strong>um único valor</strong>, 1.101,6 milhões de kg, para os 24 meses. O treino
+        perfeito é o sintoma: a árvore decorou a posição de cada linha. As linhas de teste têm
+        números de 315 a 338, maiores que qualquer um visto, e todas caem na última folha. O modelo
+        precisa funcionar para casos novos, e o identificador de um caso novo é, por construção, um
+        valor que o treino nunca viu.</p>
+        <div class="doc-nota">
+          <p><strong>Uma premissa para conferir com a LDC.</strong> A base mensal supõe que o mês
+          t-1 já foi publicado quando se prevê o mês t. O <code>dados/README.md</code> registra que
+          as tabelas do SIDRA publicam o trimestre e os três meses que o compõem na mesma tabela.
+          Se os três meses saem juntos, <code>lag1</code> e <code>lag2</code> nem sempre existem
+          no momento da previsão de um mês que está no meio do trimestre. A premissa é a mesma do
+          acervo inteiro desde a Aula 07, e verificar o calendário de publicação é trabalho da
+          dupla com o parceiro, não conclusão desta revisão.</p>
+        </div>
+        <p><strong>Erro comum:</strong> escolher X pelo que melhora a métrica de teste. A métrica
+        de teste premia justamente a coluna que vaza.</p>
+        <details>
+          <summary><strong>Autoverificação.</strong> Prever o abate de frangos de junho de 2026
+          com o abate de bovinos de junho de 2026 é vazamento? E com o de maio?</summary>
+          <p>Com o de junho, sim: ele sai na mesma publicação que o alvo e não existe no momento da
+          previsão. Com o de maio, não, na premissa da base: maio já foi publicado. É a coluna
+          <code>abate_bovinos_lag1</code>.</p>
+        </details>
+      </section>
+
+      <section class="doc-secao" id="holdout">
+        <h2>3. Treino, teste e validade da estimativa</h2>
+        <p><strong>Onde foi dado:</strong> Aula 05 (corte temporal), Aula 09 (vazamento por
+        sorteio), Aula 12 (o modelo reajustado). Material:
+        <a href="aula05.html#corte">aula05, corte</a>,
+        <a href="aula12.html#reajuste">aula12, reajuste</a>.</p>
+        <p>O teste existe para estimar o erro em dado que o modelo nunca viu. Isso vale para
+        <strong>todo</strong> <code>fit</code>: o do modelo e o do escalador. A tabela abaixo mede o
+        mesmo par de modelos de três formas, na base mensal:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Como foi medido</th><th>Floresta</th><th>Regressão linear</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>fit</code> nos 315 meses, medido nos 24 seguintes</td><td><strong>5,70%</strong></td><td><strong>2,86%</strong></td></tr>
+              <tr><td>medido nos próprios 315 meses de treino</td><td>1,44%</td><td>3,22%</td></tr>
+              <tr><td><code>fit</code> nas 339 linhas, medido nos 24 finais</td><td>1,31%</td><td>2,65%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A terceira linha é o <strong>erro de reapresentação</strong>: o modelo é ajustado em X
+        inteiro e avaliado num subconjunto de X. Ele já viu cada linha que está sendo medida, então
+        o número é otimista por construção. Na floresta a diferença é enorme, de 5,70% para 1,31%,
+        porque a floresta memoriza. Na regressão linear ela é pequena, de 2,86% para 2,65%, porque
+        onze coeficientes memorizam pouco. O tamanho do otimismo depende do modelo; a existência
+        dele, não.</p>
+        <p><strong>O tamanho do teste não decide a validade.</strong> Medida em 100 meses em vez
+        de 24, a floresta ajustada nas 339 linhas continua em 1,31%. Um teste maior feito de linhas
+        já vistas só dá mais precisão a um número errado.</p>
+        <div class="doc-nota">
+          <p><strong>O erro de treino da regressão linear ficou acima do erro de teste</strong>
+          (3,22% contra 2,86%), e isso contradiz a regra de que erro de treino é otimista? Não
+          contradiz: a regra vale em média, para dado da mesma distribuição. Aqui o treino cobre
+          26 anos, incluindo períodos mais voláteis, e o teste cobre dois anos mais calmos. Com a
+          floresta, que memoriza, a regra aparece inteira: 1,44% no treino contra 5,70% no teste
+          [Hastie, Tibshirani e Friedman, cap. 7].</p>
+        </div>
+        <p><strong>Erro comum:</strong> ajustar o <code>StandardScaler</code> em X inteiro "porque é
+        só escala". Na regressão linear sem regularização isso não muda a previsão (a Aula 05
+        mediu), mas em KNN, SVM e PCA muda, e a disciplina precisa ser a mesma para todos.</p>
+        <details>
+          <summary><strong>Autoverificação.</strong> Uma dupla reporta 1,31% de MAPE para a floresta
+          e justifica com "o teste tem 24 meses, igual ao protocolo". O que está errado?</summary>
+          <p>O modelo foi ajustado com esses 24 meses. O número é erro de reapresentação, e o
+          tamanho do teste não corrige isso. O número que estima o erro futuro é o 5,70%.</p>
+        </details>
+      </section>
+
+      <section class="doc-secao" id="metricas">
+        <h2>4. Métricas de regressão</h2>
+        <p><strong>Onde foi dado:</strong> Aula 05 e Aula 11. Material:
+        <a href="aula05.html#metricas">aula05, métricas</a>.</p>
+        <p>O modelo da Aula 12, nos 24 meses de teste, com erro definido como previsto menos
+        real:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Métrica</th><th>Fórmula</th><th>Valor</th><th>Leitura</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>MAE</td><td>média de |erro|</td><td>34,1 milhões de kg</td><td>distância média, na unidade do alvo, sem sinal</td></tr>
+              <tr><td>Viés</td><td>média de erro</td><td>-12,1 milhões de kg</td><td>com sinal: o modelo subestima em média</td></tr>
+              <tr><td>MAPE</td><td>média de |erro| / real</td><td>2,86%</td><td>relativo, sem unidade</td></tr>
+              <tr><td>RMSE</td><td>raiz da média de erro²</td><td>40,7 milhões de kg</td><td>pune erro grande; sempre maior ou igual ao MAE</td></tr>
+              <tr><td>R²</td><td>1 - SQ dos resíduos / SQ total</td><td>0,54</td><td>fração da variância do teste explicada</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Três leituras que a turma costuma trocar:</p>
+        <ol>
+          <li><strong>MAE não é limite por observação.</strong> O pior mês erra 90,2 milhões de kg,
+          quase três vezes o MAE. Média não garante nada sobre cada mês.</li>
+          <li><strong>MAE não tem direção.</strong> Quem diz "o modelo superestima 34,1 milhões"
+          confundiu MAE com viés. O viés é -12,1: em média o modelo fica abaixo, e só 7 dos 24 meses
+          ficam acima do real.</li>
+          <li><strong>R² não é acurácia e depende do período.</strong> O modelo erra 2,86% e tem R²
+          de 0,54, porque os 24 meses de teste variam pouco entre si: com pouca variância para
+          explicar, um erro pequeno já pesa muito. A Aula 11 mediu o mesmo efeito trocando o
+          alvo.</li>
+        </ol>
+        <p>A média do alvo no teste é 1.181,9 milhões de kg; o MAE vale 2,9% dela. Essa conta é
+        útil para comunicar o MAE à LDC, e não substitui o MAPE, que é a média das razões e não a
+        razão das médias.</p>
+        <details>
+          <summary><strong>Autoverificação.</strong> Se todas as 24 previsões fossem deslocadas
+          para cima em 12,1 milhões de kg, o que aconteceria com o viés? E com o MAE?</summary>
+          <p>O viés iria para zero e o MAE cairia só de 34,1 para 31,5 milhões de kg: os 7 meses
+          que já estavam acima do real passariam a errar mais. Zerar o viés não zera o erro.</p>
+        </details>
+      </section>
+
+      <section class="doc-secao" id="simples">
+        <h2>5. Regressão linear simples, do dado à previsão</h2>
+        <p><strong>Onde foi dado:</strong> Aulas 03 a 05. É o tema em que o fluxo inteiro aparece
+        de uma vez, e por isso a revisão usa um exemplo novo: o abate de frangos do trimestre (y)
+        sobre o abate de suínos do trimestre anterior (x), nos CSVs trimestrais.</p>
+        <pre class="doc-codigo"><code>fr = pd.read_csv("dados/abate_frangos.csv")
+su = pd.read_csv("dados/abate_suinos.csv")
+df = fr.merge(su, on="periodo", suffixes=("_fr", "_su"))
+df["suinos_lag1"] = df["valor_su"].shift(1)
+df = df.dropna()                     # 116 linhas, de 1997-T2 a 2026-T1
+
+X = df[["suinos_lag1"]]              # 2D: DataFrame com uma coluna
+y = df["valor_fr"]                   # 1D: Series
+
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.2, random_state=42)
+reta = LinearRegression().fit(X_tr, y_tr)
+reta.score(X_te, y_te)               # R² de teste</code></pre>
+        <h3>Passo a passo, com o que cada um mediu</h3>
+        <ol>
+          <li><strong>Dados e qualidade.</strong> Os dois CSVs têm zero vazios; o
+          <code>shift(1)</code> cria uma linha vazia no começo, e o <code>dropna</code> a descarta.
+          Ficam 116 trimestres.</li>
+          <li><strong>X e y.</strong> X com colchete duplo, porque o scikit-learn espera uma matriz
+          de linhas por colunas mesmo com uma coluna só. <code>df["suinos_lag1"]</code>, com
+          colchete simples, devolve uma Series 1D, e o <code>fit</code> recusa com
+          <code>ValueError: Expected 2D array</code>. É o erro mais frequente do tema, e a mensagem
+          diz exatamente o que falta.</li>
+          <li><strong>Linearidade.</strong> A dispersão mostra uma nuvem alongada, e o r de Pearson
+          é <strong>0,971</strong>. Com duas séries que crescem desde 1997, parte desse r é a
+          tendência comum, e não uma relação causal entre suínos e frangos.</li>
+          <li><strong>Proporção.</strong> Com 116 linhas, 20% de teste dá 24 trimestres. Menos que
+          isso deixa a métrica instável: em 20 sementes, com teste de 4 trimestres, o R² vai de
+          <strong>-0,25</strong> a perto de 1; com 8, o mínimo é 0,61; com 24, é 0,91.</li>
+          <li><strong><code>random_state</code>.</strong> Fixa o sorteio: rodar de novo devolve o
+          mesmo número, o que torna o resultado reproduzível e comparável. Não torna a estimativa
+          estável; a figura das 20 sementes mostra o que ele esconde.</li>
+          <li><strong>Coeficiente.</strong> A inclinação é <strong>2,29</strong>: cada quilo a mais de
+          suínos abatidos no trimestre anterior acompanha, em média, 2,29 quilos a mais de frangos
+          no trimestre. Unidade de y por unidade de x, e associação.</li>
+          <li><strong>Avaliação.</strong> No sorteio 80/20, R² de <strong>0,95</strong> e RMSE de
+          179,2 milhões de kg: o que parece um modelo excelente.</li>
+        </ol>
+        <h3>Aleatória contra cronológica</h3>
+        <p>Com os 24 últimos trimestres como teste (a partir de 2020-T2) e a reta ajustada até
+        2020-T1, o R² cai para <strong>-5,81</strong> e o RMSE sobe para 552,9 milhões de kg. A
+        reta ajustada no passado tem inclinação 2,80 e <strong>superestima os 24 trimestres</strong>
+        seguintes: a relação medida até 2020 não se manteve, e o sorteio escondia isso
+        porque cada trimestre de teste tinha vizinhos dos dois lados no treino.</p>
+        <p>O critério para escolher: <strong>o sorteio serve quando a ordem das observações não
+        importa</strong> e o caso novo se parece com a mistura do histórico, por exemplo comparar
+        granjas clientes entre si num mesmo ano. <strong>A divisão por data serve quando se prevê o
+        futuro</strong>, que é o caso da LDC. A Aula 10 mediu a mesma coisa no
+        <code>KFold</code>: 252 dos 252 meses de treino da primeira dobra eram posteriores à
+        validação.</p>
+        <details>
+          <summary><strong>Autoverificação.</strong> Um RMSE baixo e um R² perto de 1 no sorteio
+          bastam para aprovar esta reta para a LDC?</summary>
+          <p>Não. Eles medem interpolação entre trimestres já conhecidos. A pergunta da LDC é
+          sobre trimestres que ainda não aconteceram, e o corte por data, que responde a essa
+          pergunta, dá R² de -5,81.</p>
+        </details>
+      </section>
+
+      <section class="doc-secao" id="metrica-tarefa">
+        <h2>6. Métrica adequada à tarefa</h2>
+        <p><strong>Onde foi dado:</strong> Aula 09 e Aula 10. Material:
+        <a href="aula09.html#baseline">aula09, baseline</a>,
+        <a href="aula10.html#roc">aula10, ROC</a>.</p>
+        <h3>Alvo contínuo não tem acerto exato</h3>
+        <p>Das 24 previsões do modelo da Aula 12, <strong>0 de 24</strong> coincidem com o valor
+        real. Isso é esperado e não diz nada sobre a qualidade do modelo. "Proporção de acertos
+        exatos" é acurácia, uma métrica de classificação, e num alvo contínuo ela vale zero para
+        qualquer modelo razoável. A métrica certa mede distância: MAE, RMSE, MAPE.</p>
+        <h3>Alvo desbalanceado engana a acurácia</h3>
+        <p>No alvo binário da Aula 09 (alta quando o abate do mês supera o mesmo mês do ano
+        anterior), o teste tem 20 meses de alta e 4 de queda. A baseline que prevê sempre alta
+        acerta <strong>83,3%</strong>, e a revocação da classe queda dela é <strong>zero</strong>.
+        O SVM linear empata nos 83,3% e encontra 2 das 4 quedas. A acurácia não distingue os
+        dois; a revocação da classe minoritária distingue.</p>
+        <p>A regra que sai disso: em alvo desbalanceado, reportar precisão e revocação da classe
+        minoritária sempre, e comparar com a baseline majoritária, nunca com zero [Saito e
+        Rehmsmeier].</p>
+        <details>
+          <summary><strong>Autoverificação.</strong> Um classificador marca 79,2% de acurácia
+          contra 83,3% da baseline. Ele é pior que a baseline?</summary>
+          <p>Não dá para dizer só com a acurácia. A regressão logística tem 79,2% e revocação da
+          queda de 0,50; a baseline tem 83,3% e revocação da queda de zero. Se a decisão da LDC
+          depende de antecipar quedas, a logística é mais útil.</p>
+        </details>
+      </section>
+
+      <section class="doc-secao" id="matriz">
+        <h2>7. Matriz de confusão, custo e limiar</h2>
+        <p><strong>Onde foi dado:</strong> Aulas 09 e 10. Material:
+        <a href="aula09.html#classificadores">aula09, classificadores</a>.</p>
+        <h3>O critério dos quatro casos</h3>
+        <p>A segunda palavra é o que o modelo <strong>previu</strong> (positivo ou negativo). A
+        primeira diz se ele <strong>acertou</strong> (verdadeiro ou falso). Com alta como classe
+        positiva:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th></th><th>previu alta</th><th>previu queda</th><th>total real</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>real alta</td><td>TP = 17</td><td>FN = 3</td><td>20</td></tr>
+              <tr><td>real queda</td><td>FP = 2</td><td>TN = 2</td><td>4</td></tr>
+              <tr><td>total previsto</td><td>19</td><td>5</td><td>24</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>É a regressão logística da Aula 09 nos 24 meses de teste. As métricas:</p>
+        <ul>
+          <li>acurácia = (TP + TN) / total = 19 / 24 = <strong>79,2%</strong></li>
+          <li>precisão = TP / (TP + FP) = 17 / 19 = <strong>0,89</strong>: dos meses que o modelo
+          chamou de alta, quantos foram</li>
+          <li>revocação = TP / (TP + FN) = 17 / 20 = <strong>0,85</strong>: das altas reais,
+          quantas ele encontrou</li>
+          <li>F1 = 2 · precisão · revocação / (precisão + revocação) = <strong>0,87</strong></li>
+        </ul>
+        <h3>O limiar desloca um erro para o outro</h3>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Limiar</th><th>FP</th><th>FN</th><th>Precisão</th><th>Revocação</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>0,4</td><td>3</td><td>1</td><td>0,86</td><td>0,95</td></tr>
+              <tr><td>0,5</td><td>2</td><td>3</td><td>0,89</td><td>0,85</td></tr>
+              <tr><td>0,6</td><td>2</td><td>7</td><td>0,87</td><td>0,65</td></tr>
+              <tr><td>0,7</td><td>0</td><td>9</td><td>1,00</td><td>0,55</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Subir o limiar exige mais certeza para dizer alta: os FP caem e os FN sobem. Baixar faz
+        o contrário. Nenhum limiar zera os dois.</p>
+        <h3>O custo decide o limiar</h3>
+        <p>Na LDC, um FP (previu alta, veio queda) é compra antecipada de milho e farelo que fica
+        parada. Um FN (previu queda, veio alta) é compra tardia, a preço pior. Se o FN custa mais,
+        a prioridade é a <strong>revocação</strong> da alta, e o limiar desce. Se o FP custa mais,
+        a prioridade é a <strong>precisão</strong>, e o limiar sobe. O custo é declarado pelo
+        negócio antes; escolher o limiar pela maior acurácia equivale a supor que os dois erros
+        custam o mesmo.</p>
+        <details>
+          <summary><strong>Autoverificação.</strong> Classifique fev/25 (real alta, previsto
+          queda) e ago/25 (real queda, previsto alta).</summary>
+          <p>fev/25 é FN: previu negativo (queda) e errou. ago/25 é FP: previu positivo (alta) e
+          errou.</p>
+        </details>
+      </section>
+
+      <section class="doc-secao" id="dados">
+        <h2>8. Tipos de dado, ETL e ELT, lake e warehouse</h2>
+        <p><strong>Onde foi dado:</strong> Aula 04, slide 5, e material
+        <a href="aula04.html#elt">aula04, ELT</a>. Foi um slide só, e por isso a revisão volta a
+        ele com calma.</p>
+        <h3>Estruturado e não estruturado</h3>
+        <p>Dado <strong>estruturado</strong> tem linhas e colunas com tipo definido: os CSVs do
+        SIDRA, com <code>periodo</code>, <code>valor</code> e <code>unidade</code>. Dado
+        <strong>não estruturado</strong> não tem esse esquema: PDFs de boletins de mercado, imagens
+        de satélite de lavoura, áudio de calls com cooperativas. Ele precisa de extração
+        (transcrever, detectar, classificar) antes de virar coluna.</p>
+        <h3>ETL, ELT, warehouse e lake</h3>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Critério</th><th><em>Data warehouse</em></th><th><em>Data lake</em></th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Esquema</td><td>fixo, definido antes da carga</td><td>definido na leitura, por quem analisa</td></tr>
+              <tr><td>Formatos</td><td>tabelas consistentes</td><td>qualquer um: CSV, PDF, imagem, áudio</td></tr>
+              <tr><td>Uso</td><td>consultas conhecidas, com resposta rápida</td><td>uso ainda indefinido, exploração</td></tr>
+              <tr><td>Originais</td><td>já transformados</td><td>guardados crus, prontos para reprocessar</td></tr>
+              <tr><td>Processo típico</td><td>ETL: transforma, depois carrega</td><td>ELT: carrega, transforma quando precisar</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O acervo do case é ELT: <code>tools/baixar_dados.py</code> extrai, os CSVs crus de
+        <code>dados/</code> são carregados e versionados (o papel do lake), e cada aula transforma
+        quando precisa. A base analítica de 339 linhas, com esquema fixo e consultada pelo modelo,
+        faz o papel do warehouse. A consequência prática: a transformação pode ser refeita
+        quantas vezes for preciso sem baixar nada, porque o dado cru continua no repositório.</p>
+        <details>
+          <summary><strong>Autoverificação.</strong> A LDC quer guardar o áudio das calls com
+          cooperativas sem saber ainda o que vai extrair dele. Warehouse ou lake?</summary>
+          <p>Lake. Uso indefinido e formato sem esquema pedem guardar o original cru, para poder
+          reprocessar quando a extração for definida.</p>
+        </details>
+      </section>
+
+      <section class="doc-secao" id="recomendacao">
+        <h2>9. Sistemas de recomendação e cold start</h2>
+        <p><strong>Onde foi dado:</strong> Aula 08, slide 26, em fecho conceitual de dez minutos
+        (<code>ADR-011</code>), e material <a href="aula08.html#recomendacao">aula08,
+        recomendação</a>. É o tema com menos tempo de sala do módulo.</p>
+        <p>O cenário de revisão: a LDC recomenda formulações de ração a granjas clientes.
+        Usuário é a granja; item é a formulação.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Estratégia</th><th>Como decide</th><th>Dado de que depende</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Colaborativa usuário-usuário</td><td>recomenda o que granjas parecidas compraram</td><td>histórico de compras de todas as granjas</td></tr>
+              <tr><td>Colaborativa item-item</td><td>recomenda formulações parecidas com as que a granja comprou, pela coocorrência</td><td>histórico de compras e pelo menos um item da granja</td></tr>
+              <tr><td>Baseada em conteúdo</td><td>compara atributos das formulações com o perfil da granja</td><td>atributos do item e do que a granja consumiu</td></tr>
+              <tr><td>Demográfica</td><td>recomenda pelo perfil do cadastro</td><td>espécie, porte, região</td></tr>
+              <tr><td>Popularidade</td><td>recomenda o que mais vende</td><td>contagem de vendas</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Os dois cold starts</h3>
+        <ul>
+          <li><strong>De usuário:</strong> a granja recém-cadastrada não tem histórico. As duas
+          colaborativas e a baseada em conteúdo ficam sem ponto de partida. Funcionam a demográfica
+          e a popularidade.</li>
+          <li><strong>De item:</strong> a formulação nova ainda não foi comprada. As colaborativas
+          não a enxergam, e a popularidade dá zero para ela. Funciona a baseada em conteúdo, porque
+          os atributos da formulação existem desde o lançamento.</li>
+        </ul>
+        <p>A pergunta que resolve qualquer variação: <strong>qual dado existe para este usuário e
+        este item agora?</strong> É a mesma pergunta da seção 2, aplicada a outro tipo de
+        modelo [Schein et al., 2002].</p>
+        <details>
+          <summary><strong>Autoverificação.</strong> Uma granja comprou uma única formulação.
+          Item-item já funciona para ela?</summary>
+          <p>Funciona, com pouca informação: há um item de partida, e a coocorrência vem do
+          histórico das outras granjas. Usuário-usuário também começa a funcionar, mas a
+          similaridade calculada com uma compra só é frágil.</p>
+        </details>
+      </section>
+
+      <section class="doc-secao" id="acervo">
+        <h2>10. Onde cada tema foi dado no acervo</h2>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Tema</th><th>Aulas</th><th>Nesta página</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Aprendizado supervisionado, X, y, vazamento</td><td><a href="../aulas/aula05.html">05</a>, <a href="../aulas/aula09.html">09</a></td><td>seção 2</td></tr>
+              <tr><td>Treino, teste e validade da estimativa</td><td><a href="../aulas/aula05.html">05</a>, <a href="../aulas/aula09.html">09</a>, <a href="../aulas/aula12.html">12</a></td><td>seção 3</td></tr>
+              <tr><td>Métricas de regressão</td><td><a href="../aulas/aula05.html">05</a>, <a href="../aulas/aula11.html">11</a></td><td>seção 4</td></tr>
+              <tr><td>Regressão linear simples</td><td><a href="../aulas/aula03.html">03</a>, <a href="../aulas/aula04.html">04</a>, <a href="../aulas/aula05.html">05</a></td><td>seção 5</td></tr>
+              <tr><td>Métrica adequada à tarefa</td><td><a href="../aulas/aula09.html">09</a>, <a href="../aulas/aula10.html">10</a></td><td>seção 6</td></tr>
+              <tr><td>Matriz de confusão e limiar</td><td><a href="../aulas/aula09.html">09</a>, <a href="../aulas/aula10.html">10</a></td><td>seção 7</td></tr>
+              <tr><td>Tipos de dado, ETL, ELT, lake, warehouse</td><td><a href="../aulas/aula04.html">04</a></td><td>seção 8</td></tr>
+              <tr><td>Sistemas de recomendação</td><td><a href="../aulas/aula08.html">08</a></td><td>seção 9</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Prova 02/10, peso 20.</strong> <strong>ART.8 Modelo Final, peso 4</strong>, com
+        review em 07/10. O app Streamlit, que alimenta a <strong>ART.9 Critérios de Publicação,
+        peso 3</strong>, é construído na Aula 14, em 06/10.</p>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula13.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../referencias/aula13.html"><span class="material-symbols-outlined" aria-hidden="true">link</span>Referências</a>
+  </nav>
+</body>
+</html>
