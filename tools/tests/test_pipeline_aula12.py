@@ -372,5 +372,9 @@ def test_a_divergencia_de_versao_avisa_e_nao_impede(dados):
     assert len(avisos) == 3
     assert "1.7.2" in str(avisos[0].message)
 
-    atual, _ = _coeficientes(dados["X_full"], dados["y_full"])
+    # Compara com o binario versionado, e nao com um reajuste feito agora: o
+    # reajuste depende do BLAS da maquina (o CI em Ubuntu diverge do macOS no
+    # ultimo bit), enquanto os dois arquivos guardam os mesmos parametros e
+    # preveem na mesma maquina. E isso que a aula afirma sobre a divergencia.
+    atual = joblib.load(MODELO_VERSIONADO)
     assert np.array_equal(antigo.predict(dados["X_te"]), atual.predict(dados["X_te"]))
