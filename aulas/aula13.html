@@ -1,0 +1,1608 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 13 &middot; Revisão para a Prova de 02/10 &middot; Módulo 03 IN</title>
+
+  <!-- Aula 13, 30/09/2026, Sprint 5 (planning em 28/09, review em 07/10).
+       Registrada na Adalove como "Deploy de modelos de Machine Learning".
+       O encontro virou revisao, em sala invertida, dos conteudos de
+       computacao da Prova de 02/10 (peso 20), e o app Streamlit passou para a
+       Aula 14. Decisao e regras em docs/adrs/ADR-016.
+
+       REGRA DURA: nenhum cenario, numero ou questao da prova aparece aqui.
+       O deck lista temas, nunca questoes. Todo exercicio ancora no case da
+       LDC. tools/tests/test_revisao_aula13.py reprova o arquivo se algum termo
+       ou numero da prova entrar (lista codificada no proprio teste).
+
+       Todo numero deste deck e medido por tools/graficos_aula13.py sobre os
+       CSVs de dados/ e travado em tools/tests/test_revisao_aula13.py. As
+       quatro animacoes SVG sao geradas por tools/svg_aula13.py, que substitui
+       o miolo de cada par de marcadores svg:nome e /svg:nome.
+
+       Divisao dos 105 minutos (PLANEJAMENTO_AULA_A_AULA.md, Aula 13):
+         15  Resgate e diagnostico, 4 votos individuais   (slides 3 a 9)
+         15  Revisao 1: X, y, momento do dado, vazamento  (slides 10 a 15)
+         15  Revisao 2: regressao simples e metricas      (slides 16 a 23)
+         15  Revisao 3: matriz de confusao e limiar        (slides 24 a 29)
+         15  Revisao 4: dados e recomendacao               (slides 30 a 33)
+         15  Pratica com correcao cruzada                  (slides 34 e 35)
+         15  Amarracao com a sprint                        (slides 36 a 39)
+
+       As animacoes existem so dentro de section.present. Sem animacao
+       (impressao, ?print-pdf, prefers-reduced-motion) cada SVG mostra o
+       estado final, e o limiar mostra o de 0,5. -->
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-theme.css">
+  <link rel="stylesheet" href="../assets/css/inteli-print.css" media="print">
+  <style>
+    /* Animacoes da Aula 13. Ficam no deck, e nao no tema, porque sao desta
+       aula so. Nenhuma cor aqui: os SVG usam var(--seg-*) nos atributos.
+       O estado sem regra de animacao e o estado final. */
+    .a13-cursor { opacity: 0; }
+    .a13-etapa { opacity: 0; }
+    .a13-etapa.a13-padrao { opacity: 1; }
+
+    @keyframes a13-acende { from { opacity: 0.12; } to { opacity: 1; } }
+    @keyframes a13-cursor {
+      from { transform: translateX(0); opacity: 1; }
+      94% { opacity: 1; }
+      to { transform: translateX(770px); opacity: 0; }
+    }
+    @keyframes a13-e0 { 0%, 24.9% { opacity: 1; } 25%, 100% { opacity: 0; } }
+    @keyframes a13-e1 { 0%, 24.9% { opacity: 0; } 25%, 49.9% { opacity: 1; } 50%, 100% { opacity: 0; } }
+    @keyframes a13-e2 { 0%, 49.9% { opacity: 0; } 50%, 74.9% { opacity: 1; } 75%, 100% { opacity: 0; } }
+    @keyframes a13-e3 { 0%, 74.9% { opacity: 0; } 75%, 100% { opacity: 1; } }
+
+    .reveal .slides section.present .a13-acende { animation: a13-acende 0.6s ease-out both; }
+    .reveal .slides section.present .a13-cursor { animation: a13-cursor 6s linear both; }
+    .reveal .slides section.present .a13-etapa { animation-duration: 12s; animation-timing-function: linear; animation-iteration-count: infinite; }
+    .reveal .slides section.present .a13-etapa-0 { animation-name: a13-e0; }
+    .reveal .slides section.present .a13-etapa-1 { animation-name: a13-e1; }
+    .reveal .slides section.present .a13-etapa-2 { animation-name: a13-e2; }
+    .reveal .slides section.present .a13-etapa-3 { animation-name: a13-e3; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal .slides section.present .a13-acende,
+      .reveal .slides section.present .a13-cursor,
+      .reveal .slides section.present .a13-etapa { animation: none !important; }
+    }
+    @media print {
+      .a13-acende, .a13-cursor, .a13-etapa { animation: none !important; }
+    }
+    html.print-pdf .a13-acende,
+    html.print-pdf .a13-cursor,
+    html.print-pdf .a13-etapa { animation: none !important; }
+
+    .a13-svg svg { display: block; width: 100%; height: auto; }
+    .a13-legenda { margin: 6px 0 0; }
+  </style>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- 1 - Capa -->
+      <section class="cover-slide">
+        <div class="cover-panel">
+          <div class="cover-content">
+            <p class="cover-eyebrow">Módulo 03 IN &middot; Aula 13 &middot; 30/09/2026</p>
+            <h1>Revisão para a Prova de 02/10</h1>
+            <h3>Encontro registrado na Adalove como Deploy de modelos de Machine Learning. O app
+            Streamlit passa para a Aula 14.</h3>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 - Agenda -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Agenda do encontro</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Horário</th><th>Bloco</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>08h00 &middot; 10h00</td><td>Autoestudo de Streamlit [13] e estudo prévio: material de apoio e autodiagnóstico do notebook [4]</td></tr>
+            <tr><td>10h00 &middot; 10h15</td><td>Daily: o <code>Pipeline</code> da Aula 12 recarrega, e as duas dúvidas de cada dupla vão para o quadro</td></tr>
+            <tr><td>10h15 &middot; 10h30</td><td>Resgate e diagnóstico, com voto individual</td></tr>
+            <tr><td>10h30 &middot; 10h45</td><td>Revisão 1: variáveis, momento do dado e vazamento</td></tr>
+            <tr><td>10h45 &middot; 11h00</td><td>Revisão 2: regressão linear simples e métricas</td></tr>
+            <tr><td>11h00 &middot; 11h15</td><td>Revisão 3: matriz de confusão e limiar</td></tr>
+            <tr><td>11h15 &middot; 11h30</td><td>Revisão 4: tipos de dado, ETL e ELT, recomendação</td></tr>
+            <tr><td>11h30 &middot; 11h45</td><td>Prática com correção cruzada</td></tr>
+            <tr><td>11h45 &middot; 12h00</td><td>Amarração: Prova 02/10 (peso 20) e ART.8 [12]</td></tr>
+          </tbody>
+        </table>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">2</p>
+        </div>
+      </section>
+
+      <!-- 3 - Protocolo da instrucao por pares -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Protocolo da instrução por pares</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li><strong>Voto individual</strong>, em silêncio, em um minuto. A mão levantada mostra a
+          letra, de A a D, contando as alternativas de cima para baixo.</li>
+          <li><strong>Discussão em dupla</strong>, dois minutos, com alguém que votou diferente.
+          Só acontece se o acerto ficar entre 35% e 70% da sala [5].</li>
+          <li><strong>Revoto individual</strong>, e o professor registra no quadro as duas
+          contagens.</li>
+          <li><strong>Correção</strong>: o professor clica na alternativa e explica o erro que a
+          alternativa mais votada revela.</li>
+        </ol>
+        <p>Acima de 70% no primeiro voto, a explicação é curta e a sala segue. Abaixo de 35%, o
+        conceito volta antes do revoto [5].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">3</p>
+        </div>
+      </section>
+
+      <!-- 4 - Resgate da Aula 12 -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O Pipeline da Aula 12 tem 1.481 bytes</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>import joblib
+
+pipe = joblib.load(
+    "app/modelo_aula12.joblib")
+
+# reajustado nas 339 linhas.
+# O número que acompanha o
+# arquivo é o do objeto
+# avaliado: MAPE de 2,86%.</code></pre>
+          <div>
+            <p>O arquivo carrega escalador e regressão linear num objeto só, reajustado sobre a
+            base mensal inteira [14].</p>
+            <p>Na daily, cada dupla confirmou que ele recarrega sem erro. Hoje ele serve de
+            referência: todos os exercícios usam essa base, esse modelo e os CSVs do SIDRA [1].</p>
+            <p>O app Streamlit sobre este arquivo é construído na Aula 14, em 06/10 [3].</p>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">4</p>
+        </div>
+      </section>
+
+      <!-- 5 - Pergunta disparada, linha do tempo animada -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Em que momento cada coluna passa a existir?</h2>
+        </div>
+        <div class="a13-svg">
+<!-- svg:disponibilidade -->
+<svg viewBox="0 0 1120 330" width="100%" height="330" role="img" aria-label="Linha do tempo de uma previsão do abate de frangos do mês t. O calendário existe desde sempre, as defasagens acendem uma a uma até o mês anterior, e o momento da previsão fica antes da publicação do mês t. As quatro outras séries do mês t e o próprio alvo só existem depois dessa linha.">
+<text x="20.0" y="60.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="400">sen, cos e dias do mês t</text>
+<rect x="330" y="44" width="770" height="22" rx="4" fill="var(--seg-superficie)"/>
+<rect class="a13-acende" x="330" y="44" width="770" height="22" rx="4" fill="var(--seg-secundaria)" style="animation-delay: 0.00s"/>
+<text x="20.0" y="96.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="400">lag12: frangos em t-12</text>
+<rect x="330" y="80" width="770" height="22" rx="4" fill="var(--seg-superficie)"/>
+<rect class="a13-acende" x="380" y="80" width="720" height="22" rx="4" fill="var(--seg-secundaria)" style="animation-delay: 0.39s"/>
+<text x="20.0" y="132.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="400">lag3: frangos em t-3</text>
+<rect x="330" y="116" width="770" height="22" rx="4" fill="var(--seg-superficie)"/>
+<rect class="a13-acende" x="560" y="116" width="540" height="22" rx="4" fill="var(--seg-secundaria)" style="animation-delay: 1.79s"/>
+<text x="20.0" y="168.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="400">lag2: frangos em t-2</text>
+<rect x="330" y="152" width="770" height="22" rx="4" fill="var(--seg-superficie)"/>
+<rect class="a13-acende" x="660" y="152" width="440" height="22" rx="4" fill="var(--seg-secundaria)" style="animation-delay: 2.57s"/>
+<text x="20.0" y="204.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="400">lag1 e as quatro séries em t-1</text>
+<rect x="330" y="188" width="770" height="22" rx="4" fill="var(--seg-superficie)"/>
+<rect class="a13-acende" x="760" y="188" width="340" height="22" rx="4" fill="var(--seg-secundaria)" style="animation-delay: 3.35s"/>
+<text x="20.0" y="240.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="400">as quatro séries no mês t</text>
+<rect x="330" y="224" width="770" height="22" rx="4" fill="var(--seg-superficie)"/>
+<rect class="a13-acende" x="980" y="224" width="120" height="22" rx="4" fill="var(--seg-destaque)" style="animation-delay: 5.06s"/>
+<text x="20.0" y="276.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="400">y: frangos no mês t</text>
+<rect x="330" y="260" width="770" height="22" rx="4" fill="var(--seg-superficie)"/>
+<rect class="a13-acende" x="980" y="260" width="120" height="22" rx="4" fill="var(--seg-primaria)" style="animation-delay: 5.06s"/>
+<line x1="330" y1="300" x2="1100" y2="300" stroke="var(--seg-borda)" stroke-width="2"/>
+<line x1="380" y1="300" x2="380" y2="308" stroke="var(--seg-borda)" stroke-width="2"/>
+<text x="380.0" y="330.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">t-12</text>
+<line x1="560" y1="300" x2="560" y2="308" stroke="var(--seg-borda)" stroke-width="2"/>
+<text x="560.0" y="330.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">t-3</text>
+<line x1="660" y1="300" x2="660" y2="308" stroke="var(--seg-borda)" stroke-width="2"/>
+<text x="660.0" y="330.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">t-2</text>
+<line x1="760" y1="300" x2="760" y2="308" stroke="var(--seg-borda)" stroke-width="2"/>
+<text x="760.0" y="330.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">t-1</text>
+<line x1="980" y1="300" x2="980" y2="308" stroke="var(--seg-borda)" stroke-width="2"/>
+<text x="980.0" y="330.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">t publicado</text>
+<line x1="870" y1="22" x2="870" y2="300" stroke="var(--seg-destaque)" stroke-width="3" stroke-dasharray="7 5"/>
+<text x="870.0" y="16.0" font-size="18" fill="var(--seg-destaque)" text-anchor="middle" font-weight="700">momento da previsão</text>
+<line class="a13-cursor" x1="330" y1="30" x2="330" y2="300" stroke="var(--seg-primaria)" stroke-width="3"/>
+</svg>
+<!-- /svg:disponibilidade -->
+        </div>
+        <p class="a13-legenda">A base mensal supõe que o mês t-1 já foi publicado quando se prevê o
+        mês t. Coluna à direita da linha coral não existe no momento da previsão [4].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">5</p>
+        </div>
+      </section>
+
+      <!-- 6 - Diagnostico 1 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Diagnóstico 1 &middot; Momento do dado</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">Voto individual. A dupla vai prever o abate de frangos de março
+          de 2026. Qual coluna não pode entrar em X?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O abate de frangos de março de 2025 foi publicado há um ano. Ele existe no momento da previsão, e é o lag12 da base.">O abate de frangos de março de 2025</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Seno, cosseno e número de dias vêm do calendário, que é conhecido com antecedência. Não há vazamento em coluna de calendário.">O seno e o cosseno do mês de março</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: o abate de suínos de março sai na mesma publicação do IBGE que o de frangos de março. No momento da previsão ele ainda não existe, e usá-lo é vazamento."
+                data-incorrect-msg="Era esta: o abate de suínos de março sai na mesma publicação do IBGE que o de frangos de março. No momento da previsão ele ainda não existe, e usá-lo é vazamento.">O abate de suínos de março de 2026</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Fevereiro já foi publicado quando se prevê março, na premissa da base. É a coluna abate_suinos_lag1.">O abate de suínos de fevereiro de 2026</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">6</p>
+        </div>
+      </section>
+
+      <!-- 7 - Diagnostico 2 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Diagnóstico 2 &middot; Leitura do MAE</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">Voto individual. O modelo da Aula 12 tem MAE de 34,1 milhões de
+          kg nos 24 meses de teste. O que esse número afirma?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O MAE é uma média, e média não limita cada observação. O pior mês do teste erra 90,2 milhões de kg.">Nenhum mês de teste errou mais que 34,1 milhões de kg</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: é a média do erro absoluto, na unidade do alvo e sem sinal. Ela não diz se o modelo erra para cima ou para baixo, nem quanto erra no pior mês."
+                data-incorrect-msg="Era esta: é a média do erro absoluto, na unidade do alvo e sem sinal. Ela não diz se o modelo erra para cima ou para baixo, nem quanto erra no pior mês.">Em média, a previsão fica a 34,1 milhões de kg do real, sem dizer a direção</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Direção é o viés, o erro médio com sinal. Aqui ele vale -12,1 milhões de kg: o modelo subestima em média, e o MAE não mostra isso.">O modelo superestima o abate em 34,1 milhões de kg por mês</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Acurácia é métrica de classificação. Nenhuma das 24 previsões coincide com o valor real, e isso é esperado num alvo contínuo.">O modelo acerta cerca de 97% dos meses de teste</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">7</p>
+        </div>
+      </section>
+
+      <!-- 8 - Diagnostico 3 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Diagnóstico 3 &middot; Acurácia com alvo desbalanceado</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">Voto individual. No alvo binário da Aula 09, prever sempre alta
+          acerta 83,3% dos 24 meses de teste. O que essa acurácia diz sobre as quedas?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="83,3% é só a proporção de meses de alta no teste: 20 de 24. Um modelo que nunca prevê queda alcança esse número sem aprender nada.">Que o modelo reconhece bem os meses de queda</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Nenhum classificador da Aula 09 passou de 83,3%. Ficar acima da baseline não era o critério: a acurácia não olha as quedas separadamente.">Que um classificador útil precisa passar de 83,3%</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="A precisão da classe alta dessa baseline é 0,83, e não 1. O que vale 1 é a revocação da alta, porque ela prevê alta em todos os meses.">Que a precisão da classe alta é 1,00</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: a baseline não prevê nenhuma queda, então a revocação da classe queda é zero. A acurácia esconde isso porque a queda é só 4 dos 24 meses."
+                data-incorrect-msg="Era esta: a baseline não prevê nenhuma queda, então a revocação da classe queda é zero. A acurácia esconde isso porque a queda é só 4 dos 24 meses.">Nada: a revocação da classe queda é zero</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">8</p>
+        </div>
+      </section>
+
+      <!-- 9 - Diagnostico 4 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Diagnóstico 4 &middot; Granja sem histórico</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">Voto individual. Uma granja acaba de se cadastrar como cliente da
+          LDC e ainda não comprou nenhuma formulação de ração. Qual estratégia consegue recomendar
+          algo a ela?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="A filtragem usuário-usuário compara o histórico de compras das granjas. Sem histórico, não há com quem comparar.">Filtragem colaborativa usuário-usuário</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: a demográfica usa atributos do cadastro, como espécie, porte e região, e não precisa de nenhuma compra. É uma das respostas ao cold start de usuário."
+                data-incorrect-msg="Era esta: a demográfica usa atributos do cadastro, como espécie, porte e região, e não precisa de nenhuma compra. É uma das respostas ao cold start de usuário.">Recomendação demográfica, pelos atributos do cadastro</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="A filtragem item-item parte de um item que a granja já comprou. Sem nenhuma compra, não há item de partida.">Filtragem colaborativa item-item</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="A baseada em conteúdo monta o perfil a partir do que a granja já consumiu. Ela resolve o cold start de item, e não o de usuário.">Recomendação baseada no conteúdo das compras anteriores</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">9</p>
+        </div>
+      </section>
+
+      <!-- 10 - Divisor Revisao 1 -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Revisão 1</h2>
+        <h3>Variáveis, momento do dado e vazamento</h3>
+      </section>
+
+      <!-- 11 - X e y -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O modelo do case usa onze colunas que já existem</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Coluna da base mensal</th><th>Papel</th><th>Existe no momento da previsão de t?</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>abate de frangos no mês t</td><td><strong>y</strong>, o alvo</td><td>não: é o que se quer prever</td></tr>
+            <tr><td><code>lag1</code>, <code>lag2</code>, <code>lag3</code>, <code>lag12</code></td><td>X</td><td>sim: meses já publicados</td></tr>
+            <tr><td><code>sen</code>, <code>cos</code>, <code>dias</code></td><td>X</td><td>sim: calendário, conhecido antes</td></tr>
+            <tr><td>as outras quatro séries em t-1</td><td>X</td><td>sim: publicadas com o mês t-1</td></tr>
+            <tr><td>as outras quatro séries em t</td><td>fora</td><td><strong>não</strong>: saem junto com o alvo</td></tr>
+            <tr><td>número da linha, de 0 a 338</td><td>fora</td><td>existe, e não generaliza</td></tr>
+          </tbody>
+        </table>
+        <p>O objetivo define y. O momento em que cada dado passa a existir define o que pode entrar
+        em X, e isso vem antes de qualquer escolha de modelo [6].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">11</p>
+        </div>
+      </section>
+
+      <!-- 12 - Vazamento medido -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>As séries do próprio mês levam o MAPE a 2,43%</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Outras quatro séries entram como</th><th>MAPE nos 24 meses de teste</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>valor do mês anterior, t-1, como no modelo da Aula 12</td><td><strong>2,86%</strong></td></tr>
+            <tr><td>valor do próprio mês t, publicado junto com o alvo</td><td><code>2,43%</code></td></tr>
+          </tbody>
+        </table>
+        <p>O segundo número é melhor e não pode ser publicado. Em produção, no dia da previsão,
+        essas quatro colunas estão vazias: o ganho de 0,43 ponto é exatamente o que o modelo
+        perde no primeiro uso real [2][6].</p>
+        <p>É a definição de vazamento que a revisão usa: <strong>uma coluna registrada depois do
+        momento da previsão</strong>. O teste não acusa nada, porque nele a coluna existe.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">12</p>
+        </div>
+      </section>
+
+      <!-- 13 - Identificador sequencial -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O número da linha leva a árvore a um só valor</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Árvore de decisão com uma única feature, o número da linha</th><th>Resultado</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>MAPE nos 315 meses de treino</td><td><code>0,00%</code></td></tr>
+            <tr><td>MAPE nos 24 meses de teste</td><td><strong>6,83%</strong></td></tr>
+            <tr><td>Valores distintos previstos no teste</td><td><strong>1</strong>, os mesmos 1.101,6 milhões de kg</td></tr>
+          </tbody>
+        </table>
+        <p>A árvore memoriza cada linha do treino. As linhas de teste, de 315 a 338, são maiores
+        que qualquer número visto, e caem todas na última folha [2].</p>
+        <p>Um identificador sequencial descreve a posição da linha no arquivo, e não o mês. O
+        modelo precisa funcionar para casos novos, e caso novo tem número novo.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">13</p>
+        </div>
+      </section>
+
+      <!-- 14 - Reapresentacao -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Medir em dado já visto leva a floresta a 1,31%</h2>
+        </div>
+        <img src="../assets/img/aula13-reapresentacao.png" alt="Barras horizontais do MAPE de dois modelos medidos de três formas. A floresta erra 5,70% nos 24 meses que não viu, 1,44% nos 315 meses de treino e 1,31% quando é ajustada nas 339 linhas e medida nos 24 finais. A regressão linear erra 2,86% nos 24 meses não vistos e 2,65% quando é ajustada nas 339 linhas." style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 340px;">
+        <p><code>fit</code> do escalador e do modelo só nos 315 meses de treino. Medida em 100
+        meses em vez de 24, a floresta ajustada em tudo continua em 1,31%: o tamanho do teste não
+        corrige um teste que o modelo já viu [2][7].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">14</p>
+        </div>
+      </section>
+
+      <!-- 15 - Quiz P1 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pares 1 &middot; Qual erro estima o futuro</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">Voto, dupla, revoto. A floresta erra 5,70% nos 24 meses que não
+          viu e 1,31% quando é ajustada nas 339 linhas e medida nos mesmos 24. Qual número estima o
+          erro em 2026 e 2027?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O 1,31% mede a floresta sobre meses que ela usou para treinar. É erro de reapresentação, otimista por construção.">1,31%, porque o modelo usou mais dado</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Com 100 meses em vez de 24 o número continua 1,31%. O tamanho do teste não decide a validade: decide se o modelo viu ou não aquelas linhas.">1,31%, desde que o teste tenha mais de 24 meses</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: o 5,70% é o único medido em meses que o modelo não viu durante o fit. É a estimativa do erro em dado novo."
+                data-incorrect-msg="Era esta: o 5,70% é o único medido em meses que o modelo não viu durante o fit. É a estimativa do erro em dado novo.">5,70%, o único medido em dado não visto</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Média entre uma estimativa honesta e uma contaminada é outro número contaminado.">A média dos dois, 3,51%</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">15</p>
+        </div>
+      </section>
+
+      <!-- 16 - Divisor Revisao 2 -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Revisão 2</h2>
+        <h3>Regressão linear simples, divisão e métricas</h3>
+      </section>
+
+      <!-- 17 - Fluxo completo -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Fluxo completo da regressão linear simples</h2>
+        </div>
+        <div class="side-by-side">
+          <pre class="code-compact"><code>fr = pd.read_csv("dados/abate_frangos.csv")
+su = pd.read_csv("dados/abate_suinos.csv")
+df = fr.merge(su, on="periodo",
+              suffixes=("_fr", "_su"))
+df["suinos_lag1"] = df["valor_su"].shift(1)
+df = df.dropna()          # 116 linhas
+
+X = df[["suinos_lag1"]]   # 2D: DataFrame
+y = df["valor_fr"]        # 1D: Series
+
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.2, random_state=42)
+reta = LinearRegression().fit(X_tr, y_tr)
+reta.score(X_te, y_te)    # R² de teste</code></pre>
+          <ol class="exercise-steps">
+            <li class="a13-acende" style="animation-delay: 0.2s"><strong>Dados</strong>: dois CSVs trimestrais do SIDRA [1].</li>
+            <li class="a13-acende" style="animation-delay: 0.9s"><strong>Qualidade</strong>: zero vazios, 1997-T2 a 2026-T1.</li>
+            <li class="a13-acende" style="animation-delay: 1.6s"><strong>X e y</strong>: X com colchete duplo, y com simples.</li>
+            <li class="a13-acende" style="animation-delay: 2.3s"><strong>Treino e teste</strong>: 92 e 24 trimestres.</li>
+            <li class="a13-acende" style="animation-delay: 3.0s"><strong>Treinamento</strong>: <code>fit</code> só no treino.</li>
+            <li class="a13-acende" style="animation-delay: 3.7s"><strong>Avaliação e previsão</strong>: métrica no teste, depois <code>predict</code>.</li>
+          </ol>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">17</p>
+        </div>
+      </section>
+
+      <!-- 18 - Dispersao e Pearson -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Frangos e suínos defasados têm r de 0,971</h2>
+        </div>
+        <img src="../assets/img/aula13-dispersao.png" alt="Dispersão dos 116 trimestres, abate de frangos contra abate de suínos do trimestre anterior, em bilhões de quilogramas. Os pontos seguem uma reta crescente, com r de Pearson 0,971 e inclinação 2,29. Os 24 pontos do teste sorteado aparecem em coral, espalhados entre os de treino." style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 340px;">
+        <p>A dispersão confirma a forma linear antes do ajuste. A inclinação de 2,29 diz que cada
+        quilo a mais de suínos no trimestre anterior acompanha 2,29 quilos a mais de frangos, na
+        média do treino. É associação: as duas séries crescem juntas desde 1997 [2].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">18</p>
+        </div>
+      </section>
+
+      <!-- 19 - Divisao aleatoria contra cronologica, animada -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A reta tem R² de 0,95 no sorteio e -5,81 por data</h2>
+        </div>
+        <div class="a13-svg">
+<!-- svg:divisao -->
+<svg viewBox="0 0 1120 262" width="100%" height="262" role="img" aria-label="Os 116 trimestres da regressão simples em duas faixas. Na de cima, os 24 trimestres de teste são sorteados e ficam espalhados entre os de treino, com R2 de teste 0,95. Na de baixo, os 24 de teste são os últimos, a partir de 2020-T2, com R2 de teste -5,81.">
+<text x="20.0" y="94.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="700">sorteio 80/20</text>
+<rect class="a13-acende" x="200.0" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 1.14s"/>
+<rect x="207.8" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="215.5" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="223.3" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="231.0" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 1.74s"/>
+<rect x="238.8" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="246.6" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="254.3" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="262.1" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="269.8" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="277.6" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 2.70s"/>
+<rect class="a13-acende" x="285.3" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 0.66s"/>
+<rect class="a13-acende" x="293.1" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 0.42s"/>
+<rect x="300.9" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="308.6" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="316.4" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="324.1" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="331.9" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="339.7" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 2.34s"/>
+<rect x="347.4" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="355.2" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="362.9" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="370.7" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="378.4" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="386.2" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="394.0" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="401.7" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 2.10s"/>
+<rect x="409.5" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="417.2" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="425.0" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="432.8" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="440.5" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="448.3" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="456.0" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="463.8" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="471.6" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="479.3" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 1.62s"/>
+<rect x="487.1" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="494.8" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="502.6" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="510.3" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 1.50s"/>
+<rect x="518.1" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="525.9" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 2.94s"/>
+<rect x="533.6" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="541.4" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="549.1" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 1.02s"/>
+<rect x="556.9" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="564.7" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 3.06s"/>
+<rect x="572.4" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="580.2" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="587.9" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="595.7" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="603.4" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="611.2" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 0.90s"/>
+<rect x="619.0" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="626.7" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="634.5" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 1.98s"/>
+<rect x="642.2" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="650.0" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="657.8" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="665.5" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="673.3" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="681.0" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="688.8" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="696.6" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="704.3" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="712.1" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="719.8" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 0.78s"/>
+<rect x="727.6" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="735.3" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="743.1" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 0.30s"/>
+<rect x="750.9" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="758.6" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="766.4" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="774.1" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="781.9" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="789.7" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="797.4" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="805.2" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="812.9" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="820.7" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="828.4" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="836.2" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="844.0" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 2.22s"/>
+<rect x="851.7" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="859.5" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 1.38s"/>
+<rect x="867.2" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="875.0" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="882.8" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 0.54s"/>
+<rect x="890.5" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="898.3" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="906.0" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="913.8" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="921.6" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 1.26s"/>
+<rect class="a13-acende" x="929.3" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 2.58s"/>
+<rect x="937.1" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="944.8" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="952.6" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="960.3" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="968.1" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="975.9" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 2.82s"/>
+<rect x="983.6" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="991.4" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="999.1" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="1006.9" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="1014.7" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="1022.4" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="1030.2" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="1037.9" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="1045.7" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 1.86s"/>
+<rect class="a13-acende" x="1053.4" y="58" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 2.46s"/>
+<rect x="1061.2" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="1069.0" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="1076.7" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="1084.5" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="1092.2" y="58" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<text x="1100.0" y="48.0" font-size="18" fill="var(--seg-texto)" text-anchor="end" font-weight="700" class="a13-acende" style="animation-delay: 5.20s">R² de teste 0,95</text>
+<text x="20.0" y="196.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="700">corte por data</text>
+<rect x="200.0" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="207.8" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="215.5" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="223.3" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="231.0" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="238.8" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="246.6" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="254.3" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="262.1" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="269.8" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="277.6" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="285.3" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="293.1" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="300.9" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="308.6" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="316.4" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="324.1" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="331.9" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="339.7" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="347.4" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="355.2" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="362.9" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="370.7" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="378.4" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="386.2" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="394.0" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="401.7" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="409.5" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="417.2" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="425.0" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="432.8" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="440.5" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="448.3" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="456.0" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="463.8" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="471.6" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="479.3" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="487.1" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="494.8" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="502.6" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="510.3" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="518.1" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="525.9" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="533.6" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="541.4" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="549.1" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="556.9" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="564.7" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="572.4" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="580.2" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="587.9" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="595.7" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="603.4" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="611.2" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="619.0" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="626.7" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="634.5" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="642.2" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="650.0" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="657.8" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="665.5" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="673.3" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="681.0" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="688.8" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="696.6" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="704.3" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="712.1" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="719.8" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="727.6" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="735.3" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="743.1" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="750.9" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="758.6" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="766.4" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="774.1" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="781.9" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="789.7" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="797.4" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="805.2" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="812.9" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="820.7" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="828.4" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="836.2" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="844.0" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="851.7" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="859.5" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="867.2" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="875.0" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="882.8" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="890.5" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="898.3" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect x="906.0" y="160" width="6.4" height="60" fill="var(--seg-primaria)"/>
+<rect class="a13-acende" x="913.8" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 3.60s"/>
+<rect class="a13-acende" x="921.6" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 3.66s"/>
+<rect class="a13-acende" x="929.3" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 3.72s"/>
+<rect class="a13-acende" x="937.1" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 3.78s"/>
+<rect class="a13-acende" x="944.8" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 3.84s"/>
+<rect class="a13-acende" x="952.6" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 3.90s"/>
+<rect class="a13-acende" x="960.3" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 3.96s"/>
+<rect class="a13-acende" x="968.1" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.02s"/>
+<rect class="a13-acende" x="975.9" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.08s"/>
+<rect class="a13-acende" x="983.6" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.14s"/>
+<rect class="a13-acende" x="991.4" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.20s"/>
+<rect class="a13-acende" x="999.1" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.26s"/>
+<rect class="a13-acende" x="1006.9" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.32s"/>
+<rect class="a13-acende" x="1014.7" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.38s"/>
+<rect class="a13-acende" x="1022.4" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.44s"/>
+<rect class="a13-acende" x="1030.2" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.50s"/>
+<rect class="a13-acende" x="1037.9" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.56s"/>
+<rect class="a13-acende" x="1045.7" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.62s"/>
+<rect class="a13-acende" x="1053.4" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.68s"/>
+<rect class="a13-acende" x="1061.2" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.74s"/>
+<rect class="a13-acende" x="1069.0" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.80s"/>
+<rect class="a13-acende" x="1076.7" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.86s"/>
+<rect class="a13-acende" x="1084.5" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.92s"/>
+<rect class="a13-acende" x="1092.2" y="160" width="6.4" height="60" fill="var(--seg-destaque)" style="animation-delay: 4.98s"/>
+<text x="1100.0" y="150.0" font-size="18" fill="var(--seg-texto)" text-anchor="end" font-weight="700" class="a13-acende" style="animation-delay: 5.20s">R² de teste -5,81</text>
+<line x1="285.3" y1="224" x2="285.3" y2="232" stroke="var(--seg-borda)" stroke-width="2"/>
+<text x="285.3" y="254.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">2000</text>
+<line x1="595.7" y1="224" x2="595.7" y2="232" stroke="var(--seg-borda)" stroke-width="2"/>
+<text x="595.7" y="254.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">2010</text>
+<line x1="906.0" y1="224" x2="906.0" y2="232" stroke="var(--seg-borda)" stroke-width="2"/>
+<text x="906.0" y="254.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">2020</text>
+<text x="20.0" y="20.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="400">roxo: treino · coral: teste</text>
+</svg>
+<!-- /svg:divisao -->
+        </div>
+        <p class="a13-legenda">O sorteio serve quando a ordem não importa, como comparar granjas
+        entre si. Para prever os próximos trimestres, o teste precisa estar depois do treino, e o
+        sorteio mede interpolação em vez de previsão [8].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">19</p>
+        </div>
+      </section>
+
+      <!-- 20 - A reta cronologica -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A reta até 2020-T1 superestima os 24 trimestres</h2>
+        </div>
+        <img src="../assets/img/aula13-cronologica.png" alt="Série trimestral do abate de frangos de 1997 a 2026 em roxo e, a partir do corte em 2020-T2, a previsão da reta ajustada até o trimestre anterior, em coral. A previsão fica acima do real em todos os 24 trimestres do teste." style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 340px;">
+        <p>O RMSE vai de 179,2 para 552,9 milhões de kg. Um r alto no histórico não garante que a
+        relação se mantenha no período seguinte, e só a divisão por data mostra isso [2].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">20</p>
+        </div>
+      </section>
+
+      <!-- 21 - random_state e teste pequeno -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Com teste de 4 trimestres, o R² desce até -0,25</h2>
+        </div>
+        <img src="../assets/img/aula13-sementes.png" alt="R2 de teste da regressão simples em 20 sementes do sorteio, para testes de 4, 8 e 24 trimestres. Com 4 trimestres o R2 vai de -0,25 a perto de 1. Com 8, o mínimo é 0,61. Com 24, o mínimo é 0,91." style="display: block; margin: 0 auto 6px; max-width: 100%; max-height: 340px;">
+        <p><code>random_state</code> fixa o sorteio e torna o número reproduzível; ele não torna a
+        estimativa estável. Com 116 trimestres, 20% de teste dá 24 e o mínimo sobe para 0,91 [2].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">21</p>
+        </div>
+      </section>
+
+      <!-- 22 - Metricas de regressao -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O modelo erra em média 34,1 milhões de kg</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Métrica</th><th>Nos 24 meses de teste</th><th>O que afirma</th><th>O que não afirma</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>MAE</td><td>34,1 milhões de kg</td><td>distância média, na unidade do alvo</td><td>direção, nem limite por mês: o pior erra 90,2</td></tr>
+            <tr><td>Viés</td><td>-12,1 milhões de kg</td><td>erro médio com sinal: subestima em média</td><td>tamanho do erro: 7 dos 24 meses ficam acima</td></tr>
+            <tr><td>MAPE</td><td>2,86%</td><td>erro relativo, sem unidade</td><td>peso igual entre meses de volume diferente</td></tr>
+            <tr><td>RMSE</td><td>40,7 milhões de kg</td><td>pune erro grande, e nunca fica abaixo do MAE</td><td>média simples do erro</td></tr>
+            <tr><td>R²</td><td>0,54</td><td>fração da variância do teste explicada</td><td>acurácia: depende da variância do período</td></tr>
+            <tr><td>Acertos exatos</td><td>0 de 24</td><td>nada útil</td><td>acurácia não se aplica a alvo contínuo</td></tr>
+          </tbody>
+        </table>
+        <p>A média do alvo no teste é 1.181,9 milhões de kg, então o MAE equivale a 2,9% dela [2].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">22</p>
+        </div>
+      </section>
+
+      <!-- 23 - Quiz P2 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pares 2 &middot; Qual divisão responde à LDC</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">Voto, dupla, revoto. A reta de frangos sobre suínos do trimestre
+          anterior tem R² de 0,95 no sorteio 80/20 e de -5,81 no corte por data. A LDC quer os
+          próximos oito trimestres. Qual divisão responde à pergunta dela?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O R² maior vem de testar trimestres cercados por vizinhos do treino. A LDC não terá vizinho posterior quando prever 2027.">O sorteio, porque o R² é mais alto</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: o corte por data reproduz a situação real, em que todo o treino é anterior ao que se prevê. O -5,81 é o número que descreve esta reta para a LDC."
+                data-incorrect-msg="Era esta: o corte por data reproduz a situação real, em que todo o treino é anterior ao que se prevê. O -5,81 é o número que descreve esta reta para a LDC.">O corte por data, com o teste depois do treino</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="random_state torna o sorteio reproduzível, e continua sendo sorteio. Reproduzir o mesmo vazamento não o corrige.">Qualquer uma, desde que o random_state esteja fixo</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Com teste de 4 trimestres o R² sorteado vai de -0,25 a perto de 1. Diminuir o teste deixa a estimativa mais instável, não mais honesta.">O sorteio, com um teste menor, de 4 trimestres</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">23</p>
+        </div>
+      </section>
+
+      <!-- 24 - Divisor Revisao 3 -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Revisão 3</h2>
+        <h3>Matriz de confusão, métricas e limiar</h3>
+      </section>
+
+      <!-- 25 - Criterio TP TN FP FN -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Critério para classificar cada mês</h2>
+        </div>
+        <div class="side-by-side">
+          <div>
+            <p>Alvo da Aula 09: <strong>alta</strong> quando o abate do mês supera o mesmo mês do
+            ano anterior. Alta é a classe positiva [14].</p>
+            <p><strong>Positivo ou negativo</strong> é o que o modelo previu.
+            <strong>Verdadeiro ou falso</strong> diz se ele acertou.</p>
+            <p>Em dupla, dois minutos: classifiquem os seis meses da regressão logística ao
+            lado.</p>
+          </div>
+          <table class="data-table tabela-projecao">
+            <thead>
+              <tr><th>Mês</th><th>Real</th><th>Previsto</th><th>Caso</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>abr/24</td><td>alta</td><td>alta</td><td></td></tr>
+              <tr><td>mai/24</td><td>queda</td><td>queda</td><td></td></tr>
+              <tr><td>jun/24</td><td>queda</td><td>alta</td><td></td></tr>
+              <tr><td>fev/25</td><td>alta</td><td>queda</td><td></td></tr>
+              <tr><td>ago/25</td><td>queda</td><td>alta</td><td></td></tr>
+              <tr><td>out/25</td><td>alta</td><td>queda</td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">25</p>
+        </div>
+      </section>
+
+      <!-- 26 - Matriz animada -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>A regressão logística acerta 19 dos 24 meses</h2>
+        </div>
+        <div class="a13-svg">
+<!-- svg:matriz -->
+<svg viewBox="0 0 1120 318" width="100%" height="318" role="img" aria-label="Os 24 meses de teste da regressão logística, classificados um a um. 17 TP, 3 FN, 2 FP e 2 TN, com 20 meses reais de alta e 4 de queda.">
+<g class="a13-acende" style="animation-delay: 0.00s">
+<rect x="20" y="20" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="64.0" y="45.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">abr/24</text>
+<text x="64.0" y="71.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 0.25s">
+<rect x="116" y="20" width="88" height="62" rx="6" fill="var(--seg-secundaria)"/>
+<text x="160.0" y="45.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">mai/24</text>
+<text x="160.0" y="71.0" font-size="20" fill="var(--seg-texto)" text-anchor="middle" font-weight="700">TN</text>
+</g>
+<g class="a13-acende" style="animation-delay: 0.50s">
+<rect x="212" y="20" width="88" height="62" rx="6" fill="var(--seg-destaque)"/>
+<text x="256.0" y="45.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">jun/24</text>
+<text x="256.0" y="71.0" font-size="20" fill="var(--seg-texto)" text-anchor="middle" font-weight="700">FP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 0.75s">
+<rect x="308" y="20" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="352.0" y="45.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">jul/24</text>
+<text x="352.0" y="71.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 1.00s">
+<rect x="404" y="20" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="448.0" y="45.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">ago/24</text>
+<text x="448.0" y="71.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 1.25s">
+<rect x="500" y="20" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="544.0" y="45.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">set/24</text>
+<text x="544.0" y="71.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 1.50s">
+<rect x="20" y="92" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="64.0" y="117.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">out/24</text>
+<text x="64.0" y="143.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 1.75s">
+<rect x="116" y="92" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="160.0" y="117.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">nov/24</text>
+<text x="160.0" y="143.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 2.00s">
+<rect x="212" y="92" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="256.0" y="117.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">dez/24</text>
+<text x="256.0" y="143.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 2.25s">
+<rect x="308" y="92" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="352.0" y="117.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">jan/25</text>
+<text x="352.0" y="143.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 2.50s">
+<rect x="404" y="92" width="88" height="62" rx="6" fill="var(--seg-base)" stroke="var(--seg-destaque)" stroke-width="3"/>
+<text x="448.0" y="117.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">fev/25</text>
+<text x="448.0" y="143.0" font-size="20" fill="var(--seg-texto)" text-anchor="middle" font-weight="700">FN</text>
+</g>
+<g class="a13-acende" style="animation-delay: 2.75s">
+<rect x="500" y="92" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="544.0" y="117.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">mar/25</text>
+<text x="544.0" y="143.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 3.00s">
+<rect x="20" y="164" width="88" height="62" rx="6" fill="var(--seg-secundaria)"/>
+<text x="64.0" y="189.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">abr/25</text>
+<text x="64.0" y="215.0" font-size="20" fill="var(--seg-texto)" text-anchor="middle" font-weight="700">TN</text>
+</g>
+<g class="a13-acende" style="animation-delay: 3.25s">
+<rect x="116" y="164" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="160.0" y="189.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">mai/25</text>
+<text x="160.0" y="215.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 3.50s">
+<rect x="212" y="164" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="256.0" y="189.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">jun/25</text>
+<text x="256.0" y="215.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 3.75s">
+<rect x="308" y="164" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="352.0" y="189.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">jul/25</text>
+<text x="352.0" y="215.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 4.00s">
+<rect x="404" y="164" width="88" height="62" rx="6" fill="var(--seg-destaque)"/>
+<text x="448.0" y="189.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">ago/25</text>
+<text x="448.0" y="215.0" font-size="20" fill="var(--seg-texto)" text-anchor="middle" font-weight="700">FP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 4.25s">
+<rect x="500" y="164" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="544.0" y="189.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">set/25</text>
+<text x="544.0" y="215.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 4.50s">
+<rect x="20" y="236" width="88" height="62" rx="6" fill="var(--seg-base)" stroke="var(--seg-destaque)" stroke-width="3"/>
+<text x="64.0" y="261.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">out/25</text>
+<text x="64.0" y="287.0" font-size="20" fill="var(--seg-texto)" text-anchor="middle" font-weight="700">FN</text>
+</g>
+<g class="a13-acende" style="animation-delay: 4.75s">
+<rect x="116" y="236" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="160.0" y="261.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">nov/25</text>
+<text x="160.0" y="287.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 5.00s">
+<rect x="212" y="236" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="256.0" y="261.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">dez/25</text>
+<text x="256.0" y="287.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 5.25s">
+<rect x="308" y="236" width="88" height="62" rx="6" fill="var(--seg-base)" stroke="var(--seg-destaque)" stroke-width="3"/>
+<text x="352.0" y="261.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">jan/26</text>
+<text x="352.0" y="287.0" font-size="20" fill="var(--seg-texto)" text-anchor="middle" font-weight="700">FN</text>
+</g>
+<g class="a13-acende" style="animation-delay: 5.50s">
+<rect x="404" y="236" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="448.0" y="261.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">fev/26</text>
+<text x="448.0" y="287.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<g class="a13-acende" style="animation-delay: 5.75s">
+<rect x="500" y="236" width="88" height="62" rx="6" fill="var(--seg-primaria)"/>
+<text x="544.0" y="261.0" font-size="18" fill="var(--inteli-branco)" text-anchor="middle" font-weight="400">mar/26</text>
+<text x="544.0" y="287.0" font-size="20" fill="var(--inteli-branco)" text-anchor="middle" font-weight="700">TP</text>
+</g>
+<text x="870.0" y="22.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="700">previsto</text>
+<text x="795.0" y="44.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">alta</text>
+<text x="945.0" y="44.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">queda</text>
+<text x="708.0" y="108.0" font-size="18" fill="var(--seg-texto)" text-anchor="end" font-weight="400">real alta</text>
+<text x="708.0" y="208.0" font-size="18" fill="var(--seg-texto)" text-anchor="end" font-weight="400">real queda</text>
+<rect x="720" y="52" width="150" height="100" fill="var(--seg-superficie)" stroke="var(--seg-borda)" stroke-width="2"/>
+<text x="730.0" y="74.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="700">TP</text>
+<circle class="a13-acende" cx="790" cy="68" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 0.00s"/>
+<circle class="a13-acende" cx="802" cy="68" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 0.75s"/>
+<circle class="a13-acende" cx="814" cy="68" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 1.00s"/>
+<circle class="a13-acende" cx="826" cy="68" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 1.25s"/>
+<circle class="a13-acende" cx="838" cy="68" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 1.50s"/>
+<circle class="a13-acende" cx="850" cy="68" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 1.75s"/>
+<circle class="a13-acende" cx="790" cy="80" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 2.00s"/>
+<circle class="a13-acende" cx="802" cy="80" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 2.25s"/>
+<circle class="a13-acende" cx="814" cy="80" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 2.75s"/>
+<circle class="a13-acende" cx="826" cy="80" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 3.25s"/>
+<circle class="a13-acende" cx="838" cy="80" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 3.50s"/>
+<circle class="a13-acende" cx="850" cy="80" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 3.75s"/>
+<circle class="a13-acende" cx="790" cy="92" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 4.25s"/>
+<circle class="a13-acende" cx="802" cy="92" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 4.75s"/>
+<circle class="a13-acende" cx="814" cy="92" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 5.00s"/>
+<circle class="a13-acende" cx="826" cy="92" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 5.50s"/>
+<circle class="a13-acende" cx="838" cy="92" r="4.5" fill="var(--seg-primaria)" style="animation-delay: 5.75s"/>
+<text x="795.0" y="136.0" font-size="30" fill="var(--seg-texto)" text-anchor="middle" font-weight="700" class="a13-acende" style="animation-delay: 6.00s">17</text>
+<rect x="870" y="52" width="150" height="100" fill="var(--seg-superficie)" stroke="var(--seg-borda)" stroke-width="2"/>
+<text x="880.0" y="74.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="700">FN</text>
+<circle class="a13-acende" cx="940" cy="68" r="4.5" fill="var(--seg-destaque)" style="animation-delay: 2.50s"/>
+<circle class="a13-acende" cx="952" cy="68" r="4.5" fill="var(--seg-destaque)" style="animation-delay: 4.50s"/>
+<circle class="a13-acende" cx="964" cy="68" r="4.5" fill="var(--seg-destaque)" style="animation-delay: 5.25s"/>
+<text x="945.0" y="136.0" font-size="30" fill="var(--seg-texto)" text-anchor="middle" font-weight="700" class="a13-acende" style="animation-delay: 6.00s">3</text>
+<rect x="720" y="152" width="150" height="100" fill="var(--seg-superficie)" stroke="var(--seg-borda)" stroke-width="2"/>
+<text x="730.0" y="174.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="700">FP</text>
+<circle class="a13-acende" cx="790" cy="168" r="4.5" fill="var(--seg-destaque)" style="animation-delay: 0.50s"/>
+<circle class="a13-acende" cx="802" cy="168" r="4.5" fill="var(--seg-destaque)" style="animation-delay: 4.00s"/>
+<text x="795.0" y="236.0" font-size="30" fill="var(--seg-texto)" text-anchor="middle" font-weight="700" class="a13-acende" style="animation-delay: 6.00s">2</text>
+<rect x="870" y="152" width="150" height="100" fill="var(--seg-superficie)" stroke="var(--seg-borda)" stroke-width="2"/>
+<text x="880.0" y="174.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="700">TN</text>
+<circle class="a13-acende" cx="940" cy="168" r="4.5" fill="var(--seg-secundaria)" style="animation-delay: 0.25s"/>
+<circle class="a13-acende" cx="952" cy="168" r="4.5" fill="var(--seg-secundaria)" style="animation-delay: 3.00s"/>
+<text x="945.0" y="236.0" font-size="30" fill="var(--seg-texto)" text-anchor="middle" font-weight="700" class="a13-acende" style="animation-delay: 6.00s">2</text>
+<text x="1034.0" y="109.0" font-size="20" fill="var(--seg-texto)" text-anchor="start" font-weight="700">20</text>
+<text x="1034.0" y="209.0" font-size="20" fill="var(--seg-texto)" text-anchor="start" font-weight="700">4</text>
+<text x="795.0" y="280.0" font-size="20" fill="var(--seg-texto)" text-anchor="middle" font-weight="700">19</text>
+<text x="945.0" y="280.0" font-size="20" fill="var(--seg-texto)" text-anchor="middle" font-weight="700">5</text>
+<text x="1034.0" y="280.0" font-size="20" fill="var(--seg-texto)" text-anchor="start" font-weight="700">24</text>
+</svg>
+<!-- /svg:matriz -->
+        </div>
+        <p class="a13-legenda">Acurácia (TP+TN)/24 = 79,2% &middot; precisão TP/(TP+FP) = 17/19 =
+        0,89 &middot; revocação TP/(TP+FN) = 17/20 = 0,85 &middot; F1 = 2PR/(P+R) = 0,87 [2]</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">26</p>
+        </div>
+      </section>
+
+      <!-- 27 - Baseline e classe minoritaria -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prever sempre alta dá 83,3% e nenhuma queda</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Classificador, 24 meses de teste</th><th>Acurácia</th><th>Precisão da alta</th><th>Revocação da alta</th><th>Precisão da queda</th><th>Revocação da queda</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Baseline majoritária</td><td>83,3%</td><td>0,83</td><td>1,00</td><td>não definida</td><td><strong>0,00</strong></td></tr>
+            <tr><td>Regressão logística</td><td>79,2%</td><td>0,89</td><td>0,85</td><td>0,40</td><td>0,50</td></tr>
+            <tr><td>SVM linear</td><td>83,3%</td><td>0,90</td><td>0,90</td><td>0,50</td><td>0,50</td></tr>
+          </tbody>
+        </table>
+        <p>São 20 meses de alta e 4 de queda. A baseline e o SVM linear empatam na acurácia, e
+        só as métricas da classe minoritária mostram que o SVM encontra duas das quatro
+        quedas [2][9].</p>
+        <p>A regressão logística encontra as mesmas duas quedas e fica com a menor acurácia das três,
+        porque erra três meses de alta.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">27</p>
+        </div>
+      </section>
+
+      <!-- 28 - Limiar animado -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O limiar de 0,7 zera os FP e leva os FN a 9</h2>
+        </div>
+        <div class="a13-svg">
+<!-- svg:limiar -->
+<svg viewBox="0 0 1120 250" width="100%" height="250" role="img" aria-label="As 24 probabilidades de alta da regressão logística, em duas faixas pelo resultado real. O limiar passa por 0,4, 0,5, 0,6 e 0,7, e os erros de cada limiar ficam circulados.">
+<text x="20.0" y="76.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="700">real alta</text>
+<text x="20.0" y="156.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="700">real queda</text>
+<line x1="150" y1="196" x2="1090" y2="196" stroke="var(--seg-borda)" stroke-width="2"/>
+<text x="150.0" y="222.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">0,2</text>
+<text x="385.0" y="222.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">0,4</text>
+<text x="620.0" y="222.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">0,6</text>
+<text x="855.0" y="222.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">0,8</text>
+<text x="1090.0" y="222.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="400">1,0</text>
+<text x="1090.0" y="246.0" font-size="18" fill="var(--seg-texto)" text-anchor="end" font-weight="400">probabilidade de alta</text>
+<circle cx="889.5" cy="70.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="383.5" cy="150.0" r="8" fill="var(--seg-destaque)"/>
+<circle cx="672.2" cy="150.0" r="8" fill="var(--seg-destaque)"/>
+<circle cx="881.8" cy="52.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="548.7" cy="70.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="957.7" cy="70.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="922.0" cy="70.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="816.9" cy="70.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="1013.3" cy="70.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="521.1" cy="70.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="211.9" cy="70.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="940.4" cy="52.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="413.5" cy="150.0" r="8" fill="var(--seg-destaque)"/>
+<circle cx="698.9" cy="70.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="790.1" cy="70.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="594.5" cy="70.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="664.7" cy="132.0" r="8" fill="var(--seg-destaque)"/>
+<circle cx="907.4" cy="88.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="496.7" cy="70.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="728.4" cy="70.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="1035.5" cy="70.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="499.4" cy="52.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="580.9" cy="52.0" r="8" fill="var(--seg-primaria)"/>
+<circle cx="950.1" cy="88.0" r="8" fill="var(--seg-primaria)"/>
+<g class="a13-etapa a13-etapa-0">
+<rect x="385.0" y="30" width="705.0" height="166" fill="var(--seg-secundaria)" opacity="0.25"/>
+<line x1="385.0" y1="24" x2="385.0" y2="196" stroke="var(--seg-primaria)" stroke-width="3"/>
+<text x="385.0" y="18.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="700">limiar 0,4</text>
+<circle cx="672.2" cy="150.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="211.9" cy="70.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="413.5" cy="150.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="664.7" cy="132.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<text x="150.0" y="246.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="700">FP 3 · FN 1 · precisão 0,86 · revocação 0,95</text>
+</g>
+<g class="a13-etapa a13-etapa-1 a13-padrao">
+<rect x="502.5" y="30" width="587.5" height="166" fill="var(--seg-secundaria)" opacity="0.25"/>
+<line x1="502.5" y1="24" x2="502.5" y2="196" stroke="var(--seg-primaria)" stroke-width="3"/>
+<text x="502.5" y="18.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="700">limiar 0,5</text>
+<circle cx="672.2" cy="150.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="211.9" cy="70.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="664.7" cy="132.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="496.7" cy="70.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="499.4" cy="52.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<text x="150.0" y="246.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="700">FP 2 · FN 3 · precisão 0,89 · revocação 0,85</text>
+</g>
+<g class="a13-etapa a13-etapa-2">
+<rect x="620.0" y="30" width="470.0" height="166" fill="var(--seg-secundaria)" opacity="0.25"/>
+<line x1="620.0" y1="24" x2="620.0" y2="196" stroke="var(--seg-primaria)" stroke-width="3"/>
+<text x="620.0" y="18.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="700">limiar 0,6</text>
+<circle cx="672.2" cy="150.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="548.7" cy="70.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="521.1" cy="70.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="211.9" cy="70.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="594.5" cy="70.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="664.7" cy="132.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="496.7" cy="70.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="499.4" cy="52.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="580.9" cy="52.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<text x="150.0" y="246.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="700">FP 2 · FN 7 · precisão 0,87 · revocação 0,65</text>
+</g>
+<g class="a13-etapa a13-etapa-3">
+<rect x="737.5" y="30" width="352.5" height="166" fill="var(--seg-secundaria)" opacity="0.25"/>
+<line x1="737.5" y1="24" x2="737.5" y2="196" stroke="var(--seg-primaria)" stroke-width="3"/>
+<text x="737.5" y="18.0" font-size="18" fill="var(--seg-texto)" text-anchor="middle" font-weight="700">limiar 0,7</text>
+<circle cx="548.7" cy="70.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="521.1" cy="70.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="211.9" cy="70.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="698.9" cy="70.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="594.5" cy="70.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="496.7" cy="70.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="728.4" cy="70.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="499.4" cy="52.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<circle cx="580.9" cy="52.0" r="13" fill="none" stroke="var(--seg-destaque)" stroke-width="3"/>
+<text x="150.0" y="246.0" font-size="18" fill="var(--seg-texto)" text-anchor="start" font-weight="700">FP 0 · FN 9 · precisão 1,00 · revocação 0,55</text>
+</g>
+</svg>
+<!-- /svg:limiar -->
+        </div>
+        <div class="side-by-side">
+          <table class="data-table tabela-projecao">
+            <thead>
+              <tr><th>Limiar</th><th>FP</th><th>FN</th><th>Precisão</th><th>Revocação</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>0,4</td><td>3</td><td>1</td><td>0,86</td><td>0,95</td></tr>
+              <tr><td>0,5</td><td>2</td><td>3</td><td>0,89</td><td>0,85</td></tr>
+              <tr><td>0,6</td><td>2</td><td>7</td><td>0,87</td><td>0,65</td></tr>
+              <tr><td>0,7</td><td>0</td><td>9</td><td>1,00</td><td>0,55</td></tr>
+            </tbody>
+          </table>
+          <p>FP: previu alta e veio queda, e a compra antecipada de milho fica parada. FN: previu
+          queda e veio alta, e a compra sai tarde. Qual custa mais é decisão da LDC, declarada
+          antes de escolher o limiar [9].</p>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">28</p>
+        </div>
+      </section>
+
+      <!-- 29 - Quiz P3 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pares 3 &middot; Custo de cada erro</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">Voto, dupla, revoto. A LDC declara que comprar milho tarde, depois
+          de uma alta não prevista, custa bem mais que estoque parado. Qual limiar da tabela anterior
+          ela deveria preferir?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O 0,7 zera os FP, que são o erro barato, e sobe os FN para 9, que são o erro caro.">0,7, porque a precisão chega a 1,00</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="0,5 é o padrão do predict, e não uma decisão. Com custo declarado, o limiar sai do custo.">0,5, porque é o limiar padrão do modelo</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="A acurácia soma os dois erros como se custassem o mesmo, que é justamente o que a LDC declarou não ser verdade.">O de maior acurácia, porque resume os dois erros</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: o erro caro é o FN, então a prioridade é revocação da alta. Em 0,4 o FN cai para 1, ao custo de um FP a mais."
+                data-incorrect-msg="Era esta: o erro caro é o FN, então a prioridade é revocação da alta. Em 0,4 o FN cai para 1, ao custo de um FP a mais.">0,4, porque prioriza a revocação da alta</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">29</p>
+        </div>
+      </section>
+
+      <!-- 30 - Divisor Revisao 4 -->
+      <section class="section-slide">
+        <div class="accent-bar"></div>
+        <h2>Revisão 4</h2>
+        <h3>Tipos de dado, ETL e ELT, recomendação</h3>
+      </section>
+
+      <!-- 31 - Estruturado, ETL ELT, lake warehouse -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>O acervo carrega o dado cru e transforma depois</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Fonte do case</th><th>Estrutura</th><th>Onde fica</th><th>Por quê</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>CSVs do SIDRA em <code>dados/</code></td><td>estruturado</td><td><em>data lake</em> do case, cru</td><td>reprocessar sem baixar de novo</td></tr>
+            <tr><td>Base analítica de 339 linhas</td><td>estruturado</td><td><em>data warehouse</em></td><td>esquema fixo, consistente, consulta rápida pelo modelo</td></tr>
+            <tr><td>PDFs de boletins de mercado</td><td>não estruturado</td><td><em>data lake</em></td><td>formato variado, uso ainda indefinido</td></tr>
+            <tr><td>Imagens de satélite de lavoura</td><td>não estruturado</td><td><em>data lake</em></td><td>o original precisa ficar para reprocessar</td></tr>
+            <tr><td>Áudio de calls com cooperativas</td><td>não estruturado</td><td><em>data lake</em></td><td>transcrição e extração vêm depois</td></tr>
+          </tbody>
+        </table>
+        <p><strong>ETL</strong> transforma antes de carregar, e serve ao <em>warehouse</em> de esquema
+        fixo. <strong>ELT</strong> carrega cru e transforma quando a análise pedir, que é o que o
+        acervo faz desde a Aula 04 [10][14].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">31</p>
+        </div>
+      </section>
+
+      <!-- 32 - Recomendacao e cold start -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Duas estratégias recomendam para a granja nova</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Estratégia</th><th>Dado de que depende</th><th>Granja nova</th><th>Formulação nova</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Colaborativa usuário-usuário</td><td>histórico de compras de granjas parecidas</td><td>não</td><td>não</td></tr>
+            <tr><td>Colaborativa item-item</td><td>formulações compradas pelas mesmas granjas</td><td>não</td><td>não</td></tr>
+            <tr><td>Baseada em conteúdo</td><td>atributos da formulação: espécie, fase, proteína, energia</td><td>não</td><td><strong>sim</strong></td></tr>
+            <tr><td>Demográfica</td><td>atributos do cadastro: espécie, porte, região</td><td><strong>sim</strong></td><td>não</td></tr>
+            <tr><td>Popularidade</td><td>as formulações mais vendidas</td><td><strong>sim</strong></td><td>não</td></tr>
+          </tbody>
+        </table>
+        <p><em>Cold start</em> de usuário pede dado que não seja histórico da própria granja.
+        <em>Cold start</em> de item pede atributo do item, porque ninguém o comprou ainda [11].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">32</p>
+        </div>
+      </section>
+
+      <!-- 33 - Quiz P4 -->
+      <section class="quiz-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Pares 4 &middot; Arquitetura do repositório</h2>
+        </div>
+        <div class="quiz-container">
+          <p class="quiz-question">Voto, dupla, revoto. CSVs do SIDRA, PDFs de boletins e imagens de
+          satélite vão para o mesmo repositório da LDC sem transformação, e cada análise transforma
+          quando precisa. O que é isso?</p>
+          <ul class="quiz-options">
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="Um warehouse recebe dado já transformado num esquema fixo. PDF e imagem não cabem em esquema fixo sem transformar antes.">Data warehouse alimentado por ETL</li>
+            <li data-correct="true"
+                data-correct-msg="Certo: carregar cru e transformar depois é ELT, e guardar formatos variados com uso indefinido é o papel do data lake."
+                data-incorrect-msg="Era esta: carregar cru e transformar depois é ELT, e guardar formatos variados com uso indefinido é o papel do data lake.">Data lake alimentado por ELT</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="ETL transforma antes de carregar. O enunciado diz que nada é transformado na entrada.">Data lake alimentado por ETL</li>
+            <li data-correct="false"
+                data-correct-msg="Correto."
+                data-incorrect-msg="O warehouse exige esquema fixo na entrada. Guardar o original sem esquema é a característica do lake.">Data warehouse alimentado por ELT</li>
+          </ul>
+        </div>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">33</p>
+        </div>
+      </section>
+
+      <!-- 34 - Pratica -->
+      <section class="exercise-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Prática &middot; Fluxo completo sobre o abate de bovinos</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Com y = abate de bovinos do trimestre, escolher uma única feature que exista antes do
+          trimestre previsto, e escrever quando ela passa a existir.</li>
+          <li>Conferir qualidade em <code>dados/</code>: vazios, período coberto e unidade.</li>
+          <li>Escolher a divisão e a proporção, com justificativa para 116 trimestres.</li>
+          <li>Treinar, reportar MAE, RMSE e R² na unidade certa e interpretar a inclinação.</li>
+          <li>Prever 2026-T2 e dizer o que a métrica garante sobre esse número.</li>
+        </ol>
+        <p>Seção 9 do <a href="https://github.com/canaldoovidio/2026-2A-M03/blob/main/notebooks/aula13.ipynb" target="_blank" rel="noopener">notebook</a>. Aos 11h40, a folha vai para a dupla vizinha.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">34</p>
+        </div>
+      </section>
+
+      <!-- 35 - Criterio da correcao cruzada -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Critério da correção cruzada</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Critério</th><th>Atende quando</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>X, y e momento do dado</td><td>a feature existe antes do trimestre previsto, e a resposta diz quando</td></tr>
+            <tr><td>Qualidade</td><td>vazios, período e unidade conferidos no CSV, com o número</td></tr>
+            <tr><td>Divisão</td><td>a escolha entre sorteio e data é justificada pela pergunta da LDC</td></tr>
+            <tr><td><code>fit</code></td><td>nada é ajustado com linhas de teste</td></tr>
+            <tr><td>Métricas</td><td>cada métrica vem com a unidade e com o que ela não afirma</td></tr>
+            <tr><td>Inclinação</td><td>lida como quilos de y por quilo de x, e como associação</td></tr>
+            <tr><td>Previsão</td><td>o número de 2026-T2 vem com a ressalva da métrica</td></tr>
+          </tbody>
+        </table>
+        <p>A dupla corretora marca atende ou não atende em cada linha e escreve uma frase sobre o
+        critério que falhou. Nada de nota: a folha volta para a dupla autora.</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">35</p>
+        </div>
+      </section>
+
+      <!-- 36 - Temas da Prova -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Temas de computação da Prova de 02/10</h2>
+        </div>
+        <table class="data-table tabela-projecao">
+          <thead>
+            <tr><th>Tema</th><th>Onde revisar</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Aprendizado supervisionado: X, y, momento do dado, vazamento, identificador</td><td>slides 11 a 13, material seção 2</td></tr>
+            <tr><td>Treino e teste, e validade da estimativa de erro</td><td>slide 14, material seção 3</td></tr>
+            <tr><td>Métricas de regressão: MAE, viés, MAPE, RMSE, R²</td><td>slide 22, material seção 4</td></tr>
+            <tr><td>Dados estruturados e não estruturados, ETL e ELT, <em>lake</em> e <em>warehouse</em></td><td>slide 31, material seção 8</td></tr>
+            <tr><td>Sistemas de recomendação e <em>cold start</em></td><td>slide 32, material seção 9</td></tr>
+            <tr><td>Métrica adequada à tarefa, alvo desbalanceado</td><td>slides 22 e 27, material seção 6</td></tr>
+            <tr><td>Fluxo completo da regressão linear simples</td><td>slides 17 a 21, material seção 5</td></tr>
+            <tr><td>Matriz de confusão, métricas de classificação, custo e limiar</td><td>slides 25 a 28, material seção 7</td></tr>
+          </tbody>
+        </table>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">36</p>
+        </div>
+      </section>
+
+      <!-- 37 - Estudo ate sexta e sprint -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Plano de estudo até 02/10 e estado da Sprint 5</h2>
+        </div>
+        <ol class="exercise-steps">
+          <li>Hoje: refazer no notebook as questões do autodiagnóstico que falharam, sem olhar o deck.</li>
+          <li>Quinta, 01/10: uma seção do material por tema, fechando cada uma pela autoverificação.</li>
+          <li>Sexta, 02/10: <strong>Prova, peso 20</strong> [12].</li>
+        </ol>
+        <p><strong>ART.8 Modelo Final, peso 4</strong>: o <code>Pipeline</code> da Aula 12, com o MAPE do
+        objeto avaliado e as versões declaradas, com review em <strong>07/10</strong> [12].</p>
+        <p>O app Streamlit, que alimenta a <strong>ART.9 Critérios de Publicação, peso 3</strong>, é
+        construído na Aula 14, em 06/10 [3].</p>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">37</p>
+        </div>
+      </section>
+
+      <!-- 38 - Referencias -->
+      <section class="content-slide">
+        <div class="top-bar"></div>
+        <img class="inteli-logo-header" src="../assets/img/inteli-logo-positiva.svg" alt="Logo Inteli">
+        <div class="slide-title-area">
+          <div class="accent-bar"></div>
+          <h2>Referências</h2>
+        </div>
+        <ol class="ref-columns">
+          <li>IBGE. Pesquisa Trimestral do Abate de Animais e da produção de ovos e leite: tabelas 1092, 1093, 1094, 7524 e 1086 do SIDRA.</li>
+          <li>Os números da aula, em <code>tools/tests/test_revisao_aula13.py</code>.</li>
+          <li>A conversão do encontro em revisão, em <code>docs/adrs/ADR-016</code>.</li>
+          <li><a href="../materiais/aula13.html">Material de apoio da Aula 13</a>.</li>
+          <li>Crouch, C.; Mazur, E. <em>Peer Instruction: Ten years of experience and results</em>. American Journal of Physics, 2001.</li>
+          <li>Kaufman, S. et al. <em>Leakage in data mining: formulation, detection, and avoidance</em>. ACM TKDD, 2012.</li>
+          <li>Hastie, T.; Tibshirani, R.; Friedman, J. <em>The Elements of Statistical Learning</em>, cap. 7. Springer, 2009.</li>
+          <li>Hyndman, R.; Athanasopoulos, G. <em>Forecasting: Principles and Practice</em>, 3. ed., 2021.</li>
+          <li>Saito, T.; Rehmsmeier, M. <em>The precision-recall plot is more informative than the ROC plot on imbalanced datasets</em>. PLoS ONE, 2015.</li>
+          <li>Kimball, R.; Ross, M. <em>The Data Warehouse Toolkit</em>, 3. ed. Wiley, 2013.</li>
+          <li>Schein, A. et al. <em>Methods and metrics for cold-start recommendations</em>. SIGIR, 2002.</li>
+          <li><code>PLANO_DE_ENSINO.md</code>, seção 4: Prova 02/10 (20), ART.8 (4), ART.9 (3).</li>
+          <li>Autoestudos da Semana 09 em <a href="../referencias/aula13.html">referencias/aula13.html</a>.</li>
+          <li>Aulas <a href="aula04.html">04</a>, <a href="aula05.html">05</a>, <a href="aula08.html">08</a>, <a href="aula09.html">09</a>, <a href="aula10.html">10</a> e <a href="aula12.html">12</a> do acervo.</li>
+        </ol>
+        <div class="slide-footer">
+          <p class="footer-bar">Módulo 03 IN &middot; Aula 13 &middot; Sprint 5</p>
+          <p class="footer-page">38</p>
+        </div>
+      </section>
+
+      <!-- 39 - Encerramento -->
+      <section class="end-slide">
+        <h1>Até 02/10</h1>
+        <h3>Prova na sexta. Aula 14, Revisão e Futuro, em 06/10</h3>
+        <p>Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot; 2026-2A</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      width: 1280, height: 720, center: false, margin: 0,
+      hash: true, slideNumber: false, transition: 'fade'
+    });
+  </script>
+  <script src="../assets/js/inteli-quiz.js"></script>
+  <script src="../assets/js/inteli-zoom.js"></script>
+  <script src="../assets/js/inteli-print.js"></script>
+</body>
+</html>

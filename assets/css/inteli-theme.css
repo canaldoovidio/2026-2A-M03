@@ -473,6 +473,13 @@ html.print-pdf.reveal-print .reveal .slides section.cover-slide[class] {
   font-weight: 700;
 }
 
+/* Modificador opt-in: tabela lida de longe na projecao (revisao com numeros
+   que a turma precisa ler do fundo da sala). Sobe do corpo complementar para o
+   piso de texto; so usar onde o slide tem folga vertical para isso. */
+.data-table.tabela-projecao {
+  font-size: var(--escala-texto);
+}
+
 /* Citacao central, grande, para uma unica afirmacao de peso (ex.: um
    achado de pesquisa citavel). Nao e o mesmo bloco que concept-cards nem
    side-by-side: e uma unica frase, centralizada, sem grade. */
