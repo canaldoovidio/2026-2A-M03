@@ -24,6 +24,7 @@ scikit-learn      # Aula 04, StandardScaler e LinearRegression
 shap              # Aula 10, TreeExplainer no notebook e em graficos_aula10.py
 joblib            # Aula 12, export do Pipeline em app/modelo_aula12.joblib
 mlflow            # Aula 12, rastreamento dos experimentos no notebook
+streamlit         # Aula 14, app/app.py testado com AppTest em tools/tests/test_app_aula14.py
 
 # A UNICA versao fixada do arquivo, e a excecao existe por um motivo medido:
 # o pycaret estavel (3.3.2) recusa Python 3.12 na importacao, com uma checagem

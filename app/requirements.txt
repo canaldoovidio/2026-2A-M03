@@ -1,0 +1,12 @@
+# Dependencias do app da Aula 14 (streamlit run app/app.py).
+#
+# Sem versao fixada, pela mesma politica de requirements-ci.txt: o acervo nao e
+# uma aplicacao em producao, e o aluno instala a versao corrente. O scikit-learn
+# que carrega o modelo precisa ser o mesmo, ou mais novo, que o que o gravou
+# (1.9.1, ver docs/adrs/ADR-015): versao diferente emite
+# InconsistentVersionWarning e, medido na Aula 12, devolve previsao identica.
+streamlit
+scikit-learn
+joblib
+pandas
+numpy
