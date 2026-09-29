@@ -46,6 +46,13 @@ previsão e cenários passa para a Aula 14, em 06/10, junto com o fechamento do 
 4. **O arquivo da prova nunca é copiado para o repositório.** Ele não está no `.gitignore` porque
    nunca esteve dentro da árvore de trabalho.
 
+## Forma do app na Aula 14
+
+O app entra como código versionado em `app/`, que roda na máquina de quem clonar o repositório, e
+não é publicado como serviço externo. O acervo continua sendo site estático no GitHub Pages:
+publicar o app exigiria decidir quem mantém o servidor, quem atualiza os CSVs e quem responde por
+divergência de versão de biblioteca, e nenhuma dessas responsabilidades existe no módulo.
+
 ## Riscos conhecidos
 
 - **O app Streamlit fica com um encontro de 105 minutos dividido com o fechamento do módulo.**
