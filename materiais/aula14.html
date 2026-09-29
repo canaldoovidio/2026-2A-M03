@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material de apoio &middot; Aula 14 &middot; Revisão e Futuro</title>
+  <meta name="description" content="Material de apoio da Aula 14 do Módulo 03 IN: o app Streamlit sobre o Pipeline da Aula 12, o número de erro que acompanha a tela, a previsão de um passo à frente, cenários honestos com o modelo, critérios de publicação, a linha do tempo do case e a IA generativa como horizonte.">
+
+  <!-- Este material NAO e o roteiro do deck em prosa. Ele aprofunda o que o
+       slide so pode apontar. Todo numero citado aqui sai de app/logica.py e
+       esta travado em tools/tests/test_app_aula14.py, sobre os CSVs de
+       dados/mensal/. A definicao dos cenarios esta em docs/adrs/ADR-017.
+
+       CUIDADO, herdado da Aula 12: dois objetos em jogo. O 2,86% e do
+       avaliado (315 meses); o 2,65% e do exportado medido nos meses que ele
+       ja viu. A tela mostra o primeiro.
+
+       Nenhum conteudo, questao ou resultado da Prova de 02/10 aparece aqui. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 14 &middot; 06/10/2026 &middot; Sprint 5</p>
+      <h1>Material de apoio: revisão e futuro</h1>
+      <p class="doc-subtitulo">A última aula do módulo dá uma tela ao modelo que a Aula 12
+      exportou e fecha o case. O app Streamlit de <code>app/</code> mostra o histórico, a previsão
+      dos 24 meses de teste e um controle de cenário, e cada escolha da tela tem uma razão medida:
+      qual erro publicar, até onde o modelo prevê com dado medido, e por que um cenário numa entrada
+      isolada inverte de sinal entre dois ajustes do mesmo modelo. O material fecha com a linha do
+      tempo do case, os critérios de publicação e a IA generativa como horizonte.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#resgate">O que a Aula 12 deixou pronto</a></li>
+        <li><a href="#streamlit">Como o Streamlit executa um app</a></li>
+        <li><a href="#logica">Por que a conta mora fora da tela</a></li>
+        <li><a href="#numero">O número de erro que acompanha a tela</a></li>
+        <li><a href="#passo">Um passo à frente, e o único mês futuro</a></li>
+        <li><a href="#eixo">O eixo que começa em zero</a></li>
+        <li><a href="#milho">O erro de propósito: o cenário de milho</a></li>
+        <li><a href="#estabilidade">Por que o grupo é estável e a coluna isolada não</a></li>
+        <li><a href="#publicacao">Critérios de publicação</a></li>
+        <li><a href="#linha">A linha do tempo do case</a></li>
+        <li><a href="#generativa">IA generativa como horizonte</a></li>
+        <li><a href="#escopo">Escopo das conclusões desta aula</a></li>
+        <li><a href="#entregas">O que a dupla entrega na ART.9 e na ART.10</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="resgate">
+        <h2>1. O que a Aula 12 deixou pronto</h2>
+        <p>O arquivo <code>app/modelo_aula12.joblib</code>, de 1.481 bytes: um <code>Pipeline</code>
+        com <code>StandardScaler</code> e <code>LinearRegression</code>, sobre o alvo em nível
+        (<code>abate_frangos</code>), com onze features da base mensal. Ele foi reajustado sobre as
+        339 linhas, de 1998-01 a 2026-03, depois de a avaliação terminar. O número que o descreve é
+        <strong>2,86%</strong> de MAPE, medido no objeto avaliado, que treinou nos 315 primeiros meses
+        e foi testado nos 24 seguintes, de 2024-04 a 2026-03.</p>
+        <p>As onze features, na ordem em que o modelo as espera:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Grupo</th><th>Colunas</th><th>O que medem</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Defasagens do frango</td><td><code>lag1</code>, <code>lag2</code>, <code>lag3</code>, <code>lag12</code></td><td>o abate de frangos de 1, 2, 3 e 12 meses antes</td></tr>
+              <tr><td>Calendário</td><td><code>sen</code>, <code>cos</code>, <code>dias</code></td><td>o mês do ano em forma circular e o número de dias do mês</td></tr>
+              <tr><td>Outras séries</td><td><code>abate_bovinos_lag1</code>, <code>abate_suinos_lag1</code>, <code>producao_ovos_lag1</code>, <code>producao_leite_lag1</code></td><td>as outras quatro séries do SIDRA no mês anterior</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A aula não muda nada nesse arquivo. Tudo o que ela acrescenta é uma camada por cima, que
+        lê o modelo e decide o que mostrar.</p>
+      </section>
+
+      <section class="doc-secao" id="streamlit">
+        <h2>2. Como o Streamlit executa um app</h2>
+        <p>Um app Streamlit é um script Python comum. <code>streamlit run app/app.py</code> sobe um
+        servidor local, abre o navegador em <code>http://localhost:8501</code> e executa o script de
+        cima para baixo. Cada chamada <code>st.*</code> vira um elemento na página, na ordem em que
+        aparece no código.</p>
+        <pre class="doc-codigo"><code>import streamlit as st
+import logica
+
+st.title("Abate de frangos")
+serie = st.selectbox("Série", logica.SERIES)
+tabela = logica.carregar_series()[serie]
+st.line_chart(tabela.set_index("periodo")["valor"])</code></pre>
+        <p>O modelo de execução é o que surpreende quem vem de JavaScript: <strong>a cada interação,
+        o script inteiro roda de novo</strong>. Quando o usuário troca a série no
+        <code>st.selectbox</code>, o Streamlit reexecuta o arquivo do começo, e desta vez a chamada
+        devolve a série nova. Não existe callback nem estado implícito entre uma execução e outra.</p>
+        <p>A consequência prática é o cache. Sem ele, cada movimento de um controle releria os cinco
+        CSVs e o <code>.joblib</code> do disco. O app usa os dois decoradores que o Streamlit
+        oferece, e a diferença entre eles importa:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Decorador</th><th>Guarda</th><th>Usado no app para</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>@st.cache_resource</code></td><td>o próprio objeto, compartilhado entre execuções</td><td>o <code>Pipeline</code> carregado</td></tr>
+              <tr><td><code>@st.cache_data</code></td><td>uma cópia do resultado, que o código pode alterar sem afetar o cache</td><td>a base analítica, as cinco séries e o MAPE do avaliado</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O cache não muda o objeto: o modelo carregado com ou sem cache é o mesmo, e a previsão é
+        idêntica. Ele só evita reler o disco. É a pergunta 1 do deck.</p>
+      </section>
+
+      <section class="doc-secao" id="logica">
+        <h2>3. Por que a conta mora fora da tela</h2>
+        <p>O app tem dois arquivos, e nenhuma conta mora no segundo:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Arquivo</th><th>O que faz</th><th>Como é testado</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>app/logica.py</code></td><td>carrega o modelo, monta a base, prevê, aplica o cenário, compara os dois ajustes</td><td><code>pytest</code> comum, em <code>tools/tests/test_app_aula14.py</code></td></tr>
+              <tr><td><code>app/app.py</code></td><td>decide o que aparece e em que ordem</td><td><code>streamlit.testing.v1.AppTest</code>, que executa o script sem navegador e deixa clicar nos controles</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A separação tem três efeitos. As contas são testáveis sem subir servidor. O notebook da aula
+        importa o mesmo módulo, então o que a dupla confere no Colab é exatamente o que o app mostra.
+        E a tela fica curta o bastante para ser lida de uma vez, o que importa quando alguém da LDC
+        quiser saber de onde veio um número.</p>
+        <p><code>logica.py</code> reimplementa a montagem da base em vez de importar
+        <code>tools/exportar_modelo_aula12.py</code>, para <code>app/</code> não depender de
+        <code>tools/</code>. O primeiro teste da suíte confere que as duas produzem a mesma matriz,
+        número a número: duplicar código só é aceitável com um teste que impeça as cópias de
+        divergir.</p>
+      </section>
+
+      <section class="doc-secao" id="numero">
+        <h2>4. O número de erro que acompanha a tela</h2>
+        <p>O app carrega o objeto exportado, e a tentação é mostrar o erro dele nos 24 meses que o
+        gráfico exibe. A medição:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Objeto</th><th>Treina com</th><th>MAPE nos 24 meses de teste</th><th>Na tela</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Avaliado</td><td>315 meses, até 2024-03</td><td><strong>2,86%</strong></td><td>no cartão de MAPE</td></tr>
+              <tr><td>Exportado</td><td>339 meses, até 2026-03</td><td>2,65%</td><td>não aparece</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O exportado treinou com os 24 meses de teste. Medi-lo ali devolve o erro sobre dado já
+        visto, que não estima desempenho futuro nenhum; publicá-lo seria o vazamento da Aula 09 numa
+        forma nova. O app recalcula o 2,86% a partir dos CSVs, com <code>mape_do_avaliado</code>, e
+        não o escreve à mão: se a base mudar, o número muda junto.</p>
+        <p>O gráfico, porém, mostra as previsões do exportado, porque é o objeto que a LDC recebe. A
+        legenda embaixo dele diz isso. O maior erro mês a mês que aparece ali é de 6,51%, em
+        2025-05, e ele também é do exportado.</p>
+        <img src="../assets/img/aula14-app-streamlit.png" alt="Captura de tela do app Streamlit rodando, com a barra lateral de controles, os três cartões de MAPE, meses de treino e previsão para 2026-04, e o gráfico com a série medida, a previsão do modelo e a previsão sob um choque de menos 10% no patamar do frango" style="width:100%; max-width: 900px; border: 1px solid var(--seg-borda); border-radius: 10px; display:block; margin: 0 auto 14px;">
+      </section>
+
+      <section class="doc-secao" id="passo">
+        <h2>5. Um passo à frente, e o único mês futuro</h2>
+        <p>As 24 previsões do gráfico são de <strong>um passo à frente</strong>. Para prever 2025-05,
+        o modelo usa o abate real de 2025-04 como <code>lag1</code>; para prever 2025-06, usa o real
+        de 2025-05, e assim por diante. O erro de um mês nunca contamina o seguinte.</p>
+        <p>O TAPI da LDC pede outra coisa: 24 meses de horizonte a partir de hoje. Para isso, o
+        <code>lag1</code> do segundo mês seria a previsão do primeiro, e as outras quatro séries
+        precisariam de modelo próprio. A Aula 05 mediu, na base trimestral, que prever o horizonte
+        inteiro de forma recursiva leva o MAPE de 1,60% para 2,85%. A tela precisa deixar claro qual
+        das duas perguntas ela responde, e a legenda do gráfico faz isso.</p>
+        <p>Existe exatamente um mês futuro que o modelo prevê só com dado medido: o seguinte ao último
+        do CSV. Para 2026-04, as onze entradas já existem (o abate de frangos de 2026-03, 2026-02,
+        2026-01 e 2025-04, o calendário de abril, e as outras quatro séries em 2026-03). A previsão
+        do exportado é de <strong>1.227.063.556 kg</strong>, que o app mostra como 1,227 bilhão. Não
+        há valor medido para comparar com ela no acervo, que para em 2026-03.</p>
+      </section>
+
+      <section class="doc-secao" id="eixo">
+        <h2>6. O eixo que começa em zero</h2>
+        <p>O <code>st.line_chart</code> é a chamada que o roteiro e os autoestudos ensinam, e é a que
+        o app mínimo usa. O app de <code>app/</code> a trocou por um gráfico Altair (a biblioteca que
+        o próprio Streamlit usa por baixo), por um motivo visível: o eixo vertical do
+        <code>st.line_chart</code> começa em zero. Numa série que oscila entre 1,0 e 1,3 bilhão de
+        quilogramas, isso comprime a variação num quinto da altura, e um erro de 2,86% vira uma linha
+        quase reta sobre outra.</p>
+        <p>O Altair deixa declarar <code>scale=alt.Scale(zero=False)</code>. O eixo passa a começar
+        perto de 950 milhões, e a distância entre previsão e realizado fica visível. A regra vale para
+        qualquer gráfico: numa série de nível, o eixo deve mostrar a faixa em que a
+        variação acontece, e dizer em que unidade está (milhões de kg por mês).</p>
+      </section>
+
+      <section class="doc-secao" id="milho">
+        <h2>7. O erro de propósito: o cenário de milho</h2>
+        <p>A primeira pergunta de um trader de grãos seria "e se o milho subir 10%?". O notebook manda
+        tentar, e o resultado é este:</p>
+        <pre class="doc-codigo"><code>ValueError: entrada fora do modelo: preco_milho. O Pipeline da Aula 12 só lê
+as onze features de FEATURES; um cenário sobre outra variável exige outra
+feature, outra fonte e outro modelo.</code></pre>
+        <p>A mensagem diz três coisas. <strong>Qual</strong> entrada foi recusada. <strong>Por
+        quê</strong>: o <code>Pipeline</code> recebe uma matriz de onze colunas, e nenhuma delas é
+        preço. E <strong>o que faltaria</strong>: uma feature nova, uma fonte de dado aberta que a
+        sustente e um modelo retreinado e reavaliado.</p>
+        <p>O erro é pedagógico porque a alternativa silenciosa é pior. Um controle de milho que
+        aceitasse o valor e não mudasse nada na previsão ensinaria ao usuário que o preço do milho não
+        afeta o abate de frango, e isso é uma afirmação sobre o mundo que o modelo nunca testou. Um
+        controle que parece funcionar e não lê nada é mais perigoso que a ausência do controle.</p>
+        <p>O que faltaria para o milho entrar, por extenso: uma série mensal aberta de preço (o
+        indicador de milho do CEPEA é a candidata natural), uma hipótese declarada sobre a defasagem
+        com que o preço afeta o abate, a feature construída sem vazamento temporal, e o modelo
+        reavaliado no mesmo corte de 24 meses, contra o 2,86% atual. É uma ART inteira, e fica
+        registrada na tela, no expansor "Entradas que o modelo não usa".</p>
+        <div class="doc-nota">
+          <p>O paralelo com a Aula 02 é direto. Lá, o TAPI pedia previsão mensal sobre um dado que
+          parecia só trimestral, e o descompasso virou conteúdo. Aqui, o parceiro vai querer variar o
+          preço de um insumo que o modelo não tem. Declarar o que o modelo não responde é parte do
+          entendimento do negócio, na primeira sprint e na última.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="estabilidade">
+        <h2>8. Por que o grupo é estável e a coluna isolada não</h2>
+        <p>O cenário do app aplica um choque percentual a um grupo de colunas nos 24 meses de teste e
+        recalcula a previsão. Para saber se o efeito medido é propriedade do modelo ou acidente de
+        um ajuste, a aula aplica o mesmo choque em dois ajustes do mesmo modelo, que diferem só em
+        24 meses de dado:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Choque de +10% em</th><th>Exportado, 339 meses</th><th>Avaliado, 315 meses</th><th>Mesmo sinal</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>lag1</code>, <code>lag2</code>, <code>lag3</code> e <code>lag12</code> juntos</td><td>+9,624%</td><td>+9,630%</td><td>sim</td></tr>
+              <tr><td>As outras quatro séries no mês anterior, juntas</td><td>+0,394%</td><td>+0,347%</td><td>sim</td></tr>
+              <tr><td>Só <code>lag1</code></td><td>+0,241%</td><td>+0,453%</td><td>sim, e quase o dobro</td></tr>
+              <tr><td>Só <code>abate_bovinos_lag1</code></td><td>+0,151%</td><td>-0,005%</td><td><strong>não</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <img src="../assets/img/aula14-cenarios-estabilidade.png" alt="Barras do efeito médio de um choque de mais 10% nos dois ajustes do modelo: patamar do frango com mais 9,62 e mais 9,63; outras quatro séries com mais 0,39 e mais 0,35; só lag1 com mais 0,24 e mais 0,45; só bovinos com mais 0,15 e menos 0,005, com a anotação troca de sinal" style="width:100%; max-width: 900px; border: 1px solid var(--seg-borda); border-radius: 10px; display:block; margin: 0 auto 14px;">
+        <p>O mecanismo é o que a Aula 12 mediu. As quatro defasagens do frango são colineares, com VIF
+        de até 69: dizem quase a mesma coisa, e muitas partilhas de peso entre elas produzem quase o
+        mesmo ajuste. Por isso o reajuste move a <strong>partilha</strong>, e a
+        <strong>soma</strong> fica quase parada. Em unidades originais, a soma dos quatro
+        coeficientes vale 0,976 no exportado e 0,970 no avaliado.</p>
+        <p>Um choque no grupo inteiro lê a soma. Um choque numa coluna só lê a partilha. Por isso o
+        mesmo 10% dá quase o mesmo efeito quando aplicado ao patamar e efeitos que dobram ou invertem
+        quando aplicado a uma coluna.</p>
+        <p>Vale desarmar uma leitura errada do primeiro número. +10% no patamar virar +9,62% na
+        previsão não é descoberta: com a soma dos coeficientes perto de 1, o modelo diz que o abate
+        de um mês acompanha o dos meses anteriores, o que qualquer pessoa da LDC já sabe. O valor
+        desse cenário está na estabilidade entre os dois ajustes.</p>
+        <p>O modelo é linear, então o efeito é proporcional ao choque: -10% dá exatamente -9,624%, e
+        +20% dá +19,249%. Aumentar o choque não conserta um cenário instável, só aumenta o número
+        instável.</p>
+      </section>
+
+      <section class="doc-secao" id="publicacao">
+        <h2>9. Critérios de publicação</h2>
+        <p>A tabela abaixo é uma proposta do acervo para a ART.9, montada com os achados das Aulas 09 a
+        14. A rubrica que avalia a entrega é a da Adalove.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Critério</th><th>Como conferir</th><th>Aula de origem</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>O erro publicado foi medido fora da amostra</td><td>MAPE do objeto avaliado, com o corte temporal declarado</td><td>09 e 12</td></tr>
+              <tr><td>A tela diz o que está mostrando</td><td>previsão de um passo à frente; só frango tem previsão; unidade no eixo</td><td>05 e 14</td></tr>
+              <tr><td>Cenário só sobre entrada que o modelo lê</td><td>mesmo sinal e mesma ordem de grandeza nos dois ajustes</td><td>12 e 14</td></tr>
+              <tr><td>A explicação é tão estável quanto o número</td><td>leitura de coeficiente conferida contra um reajuste</td><td>10 e 12</td></tr>
+              <tr><td>Roda do zero em outra máquina</td><td><code>app/requirements.txt</code>, versão do <code>scikit-learn</code>, último mês da base</td><td>12</td></tr>
+              <tr><td>O que ficou de fora está escrito</td><td>preço do milho, horizonte de 24 meses, Modelos 2 e 3 do TAPI</td><td>02 e 14</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O acervo decidiu não publicar o app como serviço externo (<code>docs/adrs/ADR-016</code>):
+        ele vive em <code>app/</code> como código versionado, e roda na máquina de quem clonar o
+        repositório. O site continua estático. Publicar num serviço exigiria decidir quem mantém o
+        servidor, quem atualiza os CSVs e quem responde quando a versão do <code>scikit-learn</code>
+        mudar, e cada uma dessas perguntas é um critério de publicação a mais.</p>
+      </section>
+
+      <section class="doc-secao" id="linha">
+        <h2>10. A linha do tempo do case</h2>
+        <p>O que cada aula deixou pronto, com o número que ela mediu. Os números são copiados das
+        aulas de origem.</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Aula</th><th>Data</th><th>Sprint</th><th>O que ficou pronto</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><a href="../aulas/aula01.html">01</a></td><td>04/08</td><td>1</td><td>leitura do CSV de abate bovino do SIDRA em Python</td></tr>
+              <tr><td><a href="../aulas/aula02.html">02</a></td><td>07/08</td><td>1</td><td>os três modelos do TAPI mapeados no CRISP-DM e a decisão trimestral</td></tr>
+              <tr><td><a href="../aulas/aula03.html">03</a></td><td>11/08</td><td>1</td><td>a EDA das cinco séries</td></tr>
+              <tr><td><a href="../aulas/aula04.html">04</a></td><td>19/08</td><td>2</td><td>a base analítica com defasagens e sazonalidade</td></tr>
+              <tr><td><a href="../aulas/aula05.html">05</a></td><td>24/08</td><td>2</td><td>o primeiro modelo, com MAPE de 1,60% contra 1,69% da baseline, em trimestre</td></tr>
+              <tr><td><a href="../aulas/aula06.html">06</a></td><td>01/09</td><td>3</td><td>K=4 recupera o trimestre do calendário em 98,3% das linhas</td></tr>
+              <tr><td><a href="../aulas/aula07.html">07</a></td><td>04/09</td><td>3</td><td>a base mensal, 339 linhas, e a regressão sobre a razão a 3,32% contra 3,71% da LDC</td></tr>
+              <tr><td><a href="../aulas/aula08.html">08</a></td><td>10/09</td><td>3</td><td>PCA com PC1 em 68,21% da variância, e o custo do corte</td></tr>
+              <tr><td><a href="../aulas/aula09.html">09</a></td><td>15/09</td><td>4</td><td>o protocolo da ART.7; a baseline majoritária acerta 83,3%</td></tr>
+              <tr><td><a href="../aulas/aula10.html">10</a></td><td>17/09</td><td>4</td><td>a floresta ajustada a 4,21%, <code>TimeSeriesSplit</code> e SHAP</td></tr>
+              <tr><td><a href="../aulas/aula11.html">11</a></td><td>24/09</td><td>4</td><td>o linear sobre o alvo em nível, a 2,86%</td></tr>
+              <tr><td><a href="../aulas/aula12.html">12</a></td><td>29/09</td><td>5</td><td>o <code>Pipeline</code> exportado, de 1.481 bytes, reajustado sobre 339 meses</td></tr>
+              <tr><td>13</td><td>30/09</td><td>5</td><td>revisão para a prova (<code>docs/adrs/ADR-016</code>)</td></tr>
+              <tr><td>14</td><td>06/10</td><td>5</td><td>o app com histórico, previsão e cenário</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Duas decisões atravessam a tabela e merecem aparecer na apresentação final. A correção de
+        granularidade da Aula 07, que levou o case de 117 trimestres para 339 meses e ao mesmo
+        horizonte que o parceiro pediu. E a decisão de alvo da Aula 11, que mostrou que o alvo em
+        razão, escolhido na Aula 07 para a árvore, custava 0,46 ponto ao modelo linear.</p>
+      </section>
+
+      <section class="doc-secao" id="generativa">
+        <h2>11. IA generativa como horizonte</h2>
+        <p>IA generativa é o nome dado aos modelos que produzem conteúdo novo (texto, código, imagem)
+        a partir dos padrões do dado de treino. Três técnicas cobrem a maior parte do que se usa hoje:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Técnica</th><th>Como funciona, em uma frase</th><th>Fonte primária</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Modelo de linguagem sobre <em>transformer</em></td><td>é treinado para prever o próximo símbolo de uma sequência, e gera texto repetindo essa previsão</td><td>Vaswani et al., 2017</td></tr>
+              <tr><td>Modelo de difusão</td><td>aprende a remover ruído de uma imagem, e gera partindo de ruído puro</td><td>Ho, Jain e Abbeel, 2020</td></tr>
+              <tr><td>Recuperação com geração (RAG)</td><td>busca trechos de documentos antes de gerar, e ancora a resposta neles</td><td>Lewis et al., 2020</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O primeiro item tem uma relação direta com o módulo: prever o próximo símbolo é um problema
+        de previsão, com alvo, entrada e erro. A diferença para o modelo do case está no que se pode
+        afirmar sobre o resultado. O <code>Pipeline</code> da Aula 12 tem um erro medido fora da
+        amostra, um corte temporal declarado e coeficientes que se pode reajustar e comparar. Um
+        modelo de linguagem que escreva "1,227 bilhão de kg" não tem nenhuma dessas três coisas
+        para aquele número.</p>
+        <h3>Onde ela poderia entrar no pipeline da LDC</h3>
+        <p>A tabela do deck é uma proposta para o debate, e a turma pode discordar de qualquer
+        linha:</p>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Etapa</th><th>Uso possível</th><th>Risco</th><th>Como conferir</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Dados</td><td>extrair tabelas de boletins em PDF, como os do Sindirações que o TAPI cita e o acervo não tem</td><td>número lido errado, sem aviso</td><td>somar as linhas contra o total publicado</td></tr>
+              <tr><td>Código</td><td>rascunho de função e de teste</td><td>erro plausível, que roda</td><td>um teste que já foi visto falhando</td></tr>
+              <tr><td>Previsão</td><td>gerar o número do mês</td><td>sem erro medido, sem reprodutibilidade</td><td>não entra</td></tr>
+              <tr><td>Relatório</td><td>redigir a leitura dos números para a LDC</td><td>frase afirmativa sem número atrás</td><td>cada frase com a fonte do número</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A linha de dados liga o horizonte à Aula 02: os boletins em PDF são dado não estruturado, e
+        transformá-los em tabela é exatamente o tipo de tarefa em que a técnica tem vantagem e em que
+        o erro é mais difícil de ver.</p>
+        <h3>Os desafios de autoria</h3>
+        <p>A declaração de posição do COPE sobre autoria e ferramentas de IA, de 2023, afirma que essas
+        ferramentas não podem ser autoras de trabalho científico, porque não respondem por ele, e que
+        quem as usa deve declarar o uso e responde pelo resultado. O princípio se estende à entrega
+        do módulo: na ART.10, a dupla responde por cada número e cada frase da apresentação, tenha ou
+        não usado um assistente para escrevê-la. O autoestudo da semana aprofunda o tema.</p>
+      </section>
+
+      <section class="doc-secao" id="escopo">
+        <h2>12. Escopo das conclusões desta aula</h2>
+        <ul>
+          <li>A estabilidade dos cenários foi medida em <strong>dois</strong> ajustes, com 24 meses de
+          diferença. Não é um intervalo de confiança do efeito; é uma checagem mínima de que o sinal
+          não depende de um ajuste específico.</li>
+          <li>O cenário é aplicado às 24 previsões de um passo à frente. Ele não propaga o choque para
+          os meses seguintes, porque isso exigiria prever as outras séries.</li>
+          <li>O modelo é linear. Em modelos não lineares, como a floresta da Aula 10, o efeito deixa de
+          ser proporcional ao choque, e a conferência precisa ser refeita para cada tamanho de
+          choque.</li>
+          <li>O app foi testado com o Streamlit 1.64 e o <code>AppTest</code> do próprio pacote. A
+          interface de testes do Streamlit ainda muda entre versões.</li>
+        </ul>
+      </section>
+
+      <section class="doc-secao" id="entregas">
+        <h2>13. O que a dupla entrega na ART.9 e na ART.10</h2>
+        <div class="doc-tabela-rolagem">
+          <table class="doc-tabela">
+            <thead>
+              <tr><th>Entrega</th><th>Peso</th><th>O que sai desta aula</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>ART.9 Critérios de Publicação</td><td>3</td><td>o app da dupla, o notebook que roda do zero e a tabela da seção 9 preenchida</td></tr>
+              <tr><td>ART.10 Apresentação final</td><td>3</td><td>a linha do tempo da dupla, com o número e o arquivo de cada etapa</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Os dois pesos são os registrados na Adalove, em <code>PLANO_DE_ENSINO.md</code>. A Sprint 5
+        e o módulo fecham em <strong>07/10</strong>.</p>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula14.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../referencias/aula14.html"><span class="material-symbols-outlined" aria-hidden="true">link</span>Referências</a>
+  </nav>
+</body>
+</html>

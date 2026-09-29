@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referências &middot; Aula 14 &middot; Revisão e Futuro</title>
+  <meta name="description" content="Autoestudo da Semana 10 na Adalove e leitura complementar da Aula 14 do Módulo 03 IN: Streamlit, visualização, IA generativa e autoria.">
+
+  <!-- Duas secoes fixas, nesta ordem, em TODAS as 14 aulas:
+       1. Autoestudos da semana (Adalove), copiados de
+          docs/autoestudos-por-semana.md, titulo por titulo, sem inventar
+          nenhum e sem alterar caractere.
+       2. Leitura complementar do professor.
+
+       A Semana 10 tem UM autoestudo e UM Encontro de Instrucao (06/10). Os
+       dois autoestudos de Streamlit sao da Semana 09 e continuam listados em
+       referencias/aula13.html, que e a semana deles (ADR-016): esta pagina
+       aponta para la em vez de copiar. -->
+
+  <link rel="stylesheet" href="../assets/css/inteli-brand.css">
+  <link rel="stylesheet" href="../assets/css/inteli-material.css">
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-header">
+      <p class="doc-eyebrow">Módulo 03 IN &middot; Aula 14 &middot; 06/10/2026 &middot; Semana 10</p>
+      <h1>Referências: revisão e futuro</h1>
+      <p class="doc-subtitulo">A Semana 10 tem um Encontro de Instrução e um autoestudo, sobre IA
+      generativa. O app Streamlit desta aula veio da Aula 13, e os autoestudos de Streamlit ficaram
+      na semana deles, a Semana 09. A seção 2 traz a documentação usada para construir o app e as
+      fontes primárias das técnicas de IA generativa citadas no deck.</p>
+    </header>
+
+    <nav class="doc-toc" aria-label="Sumário">
+      <h2>Nesta página</h2>
+      <ol>
+        <li><a href="#autoestudos">Autoestudos da semana (Adalove)</a></li>
+        <li><a href="#complementar">Leitura complementar do professor</a></li>
+      </ol>
+    </nav>
+
+    <main class="doc-conteudo">
+
+      <section class="doc-secao" id="autoestudos">
+        <h2>1. Autoestudos da semana (Adalove)</h2>
+        <p>Semana 10, um item, para o encontro de 06/10.</p>
+        <ol class="doc-referencias">
+          <li>IA Generativa: técnicas, oportunidades e os desafios de autoria
+            <span class="doc-porque">A base do bloco das 11h30. O deck resume três técnicas numa
+            tabela e propõe o debate sobre onde elas entrariam, ou não, no pipeline da LDC; a
+            leitura é o que dá à turma repertório para discordar da tabela.</span></li>
+        </ol>
+
+        <div class="doc-nota">
+          <p>Este título é cópia literal de <code>docs/autoestudos-por-semana.md</code>, que é gerado
+          do <code>Turma.xlsx</code> oficial. Autoestudo que não está lá não entra aqui. O acesso ao
+          conteúdo é pela Adalove, com o login institucional.</p>
+        </div>
+        <div class="doc-nota">
+          <p><strong>Os autoestudos de Streamlit são da Semana 09.</strong> "How to Build a Machine
+          Learning App using Streamlit" e "Streamlit 101 - A faster way to build and share data
+          apps" foram entregues pela Adalove antes da Aula 13, que virou revisão para a prova
+          (<code>docs/adrs/ADR-016</code>). Eles continuam listados na semana deles, em
+          <a href="aula13.html">referencias/aula13.html</a>, e são o pré-requisito dos blocos das
+          10h30 e 10h45 desta aula.</p>
+        </div>
+      </section>
+
+      <section class="doc-secao" id="complementar">
+        <h2>2. Leitura complementar do professor</h2>
+        <p>Nenhum destes é obrigatório. Cada um está aqui porque sustenta uma afirmação específica
+        da aula.</p>
+        <ol class="doc-referencias" start="2">
+          <li>Documentação do Streamlit: <em>API reference</em> e <em>Caching overview</em>.
+            <span class="doc-porque">A referência das chamadas que o app usa
+            (<code>st.title</code>, <code>st.selectbox</code>, <code>st.slider</code>,
+            <code>st.metric</code>) e a explicação do modelo de reexecução, que é o motivo de
+            <code>st.cache_resource</code> e <code>st.cache_data</code> existirem.</span></li>
+          <li>Documentação do Streamlit: <em>App testing</em>
+          (<code>streamlit.testing.v1.AppTest</code>).
+            <span class="doc-porque">A ferramenta que <code>tools/tests/test_app_aula14.py</code> usa
+            para abrir o app, mover o controle de cenário e conferir o aviso sem navegador.</span></li>
+          <li>VanderPlas, J. et al. <em>Altair: Interactive Statistical Visualizations for
+          Python</em>. Journal of Open Source Software, v. 3, 2018.
+            <span class="doc-porque">A biblioteca que o app usa no lugar do
+            <code>st.line_chart</code>, para o eixo vertical não começar em zero.</span></li>
+          <li>Vaswani, A. et al. <em>Attention Is All You Need</em>. NeurIPS, 2017.
+            <span class="doc-porque">O artigo do <em>transformer</em>, a arquitetura dos modelos de
+            linguagem atuais.</span></li>
+          <li>Ho, J.; Jain, A.; Abbeel, P. <em>Denoising Diffusion Probabilistic Models</em>.
+          NeurIPS, 2020.
+            <span class="doc-porque">A fonte primária dos modelos de difusão.</span></li>
+          <li>Lewis, P. et al. <em>Retrieval-Augmented Generation for Knowledge-Intensive NLP
+          Tasks</em>. NeurIPS, 2020.
+            <span class="doc-porque">O artigo que nomeou a recuperação com geração, a técnica mais
+            próxima do uso proposto para os boletins em PDF do setor.</span></li>
+          <li>Bommasani, R. et al. <em>On the Opportunities and Risks of Foundation Models</em>.
+          Stanford CRFM, 2021.
+            <span class="doc-porque">Um levantamento amplo de oportunidades e riscos dos modelos de
+            base, útil para o debate das 11h30.</span></li>
+          <li>COPE, Committee on Publication Ethics. <em>Authorship and AI tools</em>, declaração
+          de posição, 2023.
+            <span class="doc-porque">A posição citada no deck: ferramenta de IA não é autora, e quem
+            a usa declara o uso e responde pelo resultado.</span></li>
+          <li>CEPEA/ESALQ-USP. Indicador do milho.
+            <span class="doc-porque">A série aberta de preço que seria a candidata natural para o
+            cenário de milho que o app hoje recusa. Nunca foi baixada nem avaliada no acervo.</span></li>
+        </ol>
+      </section>
+
+    </main>
+
+    <p class="doc-rodape">Prof. Ovidio Lopes da Cruz Netto &middot; Módulo 03 IN &middot;
+    GRAD IN03 &middot; 2026-2A &middot; T25</p>
+
+  </div>
+
+  <nav class="doc-nav" aria-label="Navegação da aula">
+    <a href="../index.html"><span class="material-symbols-outlined" aria-hidden="true">home</span>Portal</a>
+    <a href="../aulas/aula14.html"><span class="material-symbols-outlined" aria-hidden="true">slideshow</span>Slides</a>
+    <a href="../materiais/aula14.html"><span class="material-symbols-outlined" aria-hidden="true">menu_book</span>Material</a>
+  </nav>
+</body>
+</html>
